@@ -1,0 +1,10 @@
+loglevel: Debug
+WriteDirectory: test_output
+raids:
+  ABS:
+    endpoint: https://google.com
+    tactics: 
+      - tlp_red
+      # - tlp_amber
+      # - tlp_green
+      # - tlp_clear
