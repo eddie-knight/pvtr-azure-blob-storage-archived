@@ -1,2 +1,5 @@
 privateer
 .DS_Store
+abs
+output/*
+config.yml
