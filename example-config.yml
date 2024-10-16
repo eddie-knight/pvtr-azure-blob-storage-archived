@@ -1,8 +1,9 @@
 loglevel: Debug
-WriteDirectory: test_output
+WriteDirectory: output
 raids:
   ABS:
-    endpoint: https://google.com
+    subscriptionid: 
+    storageAccountResourceId:
     tactics: 
       - tlp_red
       # - tlp_amber

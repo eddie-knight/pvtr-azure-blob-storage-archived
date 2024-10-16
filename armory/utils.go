@@ -10,7 +10,7 @@ import (
 )
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, result *raidengine.MovementResult) *http.Response {
+func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult) *http.Response {
 	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
 
 	// Create an HTTP client with a timeout for safety
@@ -18,8 +18,21 @@ func MakeGETRequest(endpoint string, result *raidengine.MovementResult) *http.Re
 		Timeout: 10 * time.Second,
 	}
 
+	// Create a new GET request
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		result.Passed = false
+		result.Message = err.Error()
+		return nil
+	}
+
+	// Set the required headers
+	req.Header.Set("x-ms-version", "2025-01-05")
+	req.Header.Set("x-ms-date", time.Now().UTC().Format(http.TimeFormat))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
 	// Make the GET request
-	response, err := client.Get(endpoint)
+	response, err := client.Do(req)
 	if err != nil {
 		result.Passed = false
 		result.Message = err.Error()
@@ -35,11 +48,14 @@ func MakeGETRequest(endpoint string, result *raidengine.MovementResult) *http.Re
 	} else {
 		result.Passed = false
 	}
+
 	return response
 }
 
 // CheckStatusCode checks the TLS version of the response and updates the result
-func CheckTLSVersion(response *http.Response, result *raidengine.MovementResult) {
+func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
+	response := MakeGETRequest(endpoint, token, result)
+
 	result.Description = fmt.Sprintf("Checking TLS version of response from: %s", response.Request.URL.String())
 
 	// Check the TLS version of the response
@@ -79,10 +95,10 @@ func CheckTLSVersion(response *http.Response, result *raidengine.MovementResult)
 	}
 }
 
-func ConfirmHTTPSRedirect(httpsUrl string, result *raidengine.MovementResult) {
-	url := strings.Replace(httpsUrl, "https", "http", 1)
-	response := MakeGETRequest(url, result)
-	result.Description = fmt.Sprintf("Checking for HTTPS redirection on: %s", url)
+func ConfirmHTTPSRedirect(endpoint string, token string, result *raidengine.MovementResult) {
+	httpUrl := strings.Replace(endpoint, "https", "http", 1)
+	response := MakeGETRequest(httpUrl, token, result)
+	result.Description = fmt.Sprintf("Checking for HTTPS redirection on: %s", httpUrl)
 
 	if !result.Passed {
 		return
