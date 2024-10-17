@@ -26,7 +26,7 @@ type ABS struct {
 var (
 	storageAccountUri        string
 	token                    azcore.AccessToken
-	cred                     azidentity.DefaultAzureCredential
+	cred                     *azidentity.DefaultAzureCredential
 	subscriptionId           string
 	storageAccountResourceId string
 	storageAccountResource   armresources.GenericResource
@@ -54,7 +54,8 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 	}
 
 	// Get an Azure credential
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	var err error
+	cred, err = azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("Failed to get Azure credential: %v", err)
 	}
