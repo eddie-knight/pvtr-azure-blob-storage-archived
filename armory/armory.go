@@ -3,7 +3,9 @@ package armory
 import (
 	"context"
 	"log"
+	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
@@ -23,7 +25,8 @@ type ABS struct {
 
 var (
 	storageAccountUri        string
-	accessToken              string
+	token                    azcore.AccessToken
+	cred                     azidentity.DefaultAzureCredential
 	subscriptionId           string
 	storageAccountResourceId string
 	storageAccountResource   armresources.GenericResource
@@ -76,16 +79,31 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
 
 	// Get blob storage token
-	token, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
+	getTokenResponse, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
 		Scopes: []string{"https://storage.azure.com/.default"},
 	})
 	if err != nil {
 		log.Fatalf("Failed to get access token: %v", err)
 	}
 
-	accessToken = token.Token
+	token = getTokenResponse
 
 	return a.Tactics
+}
+
+func getToken() string {
+	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
+		getTokenResponse, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
+			Scopes: []string{"https://storage.azure.com/.default"},
+		})
+		if err != nil {
+			log.Fatalf("Failed to get access token: %v", err)
+		}
+		token = getTokenResponse
+
+		return token.Token
+	}
+	return token.Token
 }
 
 // -----
@@ -117,10 +135,13 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 		Description: "Movement has not yet started",
 		Function:    utils.CallerPath(0),
 	}
-	// result.Message = "Getting storage account resource"
+
+	// Get access token
+	result.Message = "Getting access token"
+	token := getToken()
 
 	// Check TLS version of response
-	CheckTLSVersion(storageAccountUri, accessToken, &result)
+	CheckTLSVersion(storageAccountUri, token, &result)
 	if !result.Passed {
 		return
 	}
