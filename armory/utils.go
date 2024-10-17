@@ -31,20 +31,23 @@ func ValidateVariableValue(variableValue string, regex string) (bool, error) {
 }
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion *uint16) *http.Response {
+func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion *int) *http.Response {
 	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
+
+	// Add query parameters to request URL
+	endpoint = endpoint + "?comp=list"
 
 	// Create an HTTP client with a timeout for safety
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	// If a specific TLS version is provided, configure the Transport
+	// If a specific TLS version is provided, configure the TLS version
 	if tlsVersion != nil {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
-				MinVersion: *tlsVersion,
-				MaxVersion: *tlsVersion,
+				MinVersion: uint16(*tlsVersion),
+				MaxVersion: uint16(*tlsVersion),
 			},
 		}
 	}
@@ -74,13 +77,6 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 	defer response.Body.Close()
 
 	result.Message = fmt.Sprintf("Response contained HTTP status code: %d", response.StatusCode)
-
-	// // Check for HTTP success (2xx status codes)
-	// if response.StatusCode >= 200 && response.StatusCode < 300 {
-	// 	result.Passed = true
-	// } else {
-	// 	result.Passed = false
-	// }
 
 	return response
 }
@@ -145,6 +141,24 @@ func ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult)
 	}
 }
 
-func ConfirmOutdatedProtocolRequestsFail() {
+func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersions []int) {
 
+	allFailed := true
+	var failedVersions []string
+
+	for _, tlsVersion := range tlsVersions {
+		response := MakeGETRequest(endpoint, "", result, &tlsVersion)
+		if response.StatusCode != http.StatusBadRequest && response.Status == "400 The TLS version of the connection is not permitted on this storage account." {
+			allFailed = false
+			failedVersions = append(failedVersions, fmt.Sprintf("TLS %x", tlsVersion))
+		}
+	}
+
+	if allFailed {
+		result.Passed = true
+		result.Message = "All specified TLS versions are not supported"
+	} else {
+		result.Passed = false
+		result.Message = fmt.Sprintf("The following TLS versions are supported: %s", strings.Join(failedVersions, ", "))
+	}
 }

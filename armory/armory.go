@@ -2,6 +2,7 @@ package armory
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -156,7 +157,7 @@ func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	result.Description = "Verifying that HTTP endpoint is redirected to HTTPS"
+	result.Description = "Verifying that HTTP endpoint is not supported"
 	ConfirmHTTPRequestFails(storageAccountUri, &result)
 
 	return
@@ -191,8 +192,11 @@ func CCC_C01_TR03_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	result.Description = "Checking for outdated or insecure protocols"
-	// TODO: Use this section to write a single step or test that contributes to CCC_C01_TR03
+	tlsVersions := []int{tls.VersionTLS10, tls.VersionTLS11}
+
+	result.Description = "Checking outdated or insecure TLS protocols are not supported"
+
+	ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersions)
 	return
 }
 
