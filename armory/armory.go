@@ -183,10 +183,11 @@ func (a *ABS) CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult)
 
 func CCC_C01_TR03_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
+		Description: "The movement has not yet started.",
 		Function:    utils.CallerPath(0),
 	}
 
+	result.Description = "Checking for outdated or insecure protocols"
 	// TODO: Use this section to write a single step or test that contributes to CCC_C01_TR03
 	return
 }

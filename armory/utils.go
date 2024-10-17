@@ -1,6 +1,7 @@
 package armory
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,12 +11,22 @@ import (
 )
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult) *http.Response {
+func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion ...uint16) *http.Response {
 	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
 
 	// Create an HTTP client with a timeout for safety
 	client := &http.Client{
 		Timeout: 10 * time.Second,
+	}
+
+	// If a specific TLS version is provided, configure the Transport
+	if len(tlsVersion) > 0 {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion: tlsVersion[0],
+				MaxVersion: tlsVersion[0],
+			},
+		}
 	}
 
 	// Create a new GET request
@@ -54,7 +65,7 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 
 // CheckStatusCode checks the TLS version of the response and updates the result
 func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
-	response := MakeGETRequest(endpoint, token, result)
+	response := MakeGETRequest(endpoint, token, result, nil)
 
 	result.Description = fmt.Sprintf("Checking TLS version of response from: %s", response.Request.URL.String())
 
@@ -115,4 +126,8 @@ func ConfirmHTTPSRedirect(endpoint string, token string, result *raidengine.Move
 		result.Passed = false
 		result.Message = "HTTP was not redirected to HTTPS"
 	}
+}
+
+func ConfirmOutdatedProtocolRequestsFail() {
+
 }
