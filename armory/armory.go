@@ -1,6 +1,12 @@
 package armory
 
 import (
+	"context"
+	"log"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
 
@@ -15,11 +21,15 @@ type ABS struct {
 	Results map[string]raidengine.StrikeResult // Optional, allows cross referencing between strikes
 }
 
-// Optionally, retrieve config variables using Viper.
-var user string
+var (
+	storageAccountUri        string
+	accessToken              string
+	subscriptionId           string
+	storageAccountResourceId string
+	storageAccountResource   armresources.GenericResource
+)
 
 func init() {
-	user = viper.GetString("user")
 }
 
 func (a *ABS) SetLogger(loggerName string) hclog.Logger {
@@ -28,6 +38,53 @@ func (a *ABS) SetLogger(loggerName string) hclog.Logger {
 }
 
 func (a *ABS) GetTactics() map[string][]raidengine.Strike {
+
+	// Get subscription ID
+	subscriptionId = viper.GetString("raids.ABS.subscriptionId")
+	if valid, err := ValidateVariableValue(subscriptionId, `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`); !valid {
+		log.Fatalf("Subscription ID variable validation failed with error: %s", err)
+	}
+
+	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
+	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
+		log.Fatalf("Storage Account Resource ID variable validation failed with error: %s", err)
+	}
+
+	// Get an Azure credential
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf("Failed to get Azure credential: %v", err)
+	}
+
+	// Create an Azure resources client
+	client, err := armresources.NewClient(subscriptionId, cred, nil)
+	if err != nil {
+		log.Fatalf("Failed to create Azure resources client: %v", err)
+	}
+
+	// TODO: Set timeout in context below
+	getResourceResult, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
+	if err != nil {
+		log.Fatalf("Failed to get storage account resource: %v", err)
+	} else if *getResourceResult.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
+		log.Fatalf("Resource ID provided is not a storage account")
+	}
+
+	storageAccountResource = getResourceResult.GenericResource
+
+	// Get storage account URI
+	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
+
+	// Get blob storage token
+	token, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
+		Scopes: []string{"https://storage.azure.com/.default"},
+	})
+	if err != nil {
+		log.Fatalf("Failed to get access token: %v", err)
+	}
+
+	accessToken = token.Token
+
 	return a.Tactics
 }
 
@@ -60,19 +117,10 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 		Description: "Movement has not yet started",
 		Function:    utils.CallerPath(0),
 	}
-	result.Message = "Verifying that endpoint was provided"
-	endpoint := viper.GetString("raids.ABS.endpoint")
-	if endpoint == "" {
-		result.Message = "Endpoint not provided"
-		result.Passed = false
-		return
-	}
+	// result.Message = "Getting storage account resource"
 
-	response := MakeGETRequest(endpoint, &result)
-	if !result.Passed {
-		return
-	}
-	CheckTLSVersion(response, &result)
+	// Check TLS version of response
+	CheckTLSVersion(storageAccountUri, accessToken, &result)
 	if !result.Passed {
 		return
 	}
@@ -109,7 +157,7 @@ func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 	}
 
 	result.Description = "Verifying that HTTP endpoint is redirected to HTTPS"
-	ConfirmHTTPSRedirect(viper.GetString("raids.ABS.endpoint"), &result)
+	ConfirmHTTPRequestFails(storageAccountUri, &result)
 
 	return
 }
