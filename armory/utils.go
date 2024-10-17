@@ -4,11 +4,31 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
+
+func ValidateVariableValue(variableValue string, regex string) (bool, error) {
+	// Check if variable is populated
+	if variableValue == "" {
+		return false, fmt.Errorf("variable is required and not populated")
+	}
+
+	// Check if variable matches regex
+	matched, err := regexp.MatchString(regex, variableValue)
+	if err != nil {
+		return false, fmt.Errorf("validation of variable has failed with message: %s", err)
+	}
+
+	if !matched {
+		return false, fmt.Errorf("variable value is not valid")
+	}
+
+	return true, nil
+}
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
 func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion *uint16) *http.Response {
@@ -40,7 +60,9 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 	// Set the required headers
 	req.Header.Set("x-ms-version", "2025-01-05")
 	req.Header.Set("x-ms-date", time.Now().UTC().Format(http.TimeFormat))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	if token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
 
 	// Make the GET request
 	response, err := client.Do(req)
@@ -53,12 +75,12 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 
 	result.Message = fmt.Sprintf("Response contained HTTP status code: %d", response.StatusCode)
 
-	// Check for HTTP success (2xx status codes)
-	if response.StatusCode >= 200 && response.StatusCode < 300 {
-		result.Passed = true
-	} else {
-		result.Passed = false
-	}
+	// // Check for HTTP success (2xx status codes)
+	// if response.StatusCode >= 200 && response.StatusCode < 300 {
+	// 	result.Passed = true
+	// } else {
+	// 	result.Passed = false
+	// }
 
 	return response
 }
@@ -106,25 +128,20 @@ func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementR
 	}
 }
 
-func ConfirmHTTPSRedirect(endpoint string, token string, result *raidengine.MovementResult) {
+func ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
-	response := MakeGETRequest(httpUrl, token, result, nil)
-	result.Description = fmt.Sprintf("Checking for HTTPS redirection on: %s", httpUrl)
-
-	if !result.Passed {
-		return
-	}
+	response := MakeGETRequest(httpUrl, "", result, nil)
+	result.Description = fmt.Sprintf("Checking that HTTP is not supported for endpoint: %s", httpUrl)
 
 	// if response.Header.Get("Location") contains https
-	result.Message = "Checking whether HTTP is redirected to HTTPS"
-	location := response.Request.URL.Scheme
+	result.Message = "Checking that HTTP is not supported"
 
-	if location == "https" {
+	if response.StatusCode == 400 && response.Status == "400 The account being accessed does not support http." {
 		result.Passed = true
-		result.Message = "HTTP was redirected to HTTPS"
+		result.Message = "HTTP requests are not supported" // TODO Update message
 	} else {
 		result.Passed = false
-		result.Message = "HTTP was not redirected to HTTPS"
+		result.Message = "HTTP requests are supported" // TODO Update message
 	}
 }
 

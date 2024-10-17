@@ -26,6 +26,7 @@ var (
 	accessToken              string
 	subscriptionId           string
 	storageAccountResourceId string
+	storageAccountResource   armresources.GenericResource
 )
 
 func init() {
@@ -40,13 +41,13 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 
 	// Get subscription ID
 	subscriptionId = viper.GetString("raids.ABS.subscriptionId")
-	if subscriptionId == "" {
-		log.Fatalf("Subscription ID is required")
+	if valid, err := ValidateVariableValue(subscriptionId, `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`); !valid {
+		log.Fatalf("Subscription ID variable validation failed with error: %s", err)
 	}
 
 	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
-	if storageAccountResourceId == "" {
-		log.Fatalf("Storage Account Resource ID is required")
+	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
+		log.Fatalf("Storage Account Resource ID variable validation failed with error: %s", err)
 	}
 
 	// Get an Azure credential
@@ -65,8 +66,11 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 	getResourceResult, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
 	if err != nil {
 		log.Fatalf("Failed to get storage account resource: %v", err)
+	} else if *getResourceResult.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
+		log.Fatalf("Resource ID provided is not a storage account")
 	}
-	storageAccountResource := getResourceResult.GenericResource
+
+	storageAccountResource = getResourceResult.GenericResource
 
 	// Get storage account URI
 	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
@@ -153,7 +157,7 @@ func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 	}
 
 	result.Description = "Verifying that HTTP endpoint is redirected to HTTPS"
-	ConfirmHTTPSRedirect(storageAccountUri, accessToken, &result)
+	ConfirmHTTPRequestFails(storageAccountUri, &result)
 
 	return
 }
