@@ -11,7 +11,7 @@ import (
 )
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion ...uint16) *http.Response {
+func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion *uint16) *http.Response {
 	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
 
 	// Create an HTTP client with a timeout for safety
@@ -20,11 +20,11 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 	}
 
 	// If a specific TLS version is provided, configure the Transport
-	if len(tlsVersion) > 0 {
+	if tlsVersion != nil {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
-				MinVersion: tlsVersion[0],
-				MaxVersion: tlsVersion[0],
+				MinVersion: *tlsVersion,
+				MaxVersion: *tlsVersion,
 			},
 		}
 	}
@@ -108,7 +108,7 @@ func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementR
 
 func ConfirmHTTPSRedirect(endpoint string, token string, result *raidengine.MovementResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
-	response := MakeGETRequest(httpUrl, token, result)
+	response := MakeGETRequest(httpUrl, token, result, nil)
 	result.Description = fmt.Sprintf("Checking for HTTPS redirection on: %s", httpUrl)
 
 	if !result.Passed {
