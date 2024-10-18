@@ -32,8 +32,6 @@ func ValidateVariableValue(variableValue string, regex string) (bool, error) {
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
 func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
-	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
-
 	// Add query parameters to request URL
 	endpoint = endpoint + "?comp=list"
 
@@ -79,8 +77,6 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 	}
 	defer response.Body.Close()
 
-	result.Message = fmt.Sprintf("Response contained HTTP status code: %d", response.StatusCode)
-
 	return response
 }
 
@@ -91,18 +87,6 @@ func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementR
 	minTlsVersion := tls.VersionTLS10
 
 	response := MakeGETRequest(endpoint, token, result, &minTlsVersion, nil)
-
-	result.Description = fmt.Sprintf("Checking TLS version of response from: %s", response.Request.URL.String())
-
-	// Check the TLS version of the response
-	tlsVersion := response.TLS.Version
-	if tlsVersion == 0 {
-		result.Passed = false
-		result.Message = fmt.Sprintf("No TLS version found in response from %s", response.Request.URL)
-	} else {
-		result.Passed = true
-		result.Message = fmt.Sprintf("TLS version: %v", tlsVersion)
-	}
 
 	// Check if the connection used TLS
 	if response.TLS != nil {
@@ -134,38 +118,30 @@ func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementR
 func ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
 	response := MakeGETRequest(httpUrl, "", result, nil, nil)
-	result.Description = fmt.Sprintf("Checking that HTTP is not supported for endpoint: %s", httpUrl)
 
-	// if response.Header.Get("Location") contains https
-	result.Message = "Checking that HTTP is not supported"
-
-	if response.StatusCode == 400 && response.Status == "400 The account being accessed does not support http." {
+	if response.StatusCode == 400 && strings.Contains(response.Status, "http") {
 		result.Passed = true
-		result.Message = "HTTP requests are not supported" // TODO Update message
+		result.Message = "HTTP requests are not supported"
 	} else {
 		result.Passed = false
-		result.Message = "HTTP requests are supported" // TODO Update message
+		result.Message = "HTTP requests are supported"
 	}
 }
 
-func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersions []int) {
+func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int) {
 
-	allFailed := true
-	var failedVersions []string
+	response := MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
 
-	for _, tlsVersion := range tlsVersions {
-		response := MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
-		if response.StatusCode != http.StatusBadRequest && response.Status == "400 The TLS version of the connection is not permitted on this storage account." {
-			allFailed = false
-			failedVersions = append(failedVersions, fmt.Sprintf("TLS %x", tlsVersion))
-		}
-	}
-
-	if allFailed {
-		result.Passed = true
-		result.Message = "All specified TLS versions are not supported"
-	} else {
+	if response == nil {
 		result.Passed = false
-		result.Message = fmt.Sprintf("The following TLS versions are supported: %s", strings.Join(failedVersions, ", "))
+		result.Message = fmt.Sprintf("Request unexpectedly failed with error: %x", result.Message)
+	} else {
+		if response.StatusCode == http.StatusBadRequest && strings.Contains(response.Status, "TLS version") {
+			result.Passed = true
+			result.Message = "Insecure TLS version not supported"
+		} else {
+			result.Passed = false
+			result.Message = "Insecure TLS version supported"
+		}
 	}
 }

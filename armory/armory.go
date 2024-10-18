@@ -88,8 +88,8 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 
 func getToken(result *raidengine.MovementResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
-		result.Message = "Getting new access token"
 
+		log.Default().Printf("Getting new access token")
 		var err error
 		token, err = cred.GetToken(context.Background(), policy.TokenRequestOptions{
 			Scopes: []string{"https://storage.azure.com/.default"},
@@ -102,7 +102,7 @@ func getToken(result *raidengine.MovementResult) string {
 		return token.Token
 	}
 
-	result.Message = "Using existing access token"
+	log.Default().Printf("Using existing access token")
 	return token.Token
 }
 
@@ -123,8 +123,7 @@ func (a *ABS) CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C01_TR01_T01) // Ensure GET requests communicate via TLS 1.2 or higher
-	// TODO: Consider adding other HTTP methods in subsequent movements
+	raidengine.ExecuteMovement(&result, CCC_C01_TR01_T01)
 
 	return
 }
@@ -132,7 +131,7 @@ func (a *ABS) CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult)
 // CCC_C01_TR01_T01 - Ensure GET requests communicate via TLS 1.2 or higher
 func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "Movement has not yet started",
+		Description: "Default TLS version is TLS 1.2 or TLS 1.3",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -168,18 +167,16 @@ func (a *ABS) CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C01_TR02_T01)
-	// TODO: Additional movement calls go here
 
 	return
 }
 
 func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "The movement has not yet started.",
+		Description: "HTTP requests are not supported",
 		Function:    utils.CallerPath(0),
 	}
 
-	result.Description = "Verifying that HTTP endpoint is not supported"
 	ConfirmHTTPRequestFails(storageAccountUri, &result)
 
 	return
@@ -203,22 +200,36 @@ func (a *ABS) CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T01)
-	// TODO: Additional movement calls go here
+	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T02)
+
+	if result.Movements["CCC_C01_TR03_T01"].Passed && result.Movements["CCC_C01_TR03_T02"].Passed {
+		result.Message = "All insecure TLS versions are not supported"
+	}
 
 	return
 }
 
 func CCC_C01_TR03_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "The movement has not yet started.",
+		Description: "TLS Version 1.0 is not supported",
 		Function:    utils.CallerPath(0),
 	}
 
-	tlsVersions := []int{tls.VersionTLS10, tls.VersionTLS11}
+	tlsVersion := tls.VersionTLS10
 
-	result.Description = "Checking outdated or insecure TLS protocols are not supported"
+	ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersion)
+	return
+}
 
-	ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersions)
+func CCC_C01_TR03_T02() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "TLS Version 1.1 is not supported",
+		Function:    utils.CallerPath(0),
+	}
+
+	tlsVersion := tls.VersionTLS11
+
+	ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersion)
 	return
 }
 
