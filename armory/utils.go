@@ -31,25 +31,28 @@ func ValidateVariableValue(variableValue string, regex string) (bool, error) {
 }
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, tlsVersion *int) *http.Response {
+func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
 
 	// Add query parameters to request URL
 	endpoint = endpoint + "?comp=list"
 
-	// Create an HTTP client with a timeout for safety
-	client := &http.Client{
-		Timeout: 10 * time.Second,
+	// If specific TLS versions are provided, configure the TLS version
+	tlsConfig := &tls.Config{}
+	if minTlsVersion != nil {
+		tlsConfig.MinVersion = uint16(*minTlsVersion)
 	}
 
-	// If a specific TLS version is provided, configure the TLS version
-	if tlsVersion != nil {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				MinVersion: uint16(*tlsVersion),
-				MaxVersion: uint16(*tlsVersion),
-			},
-		}
+	if maxTlsVersion != nil {
+		tlsConfig.MaxVersion = uint16(*maxTlsVersion)
+	}
+
+	// Create an HTTP client with a timeout and the specified TLS configuration
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
 	}
 
 	// Create a new GET request
@@ -83,7 +86,11 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 
 // CheckStatusCode checks the TLS version of the response and updates the result
 func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
-	response := MakeGETRequest(endpoint, token, result, nil)
+
+	// Set the minimum TLS version to TLS 1.0
+	minTlsVersion := tls.VersionTLS10
+
+	response := MakeGETRequest(endpoint, token, result, &minTlsVersion, nil)
 
 	result.Description = fmt.Sprintf("Checking TLS version of response from: %s", response.Request.URL.String())
 
@@ -126,7 +133,7 @@ func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementR
 
 func ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
-	response := MakeGETRequest(httpUrl, "", result, nil)
+	response := MakeGETRequest(httpUrl, "", result, nil, nil)
 	result.Description = fmt.Sprintf("Checking that HTTP is not supported for endpoint: %s", httpUrl)
 
 	// if response.Header.Get("Location") contains https
@@ -147,7 +154,7 @@ func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.Mov
 	var failedVersions []string
 
 	for _, tlsVersion := range tlsVersions {
-		response := MakeGETRequest(endpoint, "", result, &tlsVersion)
+		response := MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
 		if response.StatusCode != http.StatusBadRequest && response.Status == "400 The TLS version of the connection is not permitted on this storage account." {
 			allFailed = false
 			failedVersions = append(failedVersions, fmt.Sprintf("TLS %x", tlsVersion))
