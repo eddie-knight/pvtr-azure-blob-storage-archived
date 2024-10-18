@@ -2,6 +2,7 @@ package armory
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -48,6 +49,7 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 		log.Fatalf("Subscription ID variable validation failed with error: %s", err)
 	}
 
+	// Get storage account resource ID
 	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
 	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
 		log.Fatalf("Storage Account Resource ID variable validation failed with error: %s", err)
@@ -66,8 +68,9 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 		log.Fatalf("Failed to create Azure resources client: %v", err)
 	}
 
-	// TODO: Set timeout in context below
+	// Get storage account resource
 	getResourceResult, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
+	// TODO: Set context with timeout and appropriate cancellation
 	if err != nil {
 		log.Fatalf("Failed to get storage account resource: %v", err)
 	} else if *getResourceResult.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
@@ -79,31 +82,26 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 	// Get storage account URI
 	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
 
-	// Get blob storage token
-	getTokenResponse, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
-		Scopes: []string{"https://storage.azure.com/.default"},
-	})
-	if err != nil {
-		log.Fatalf("Failed to get access token: %v", err)
-	}
-
-	token = getTokenResponse
-
 	return a.Tactics
 }
 
-func getToken() string {
+func getToken(result *raidengine.MovementResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
-		getTokenResponse, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
+		result.Message = "Getting new access token"
+
+		var err error
+		token, err = cred.GetToken(context.Background(), policy.TokenRequestOptions{
 			Scopes: []string{"https://storage.azure.com/.default"},
 		})
 		if err != nil {
-			log.Fatalf("Failed to get access token: %v", err)
+			result.Message = fmt.Sprintf("Failed to get access token: %v", err)
+			return ""
 		}
-		token = getTokenResponse
 
 		return token.Token
 	}
+
+	result.Message = "Using existing access token"
 	return token.Token
 }
 
@@ -138,8 +136,10 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	// Get access token
-	result.Message = "Getting access token"
-	token := getToken()
+	token := getToken(&result)
+	if token == "" {
+		return
+	}
 
 	// Check TLS version of response
 	CheckTLSVersion(storageAccountUri, token, &result)
