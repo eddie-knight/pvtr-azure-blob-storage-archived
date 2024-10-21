@@ -1,6 +1,7 @@
 package armory
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -8,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
 
@@ -144,4 +147,60 @@ func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.Mov
 			result.Message = fmt.Sprintf("Insecure TLS version %s is supported", tls.VersionName(uint16(tlsVersion)))
 		}
 	}
+}
+
+func ConfirmHttpResponseIsLogged(response *http.Response, resultMessagePrefix string, result *raidengine.MovementResult) {
+
+	logsClient, err := azquery.NewLogsClient(cred, nil)
+	if err != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Could not create logs client: %v", err)
+		return
+	}
+
+	// Create a kusto query to find our query
+	kustoQuery := "StorageBlobLogs " +
+		" | where StatusCode == " + fmt.Sprintf("%v", response.StatusCode) +
+		" | where CorrelationId == '" + response.Header.Get("x-ms-request-id") + "'"
+
+	// Time might not be same on client vs server so add some buffer
+	queryInterval := azquery.NewTimeInterval(time.Now().UTC().Add(-2*time.Minute), time.Now().UTC().Add(2*time.Minute))
+
+	// There is a 2-5 minute ingestion delay, wait for 90 seconds then loop until 5 minutes
+	time.Sleep(90 * time.Second)
+
+	for i := 0; i <= 21; i++ {
+
+		time.Sleep(10 * time.Second)
+
+		logsResult, err := logsClient.QueryResource(
+			context.Background(),
+			storageAccountResourceId,
+			azquery.Body{
+				Query:    to.Ptr(kustoQuery),
+				Timespan: to.Ptr(queryInterval),
+			},
+			nil)
+
+		if err != nil {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Failed to query logs: %v", err)
+			return
+		}
+
+		if logsResult.Error != nil {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Error when querying logs: %v", logsResult.Error)
+			return
+		}
+
+		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
+			result.Passed = true
+			result.Message = resultMessagePrefix + " logged"
+			return
+		}
+	}
+
+	result.Passed = false
+	result.Message = resultMessagePrefix + " not logged"
 }

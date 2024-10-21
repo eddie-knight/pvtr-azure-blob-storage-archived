@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -407,18 +408,56 @@ func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T01)
-	// TODO: Additional movement calls go here
+	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T02)
 
 	return
 }
 
 func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
+		Description: "This movement tests that logging is configured for the storage account",
 		Function:    utils.CallerPath(0),
 	}
 
-	// TODO: Use this section to write a single step or test that contributes to CCC_C04_TR01
+	// TODO: Implement this!
+
+	return
+}
+
+func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "This movement tests that a successful login attempt is logged",
+		Function:    utils.CallerPath(0),
+	}
+
+	token := getToken(&result)
+	response := MakeGETRequest(storageAccountUri+"?comp=list", token, &result)
+
+	if response.StatusCode != http.StatusOK {
+		result.Passed = false
+		result.Message = "Could not successfully authenticate with storage account"
+		return
+	}
+
+	ConfirmHttpResponseIsLogged(response, "Authenticated access attempt", &result)
+	return
+}
+
+func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "This movement tests that a failed login attempt is logged",
+		Function:    utils.CallerPath(0),
+	}
+
+	response := MakeGETRequest(storageAccountUri+"?comp=list", "", &result)
+
+	if response.StatusCode != http.StatusUnauthorized {
+		result.Passed = false
+		result.Message = "Could not unsuccessfully authenticate with storage account"
+		return
+	}
+
+	ConfirmHttpResponseIsLogged(response, "Unauthenticated access attempt", &result)
 	return
 }
 
