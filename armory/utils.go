@@ -138,10 +138,10 @@ func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.Mov
 	} else {
 		if response.StatusCode == http.StatusBadRequest && strings.Contains(response.Status, "TLS version") {
 			result.Passed = true
-			result.Message = "Insecure TLS version not supported"
+			result.Message = fmt.Sprintf("Insecure TLS version %s not supported", tls.VersionName(uint16(tlsVersion)))
 		} else {
 			result.Passed = false
-			result.Message = "Insecure TLS version supported"
+			result.Message = fmt.Sprintf("Insecure TLS version %s is supported", tls.VersionName(uint16(tlsVersion)))
 		}
 	}
 }
