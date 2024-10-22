@@ -151,7 +151,6 @@ func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.Mov
 }
 
 func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient *azquery.LogsClient, result *raidengine.MovementResult) {
-
 	// Create a kusto query to find our request/response in the logs
 	kustoQuery := fmt.Sprintf(
 		"StorageBlobLogs | where StatusCode == %d and CorrelationId == '%s'",
@@ -202,7 +201,6 @@ func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, log
 }
 
 func ConfirmResourceIsLoggingToLogAnalytics(resourceId string, armMonitorClientFactory *armmonitor.ClientFactory, result *raidengine.MovementResult) {
-
 	pager := armMonitorClientFactory.NewDiagnosticSettingsClient().NewListPager(resourceId, nil)
 
 	for pager.More() {
