@@ -106,6 +106,22 @@ func GetToken(result *raidengine.MovementResult) string {
 	return token.Token
 }
 
+func StrikeResultSetter(successMessage string, failureMessage string, result *raidengine.StrikeResult) {
+
+	// If any movement fails, set strike result to failed
+	for _, movementResult := range result.Movements {
+		if !movementResult.Passed {
+			result.Passed = false
+			result.Message = failureMessage
+			return
+		}
+	}
+
+	// If no movements failed, set strike result to passed
+	result.Passed = true
+	result.Message = successMessage
+}
+
 // -----
 // Strike and Movements for CCC_C01_TR01
 // -----
@@ -124,6 +140,10 @@ func (a *ABS) CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C01_TR01_T01)
+
+	StrikeResultSetter("Default TLS version is TLS 1.2 or TLS 1.3",
+		"Default TLS version is not TLS 1.2 or TLS 1.3, see movement results for more details",
+		&result)
 
 	return
 }
@@ -168,6 +188,10 @@ func (a *ABS) CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult)
 
 	raidengine.ExecuteMovement(&result, CCC_C01_TR02_T01)
 
+	StrikeResultSetter("HTTP requests are not supported",
+		"HTTP requests are supported, see movement results for more details",
+		&result)
+
 	return
 }
 
@@ -202,9 +226,9 @@ func (a *ABS) CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult)
 	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T01)
 	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T02)
 
-	if result.Movements["CCC_C01_TR03_T01"].Passed && result.Movements["CCC_C01_TR03_T02"].Passed {
-		result.Message = "All insecure TLS versions are not supported"
-	}
+	StrikeResultSetter("All insecure TLS versions are not supported",
+		"One or more insecure TLS versions are supported, see movement results for more details",
+		&result)
 
 	return
 }
