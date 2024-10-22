@@ -451,7 +451,7 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 	}
 
 	token := getToken(&result)
-	response := MakeGETRequest(storageAccountUri+"?comp=list", token, &result)
+	response := MakeGETRequest(storageAccountUri, token, &result, nil, nil)
 
 	if response.StatusCode != http.StatusOK {
 		result.Passed = false
@@ -469,7 +469,7 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	response := MakeGETRequest(storageAccountUri+"?comp=list", "", &result)
+	response := MakeGETRequest(storageAccountUri, "", &result, nil, nil)
 
 	if response.StatusCode != http.StatusUnauthorized {
 		result.Passed = false
