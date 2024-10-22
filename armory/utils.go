@@ -216,13 +216,42 @@ func ConfirmResourceIsLoggingToLogAnalytics(resourceId string, armMonitorClientF
 
 		for _, v := range page.Value {
 			if *v.Type == "Microsoft.Insights/diagnosticSettings" && *v.Properties.WorkspaceID != "" {
-				result.Passed = true
-				result.Message = fmt.Sprintf("Storage account is logging to log analytics workspace %s", *v.Properties.WorkspaceID)
-				return
+
+				readLogged := false
+				writeLogged := false
+				deleteLogged := false
+
+				for _, logSetting := range v.Properties.Logs {
+					if *logSetting.Enabled {
+						if logSetting.CategoryGroup != nil {
+							switch *logSetting.CategoryGroup {
+							case "audit", "allLogs":
+								readLogged = true
+								writeLogged = true
+								deleteLogged = true
+							}
+						} else if logSetting.Category != nil {
+							switch *logSetting.Category {
+							case "StorageRead":
+								readLogged = true
+							case "StorageWrite":
+								writeLogged = true
+							case "StorageDelete":
+								deleteLogged = true
+							}
+						}
+					}
+				}
+
+				if readLogged && writeLogged && deleteLogged {
+					result.Passed = true
+					result.Message = fmt.Sprintf("Storage account is logging to log analytics workspace %s", *v.Properties.WorkspaceID)
+					return
+				}
 			}
 		}
 	}
 
 	result.Passed = false
-	result.Message = "Storage account is not logging to log anayltics workspace destination"
+	result.Message = "Storage account is not logging to log analytics workspace destination"
 }
