@@ -1,6 +1,7 @@
 package armory
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -30,12 +31,26 @@ func ValidateVariableValue(variableValue string, regex string) (bool, error) {
 }
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult) *http.Response {
-	result.Description = fmt.Sprintf("Making GET request to endpoint: %s", endpoint)
+func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+	// Add query parameters to request URL
+	endpoint = endpoint + "?comp=list"
 
-	// Create an HTTP client with a timeout for safety
+	// If specific TLS versions are provided, configure the TLS version
+	tlsConfig := &tls.Config{}
+	if minTlsVersion != nil {
+		tlsConfig.MinVersion = uint16(*minTlsVersion)
+	}
+
+	if maxTlsVersion != nil {
+		tlsConfig.MaxVersion = uint16(*maxTlsVersion)
+	}
+
+	// Create an HTTP client with a timeout and the specified TLS configuration
 	client := &http.Client{
 		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
 	}
 
 	// Create a new GET request
@@ -62,33 +77,16 @@ func MakeGETRequest(endpoint string, token string, result *raidengine.MovementRe
 	}
 	defer response.Body.Close()
 
-	result.Message = fmt.Sprintf("Response contained HTTP status code: %d", response.StatusCode)
-
-	// // Check for HTTP success (2xx status codes)
-	// if response.StatusCode >= 200 && response.StatusCode < 300 {
-	// 	result.Passed = true
-	// } else {
-	// 	result.Passed = false
-	// }
-
 	return response
 }
 
 // CheckStatusCode checks the TLS version of the response and updates the result
 func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
-	response := MakeGETRequest(endpoint, token, result)
 
-	result.Description = fmt.Sprintf("Checking TLS version of response from: %s", response.Request.URL.String())
+	// Set the minimum TLS version to TLS 1.0
+	minTlsVersion := tls.VersionTLS10
 
-	// Check the TLS version of the response
-	tlsVersion := response.TLS.Version
-	if tlsVersion == 0 {
-		result.Passed = false
-		result.Message = fmt.Sprintf("No TLS version found in response from %s", response.Request.URL)
-	} else {
-		result.Passed = true
-		result.Message = fmt.Sprintf("TLS version: %v", tlsVersion)
-	}
+	response := MakeGETRequest(endpoint, token, result, &minTlsVersion, nil)
 
 	// Check if the connection used TLS
 	if response.TLS != nil {
@@ -119,17 +117,31 @@ func CheckTLSVersion(endpoint string, token string, result *raidengine.MovementR
 
 func ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
-	response := MakeGETRequest(httpUrl, "", result)
-	result.Description = fmt.Sprintf("Checking that HTTP is not supported for endpoint: %s", httpUrl)
+	response := MakeGETRequest(httpUrl, "", result, nil, nil)
 
-	// if response.Header.Get("Location") contains https
-	result.Message = "Checking that HTTP is not supported"
-
-	if response.StatusCode == 400 && response.Status == "400 The account being accessed does not support http." {
+	if response.StatusCode == 400 && strings.Contains(response.Status, "http") {
 		result.Passed = true
-		result.Message = "HTTP requests are not supported" // TODO Update message
+		result.Message = "HTTP requests are not supported"
 	} else {
 		result.Passed = false
-		result.Message = "HTTP requests are supported" // TODO Update message
+		result.Message = "HTTP requests are supported"
+	}
+}
+
+func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int) {
+
+	response := MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
+
+	if response == nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Request unexpectedly failed with error: %x", result.Message)
+	} else {
+		if response.StatusCode == http.StatusBadRequest && strings.Contains(response.Status, "TLS version") {
+			result.Passed = true
+			result.Message = fmt.Sprintf("Insecure TLS version %s not supported", tls.VersionName(uint16(tlsVersion)))
+		} else {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Insecure TLS version %s is supported", tls.VersionName(uint16(tlsVersion)))
+		}
 	}
 }
