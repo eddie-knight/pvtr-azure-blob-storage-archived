@@ -11,6 +11,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
@@ -33,6 +35,8 @@ var (
 	subscriptionId           string
 	storageAccountResourceId string
 	storageAccountResource   armresources.GenericResource
+	logsClient               *azquery.LogsClient
+	armMonitorClientFactory  *armmonitor.ClientFactory
 )
 
 func init() {
@@ -83,6 +87,18 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 
 	// Get storage account URI
 	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
+
+	// Get a logs client
+	logsClient, err = azquery.NewLogsClient(cred, nil)
+	if err != nil {
+		log.Fatalf("Failed to create Azure logs client: %v", err)
+	}
+
+	// Get a client factory for ARM monitor
+	armMonitorClientFactory, err = armmonitor.NewClientFactory(subscriptionId, cred, nil)
+	if err != nil {
+		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
+	}
 
 	return a.Tactics
 }
@@ -408,7 +424,11 @@ func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T01)
-	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T02)
+
+	if result.Movements["CCC_C04_TR01_T01"].Passed {
+		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T02)
+		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T03)
+	}
 
 	return
 }
@@ -419,8 +439,8 @@ func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	// TODO: Implement this!
-
+	storageAccountBlobResourceId := storageAccountResourceId + "/blobServices/default"
+	ConfirmResourceIsLoggingToLogAnalytics(storageAccountBlobResourceId, armMonitorClientFactory, &result)
 	return
 }
 
@@ -439,7 +459,7 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	ConfirmHttpResponseIsLogged(response, "Authenticated access attempt", &result)
+	ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
 	return
 }
 
@@ -457,7 +477,7 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 		return
 	}
 
-	ConfirmHttpResponseIsLogged(response, "Unauthenticated access attempt", &result)
+	ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
 	return
 }
 

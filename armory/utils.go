@@ -11,6 +11,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
 
@@ -149,33 +150,28 @@ func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.Mov
 	}
 }
 
-func ConfirmHttpResponseIsLogged(response *http.Response, resultMessagePrefix string, result *raidengine.MovementResult) {
+func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient *azquery.LogsClient, result *raidengine.MovementResult) {
 
-	logsClient, err := azquery.NewLogsClient(cred, nil)
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Could not create logs client: %v", err)
-		return
-	}
-
-	// Create a kusto query to find our query
-	kustoQuery := "StorageBlobLogs " +
-		" | where StatusCode == " + fmt.Sprintf("%v", response.StatusCode) +
-		" | where CorrelationId == '" + response.Header.Get("x-ms-request-id") + "'"
+	// Create a kusto query to find our request/response in the logs
+	kustoQuery := fmt.Sprintf(
+		"StorageBlobLogs | where StatusCode == %d and CorrelationId == '%s'",
+		response.StatusCode,
+		response.Header.Get("x-ms-request-id"))
 
 	// Time might not be same on client vs server so add some buffer
 	queryInterval := azquery.NewTimeInterval(time.Now().UTC().Add(-2*time.Minute), time.Now().UTC().Add(2*time.Minute))
 
-	// There is a 2-5 minute ingestion delay, wait for 90 seconds then loop until 5 minutes
+	// There is a 2-5 minute ingestion delay, wait for 90 seconds...
 	time.Sleep(90 * time.Second)
 
+	// Then loop every 10 seconds until we have got to 5 minues
 	for i := 0; i <= 21; i++ {
 
 		time.Sleep(10 * time.Second)
 
 		logsResult, err := logsClient.QueryResource(
 			context.Background(),
-			storageAccountResourceId,
+			resourceId,
 			azquery.Body{
 				Query:    to.Ptr(kustoQuery),
 				Timespan: to.Ptr(queryInterval),
@@ -196,11 +192,37 @@ func ConfirmHttpResponseIsLogged(response *http.Response, resultMessagePrefix st
 
 		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
 			result.Passed = true
-			result.Message = resultMessagePrefix + " logged"
+			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL)
 			return
 		}
 	}
 
 	result.Passed = false
-	result.Message = resultMessagePrefix + " not logged"
+	result.Message = fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL)
+}
+
+func ConfirmResourceIsLoggingToLogAnalytics(resourceId string, armMonitorClientFactory *armmonitor.ClientFactory, result *raidengine.MovementResult) {
+
+	pager := armMonitorClientFactory.NewDiagnosticSettingsClient().NewListPager(resourceId, nil)
+
+	for pager.More() {
+		page, err := pager.NextPage(context.Background())
+
+		if err != nil {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Could not find diagnostic setting: %v", err)
+			return
+		}
+
+		for _, v := range page.Value {
+			if *v.Type == "Microsoft.Insights/diagnosticSettings" && *v.Properties.WorkspaceID != "" {
+				result.Passed = true
+				result.Message = fmt.Sprintf("Storage account is logging to log analytics workspace %s", *v.Properties.WorkspaceID)
+				return
+			}
+		}
+	}
+
+	result.Passed = false
+	result.Message = "Storage account is not logging to log anayltics workspace destination"
 }
