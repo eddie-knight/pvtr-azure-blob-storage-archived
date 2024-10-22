@@ -164,7 +164,7 @@ func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, log
 	// There is a 2-5 minute ingestion delay, wait for 90 seconds...
 	time.Sleep(90 * time.Second)
 
-	// Then loop every 10 seconds until we have got to 5 minues
+	// Then loop every 10 seconds until we have got to 5 minutes
 	for i := 0; i <= 21; i++ {
 
 		time.Sleep(10 * time.Second)
