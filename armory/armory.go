@@ -86,7 +86,7 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 	return a.Tactics
 }
 
-func getToken(result *raidengine.MovementResult) string {
+func GetToken(result *raidengine.MovementResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
 
 		log.Default().Printf("Getting new access token")
@@ -136,7 +136,7 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	// Get access token
-	token := getToken(&result)
+	token := GetToken(&result)
 	if token == "" {
 		return
 	}
