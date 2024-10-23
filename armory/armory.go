@@ -10,6 +10,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
@@ -32,6 +34,8 @@ var (
 	subscriptionId           string
 	storageAccountResourceId string
 	storageAccountResource   armresources.GenericResource
+	logsClient               *azquery.LogsClient
+	armMonitorClientFactory  *armmonitor.ClientFactory
 )
 
 func init() {
@@ -82,6 +86,18 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 
 	// Get storage account URI
 	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
+
+	// Get a logs client
+	logsClient, err = azquery.NewLogsClient(cred, nil)
+	if err != nil {
+		log.Fatalf("Failed to create Azure logs client: %v", err)
+	}
+
+	// Get a client factory for ARM monitor
+	armMonitorClientFactory, err = armmonitor.NewClientFactory(subscriptionId, cred, nil)
+	if err != nil {
+		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
+	}
 
 	return a.Tactics
 }
@@ -386,39 +402,6 @@ func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_C03_TR02
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C04_TR01
-// -----
-
-// CCC_C04_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C04_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service logs all access attempts, including successful and failed login attempts.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C04",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C04_TR01
 	return
 }
 
