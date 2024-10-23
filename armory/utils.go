@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -161,6 +162,7 @@ func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, log
 	queryInterval := azquery.NewTimeInterval(time.Now().UTC().Add(-2*time.Minute), time.Now().UTC().Add(2*time.Minute))
 
 	// There is a 2-5 minute ingestion delay, wait for 90 seconds...
+	log.Default().Printf("Waiting 90 seconds for logs to be ingested")
 	time.Sleep(90 * time.Second)
 
 	// Then loop every 10 seconds until we have got to 5 minutes
@@ -190,17 +192,20 @@ func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, log
 		}
 
 		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
+			log.Default().Printf("Log result found after %d seconds", 90+(i*10))
 			result.Passed = true
-			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL)
+			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL.Host)
 			return
 		}
+
+		log.Default().Printf("Log result not found after %d seconds", 90+(i*10))
 	}
 
 	result.Passed = false
 	result.Message = fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL)
 }
 
-func ConfirmResourceIsLoggingToLogAnalytics(resourceId string, armMonitorClientFactory *armmonitor.ClientFactory, result *raidengine.MovementResult) {
+func ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, armMonitorClientFactory *armmonitor.ClientFactory, result *raidengine.MovementResult) {
 	pager := armMonitorClientFactory.NewDiagnosticSettingsClient().NewListPager(resourceId, nil)
 
 	for pager.More() {
@@ -243,7 +248,16 @@ func ConfirmResourceIsLoggingToLogAnalytics(resourceId string, armMonitorClientF
 
 				if readLogged && writeLogged && deleteLogged {
 					result.Passed = true
-					result.Message = fmt.Sprintf("Storage account is logging to log analytics workspace %s", *v.Properties.WorkspaceID)
+
+					// Try to extract the name of the log analytics workspace
+					logAnalyticsWorkspaceName := *v.Properties.WorkspaceID
+					match := regexp.MustCompile("^/subscriptions/[0-9a-z-]{36}/resourceGroups/.+?/providers/Microsoft.OperationalInsights/workspaces/(.*?)$").FindStringSubmatch(logAnalyticsWorkspaceName)
+
+					if len(match) > 0 {
+						logAnalyticsWorkspaceName = match[1]
+					}
+
+					result.Message = fmt.Sprintf("Storage account is configured to emit to log analytics workspace %s", logAnalyticsWorkspaceName)
 					return
 				}
 			}
@@ -251,5 +265,5 @@ func ConfirmResourceIsLoggingToLogAnalytics(resourceId string, armMonitorClientF
 	}
 
 	result.Passed = false
-	result.Message = "Storage account is not logging to log analytics workspace destination"
+	result.Message = "Storage account is not configured to emit to log analytics workspace destination"
 }

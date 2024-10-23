@@ -435,12 +435,12 @@ func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult)
 
 func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "This movement tests that logging is configured for the storage account",
+		Description: "This movement tests that logging of access attempts is configured for the storage account",
 		Function:    utils.CallerPath(0),
 	}
 
 	storageAccountBlobResourceId := storageAccountResourceId + "/blobServices/default"
-	ConfirmResourceIsLoggingToLogAnalytics(storageAccountBlobResourceId, armMonitorClientFactory, &result)
+	ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId, armMonitorClientFactory, &result)
 	return
 }
 
