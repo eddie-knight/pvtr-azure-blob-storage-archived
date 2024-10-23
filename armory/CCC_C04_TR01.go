@@ -39,6 +39,11 @@ func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult)
 		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T03)
 	}
 
+	StrikeResultSetter(
+		"All access attempts are logged",
+		"Not all access attempts are logged, see movement results for more details",
+		&result)
+
 	return
 }
 
@@ -59,7 +64,7 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	token := getToken(&result)
+	token := GetToken(&result)
 	response := MakeGETRequest(storageAccountUri, token, &result, nil, nil)
 
 	if response.StatusCode != http.StatusOK {
