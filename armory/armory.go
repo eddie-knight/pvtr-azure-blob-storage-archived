@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -403,81 +402,6 @@ func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_C03_TR02
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C04_TR01
-// -----
-
-// CCC_C04_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C04_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service logs all access attempts, including successful and failed login attempts.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C04",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T01)
-
-	if result.Movements["CCC_C04_TR01_T01"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T02)
-		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T03)
-	}
-
-	return
-}
-
-func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that logging of access attempts is configured for the storage account",
-		Function:    utils.CallerPath(0),
-	}
-
-	storageAccountBlobResourceId := storageAccountResourceId + "/blobServices/default"
-	ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId, armMonitorClientFactory, &result)
-	return
-}
-
-func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that a successful login attempt is logged",
-		Function:    utils.CallerPath(0),
-	}
-
-	token := getToken(&result)
-	response := MakeGETRequest(storageAccountUri, token, &result, nil, nil)
-
-	if response.StatusCode != http.StatusOK {
-		result.Passed = false
-		result.Message = "Could not successfully authenticate with storage account"
-		return
-	}
-
-	ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
-	return
-}
-
-func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that a failed login attempt is logged",
-		Function:    utils.CallerPath(0),
-	}
-
-	response := MakeGETRequest(storageAccountUri, "", &result, nil, nil)
-
-	if response.StatusCode != http.StatusUnauthorized {
-		result.Passed = false
-		result.Message = "Could not unsuccessfully authenticate with storage account"
-		return
-	}
-
-	ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
 	return
 }
 

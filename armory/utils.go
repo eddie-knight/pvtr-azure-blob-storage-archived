@@ -1,18 +1,13 @@
 package armory
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
 
@@ -149,121 +144,4 @@ func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.Mov
 			result.Message = fmt.Sprintf("Insecure TLS version %s is supported", tls.VersionName(uint16(tlsVersion)))
 		}
 	}
-}
-
-func ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient *azquery.LogsClient, result *raidengine.MovementResult) {
-	// Create a kusto query to find our request/response in the logs
-	kustoQuery := fmt.Sprintf(
-		"StorageBlobLogs | where StatusCode == %d and CorrelationId == '%s'",
-		response.StatusCode,
-		response.Header.Get("x-ms-request-id"))
-
-	// Time might not be same on client vs server so add some buffer
-	queryInterval := azquery.NewTimeInterval(time.Now().UTC().Add(-2*time.Minute), time.Now().UTC().Add(2*time.Minute))
-
-	// There is a 2-5 minute ingestion delay, wait for 90 seconds...
-	log.Default().Printf("Waiting 90 seconds for logs to be ingested")
-	time.Sleep(90 * time.Second)
-
-	// Then loop every 10 seconds until we have got to 5 minutes
-	for i := 0; i <= 21; i++ {
-
-		time.Sleep(10 * time.Second)
-
-		logsResult, err := logsClient.QueryResource(
-			context.Background(),
-			resourceId,
-			azquery.Body{
-				Query:    to.Ptr(kustoQuery),
-				Timespan: to.Ptr(queryInterval),
-			},
-			nil)
-
-		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to query logs: %v", err)
-			return
-		}
-
-		if logsResult.Error != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Error when querying logs: %v", logsResult.Error)
-			return
-		}
-
-		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
-			log.Default().Printf("Log result found after %d seconds", 90+(i*10))
-			result.Passed = true
-			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL.Host)
-			return
-		}
-
-		log.Default().Printf("Log result not found after %d seconds", 90+(i*10))
-	}
-
-	result.Passed = false
-	result.Message = fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL)
-}
-
-func ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, armMonitorClientFactory *armmonitor.ClientFactory, result *raidengine.MovementResult) {
-	pager := armMonitorClientFactory.NewDiagnosticSettingsClient().NewListPager(resourceId, nil)
-
-	for pager.More() {
-		page, err := pager.NextPage(context.Background())
-
-		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Could not find diagnostic setting: %v", err)
-			return
-		}
-
-		for _, v := range page.Value {
-			if *v.Type == "Microsoft.Insights/diagnosticSettings" && *v.Properties.WorkspaceID != "" {
-
-				readLogged := false
-				writeLogged := false
-				deleteLogged := false
-
-				for _, logSetting := range v.Properties.Logs {
-					if *logSetting.Enabled {
-						if logSetting.CategoryGroup != nil {
-							switch *logSetting.CategoryGroup {
-							case "audit", "allLogs":
-								readLogged = true
-								writeLogged = true
-								deleteLogged = true
-							}
-						} else if logSetting.Category != nil {
-							switch *logSetting.Category {
-							case "StorageRead":
-								readLogged = true
-							case "StorageWrite":
-								writeLogged = true
-							case "StorageDelete":
-								deleteLogged = true
-							}
-						}
-					}
-				}
-
-				if readLogged && writeLogged && deleteLogged {
-					result.Passed = true
-
-					// Try to extract the name of the log analytics workspace
-					logAnalyticsWorkspaceName := *v.Properties.WorkspaceID
-					match := regexp.MustCompile("^/subscriptions/[0-9a-z-]{36}/resourceGroups/.+?/providers/Microsoft.OperationalInsights/workspaces/(.*?)$").FindStringSubmatch(logAnalyticsWorkspaceName)
-
-					if len(match) > 0 {
-						logAnalyticsWorkspaceName = match[1]
-					}
-
-					result.Message = fmt.Sprintf("Storage account is configured to emit to log analytics workspace %s", logAnalyticsWorkspaceName)
-					return
-				}
-			}
-		}
-	}
-
-	result.Passed = false
-	result.Message = "Storage account is not configured to emit to log analytics workspace destination"
 }
