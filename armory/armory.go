@@ -160,7 +160,7 @@ func ValidateVariableValue(variableValue string, regex string) (bool, error) {
 }
 
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-func MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+var MakeGETRequest = func(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	// Add query parameters to request URL
 	endpoint = endpoint + "?comp=list"
 
