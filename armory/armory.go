@@ -47,39 +47,42 @@ func (a *ABS) SetLogger(loggerName string) hclog.Logger {
 }
 
 func (a *ABS) GetTactics() map[string][]raidengine.Strike {
+	return a.Tactics
+}
 
+func (a *ABS) Initialize() error {
 	// Get subscription ID
 	subscriptionId = viper.GetString("raids.ABS.subscriptionId")
 	if valid, err := ValidateVariableValue(subscriptionId, `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`); !valid {
-		log.Fatalf("Subscription ID variable validation failed with error: %s", err)
+		return fmt.Errorf("subscription ID variable validation failed with error: %s", err)
 	}
 
 	// Get storage account resource ID
 	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
 	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
-		log.Fatalf("Storage Account Resource ID variable validation failed with error: %s", err)
+		return fmt.Errorf("storage account resource ID variable validation failed with error: %s", err)
 	}
 
 	// Get an Azure credential
 	var err error
 	cred, err = azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatalf("Failed to get Azure credential: %v", err)
+		return fmt.Errorf("failed to get Azure credential: %v", err)
 	}
 
 	// Create an Azure resources client
 	client, err := armresources.NewClient(subscriptionId, cred, nil)
 	if err != nil {
-		log.Fatalf("Failed to create Azure resources client: %v", err)
+		return fmt.Errorf("failed to create Azure resources client: %v", err)
 	}
 
 	// Get storage account resource
 	getResourceResult, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
 	// TODO: Set context with timeout and appropriate cancellation
 	if err != nil {
-		log.Fatalf("Failed to get storage account resource: %v", err)
+		return fmt.Errorf("failed to get storage account resource: %v", err)
 	} else if *getResourceResult.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
-		log.Fatalf("Resource ID provided is not a storage account")
+		return fmt.Errorf("resource ID provided is not a storage account")
 	}
 
 	storageAccountResource = getResourceResult.GenericResource
