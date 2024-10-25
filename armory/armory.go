@@ -104,7 +104,7 @@ func (a *ABS) Initialize() error {
 		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
 	}
 
-	return a.Tactics
+	return nil
 }
 
 type CommonFunctions interface {

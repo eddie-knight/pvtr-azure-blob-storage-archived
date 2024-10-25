@@ -19,14 +19,12 @@ import (
 // Strike and Movements for CCC_C04_TR01
 // -----
 
-// CCC_C04_TR01 conforms to the Strike function type
 func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
 	strikeName = "CCC_C04_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
 		Description: "The service logs all access attempts, including successful and failed login attempts.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
+		Message:     "Strike has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C04",
 		Movements:   make(map[string]raidengine.MovementResult),
@@ -64,8 +62,8 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	token := GetToken(&result)
-	response := MakeGETRequest(storageAccountUri, token, &result, nil, nil)
+	token := ArmoryCommonFunctions.GetToken(&result)
+	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, token, &result, nil, nil)
 
 	if response.StatusCode != http.StatusOK {
 		result.Passed = false
@@ -83,7 +81,7 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	response := MakeGETRequest(storageAccountUri, "", &result, nil, nil)
+	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, "", &result, nil, nil)
 
 	if response.StatusCode != http.StatusUnauthorized {
 		result.Passed = false
