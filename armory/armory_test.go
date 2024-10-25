@@ -2,7 +2,6 @@ package armory
 
 import (
 	"net/http"
-	"testing"
 
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
@@ -18,9 +17,6 @@ func (mock *commonFunctionsMock) GetToken(result *raidengine.MovementResult) str
 
 func (mock *commonFunctionsMock) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	return mock.httpResponse
-}
-
-func TestMain(m *testing.M) {
 }
 
 // func TestGetToken(t *testing.T) {

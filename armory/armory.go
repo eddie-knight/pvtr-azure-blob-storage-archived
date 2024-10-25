@@ -38,6 +38,9 @@ var (
 	storageAccountResource   armresources.GenericResource
 	logsClient               *azquery.LogsClient
 	armMonitorClientFactory  *armmonitor.ClientFactory
+
+	ArmoryCommonFunctions CommonFunctions = &commonFunctions{}
+	ArmoryTlsFunctions    TlsFunctions    = &tlsFunctions{}
 )
 
 func (a *ABS) SetLogger(loggerName string) hclog.Logger {
@@ -110,8 +113,6 @@ type CommonFunctions interface {
 }
 
 type commonFunctions struct{}
-
-var ArmoryCommonFunctions CommonFunctions = &commonFunctions{}
 
 func (*commonFunctions) GetToken(result *raidengine.MovementResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
