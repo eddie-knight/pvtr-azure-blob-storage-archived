@@ -9,15 +9,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
+type CC_C01_TR01_Mock struct {
+	commonFunctionsMock
 	checkTlsVersionResult bool
-	getTokenResult        string
-)
+}
+
+func (mock *CC_C01_TR01_Mock) CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
+	result.Passed = mock.checkTlsVersionResult
+}
 
 func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
-	checkTlsVersionResult = true
-	getTokenResult = "mocked_token"
+	myMock := CC_C01_TR01_Mock{
+		checkTlsVersionResult: true,
+		commonFunctionsMock:   commonFunctionsMock{tokenResult: "mocked_token"}}
+
+	ArmoryTlsFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
 
 	// Act
 	result := CCC_C01_TR01_T01()
@@ -28,8 +36,12 @@ func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
 
 func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 	// Arrange
-	checkTlsVersionResult = false
-	getTokenResult = "mocked_token"
+	myMock := CC_C01_TR01_Mock{
+		checkTlsVersionResult: false,
+		commonFunctionsMock:   commonFunctionsMock{tokenResult: "mocked_token"}}
+
+	ArmoryTlsFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
 
 	// Act
 	result := CCC_C01_TR01_T01()
@@ -40,7 +52,11 @@ func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 
 func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
 	// Arrange
-	getTokenResult = ""
+	myMock := CC_C01_TR01_Mock{
+		commonFunctionsMock: commonFunctionsMock{tokenResult: ""}}
+
+	ArmoryTlsFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
 
 	// Act
 	result := CCC_C01_TR01_T01()
@@ -51,16 +67,15 @@ func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
 
 func Test_CheckTLSVersion_succeeds(t *testing.T) {
 	// Arrange
-	CheckTLSVersion = originalCheckTLSVersion
-	httpResponse = &http.Response{
-		TLS: &tls.ConnectionState{
-			Version: tls.VersionTLS12,
-		},
-	}
+	myMock := CC_C01_TR01_Mock{
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{TLS: &tls.ConnectionState{Version: tls.VersionTLS12}}}}
+
+	ArmoryCommonFunctions = &myMock
 
 	// Act
 	result := raidengine.MovementResult{}
-	CheckTLSVersion("https://example.com", "mocked_token", &result)
+	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
@@ -68,16 +83,15 @@ func Test_CheckTLSVersion_succeeds(t *testing.T) {
 
 func Test_CheckTLSVersion_fails_for_bad_tls_version(t *testing.T) {
 	// Arrange
-	CheckTLSVersion = originalCheckTLSVersion
-	httpResponse = &http.Response{
-		TLS: &tls.ConnectionState{
-			Version: tls.VersionTLS10,
-		},
-	}
+	myMock := CC_C01_TR01_Mock{
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{TLS: &tls.ConnectionState{Version: tls.VersionTLS10}}}}
+
+	ArmoryCommonFunctions = &myMock
 
 	// Act
 	result := raidengine.MovementResult{}
-	CheckTLSVersion("https://example.com", "mocked_token", &result)
+	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
 
 	// Assert
 	assert.Equal(t, true, !result.Passed)

@@ -42,7 +42,7 @@ func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 
 func ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
-	response := MakeGETRequest(httpUrl, "", result, nil, nil)
+	response := ArmoryCommonFunctions.MakeGETRequest(httpUrl, "", result, nil, nil)
 
 	if response.StatusCode == 400 && strings.Contains(response.Status, "http") {
 		result.Passed = true

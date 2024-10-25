@@ -59,7 +59,7 @@ func CCC_C01_TR03_T02() (result raidengine.MovementResult) {
 
 func ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int) {
 
-	response := MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
+	response := ArmoryCommonFunctions.MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
 
 	if response == nil {
 		result.Passed = false

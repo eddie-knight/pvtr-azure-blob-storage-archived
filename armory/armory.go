@@ -104,7 +104,16 @@ func (a *ABS) Initialize() error {
 	return a.Tactics
 }
 
-var GetToken = func(result *raidengine.MovementResult) string {
+type CommonFunctions interface {
+	GetToken(result *raidengine.MovementResult) string
+	MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response
+}
+
+type commonFunctions struct{}
+
+var ArmoryCommonFunctions CommonFunctions = &commonFunctions{}
+
+func (*commonFunctions) GetToken(result *raidengine.MovementResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
 
 		log.Default().Printf("Getting new access token")
@@ -124,43 +133,8 @@ var GetToken = func(result *raidengine.MovementResult) string {
 	return token.Token
 }
 
-func StrikeResultSetter(successMessage string, failureMessage string, result *raidengine.StrikeResult) {
-
-	// If any movement fails, set strike result to failed
-	for _, movementResult := range result.Movements {
-		if !movementResult.Passed {
-			result.Passed = false
-			result.Message = failureMessage
-			return
-		}
-	}
-
-	// If no movements failed, set strike result to passed
-	result.Passed = true
-	result.Message = successMessage
-}
-
-func ValidateVariableValue(variableValue string, regex string) (bool, error) {
-	// Check if variable is populated
-	if variableValue == "" {
-		return false, fmt.Errorf("variable is required and not populated")
-	}
-
-	// Check if variable matches regex
-	matched, err := regexp.MatchString(regex, variableValue)
-	if err != nil {
-		return false, fmt.Errorf("validation of variable has failed with message: %s", err)
-	}
-
-	if !matched {
-		return false, fmt.Errorf("variable value is not valid")
-	}
-
-	return true, nil
-}
-
 // MakeGETRequest makes a GET request to the specified endpoint and returns the status code
-var MakeGETRequest = func(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	// Add query parameters to request URL
 	endpoint = endpoint + "?comp=list"
 
@@ -207,6 +181,41 @@ var MakeGETRequest = func(endpoint string, token string, result *raidengine.Move
 	defer response.Body.Close()
 
 	return response
+}
+
+func StrikeResultSetter(successMessage string, failureMessage string, result *raidengine.StrikeResult) {
+
+	// If any movement fails, set strike result to failed
+	for _, movementResult := range result.Movements {
+		if !movementResult.Passed {
+			result.Passed = false
+			result.Message = failureMessage
+			return
+		}
+	}
+
+	// If no movements failed, set strike result to passed
+	result.Passed = true
+	result.Message = successMessage
+}
+
+func ValidateVariableValue(variableValue string, regex string) (bool, error) {
+	// Check if variable is populated
+	if variableValue == "" {
+		return false, fmt.Errorf("variable is required and not populated")
+	}
+
+	// Check if variable matches regex
+	matched, err := regexp.MatchString(regex, variableValue)
+	if err != nil {
+		return false, fmt.Errorf("validation of variable has failed with message: %s", err)
+	}
+
+	if !matched {
+		return false, fmt.Errorf("variable value is not valid")
+	}
+
+	return true, nil
 }
 
 // -----

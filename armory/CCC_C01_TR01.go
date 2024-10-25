@@ -37,26 +37,34 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	// Get access token
-	token := GetToken(&result)
+	token := ArmoryCommonFunctions.GetToken(&result)
 	if token == "" {
 		return
 	}
 
 	// Check TLS version of response
-	CheckTLSVersion(storageAccountUri, token, &result)
+	ArmoryTlsFunctions.CheckTLSVersion(storageAccountUri, token, &result)
 	if !result.Passed {
 		return
 	}
 	return
 }
 
+type TlsFunctions interface {
+	CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult)
+}
+
+type tlsFunctions struct{}
+
+var ArmoryTlsFunctions TlsFunctions = &tlsFunctions{}
+
 // CheckStatusCode checks the TLS version of the response and updates the result
-var CheckTLSVersion = func(endpoint string, token string, result *raidengine.MovementResult) {
+func (*tlsFunctions) CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
 
 	// Set the minimum TLS version to TLS 1.0
 	minTlsVersion := tls.VersionTLS10
 
-	response := MakeGETRequest(endpoint, token, result, &minTlsVersion, nil)
+	response := ArmoryCommonFunctions.MakeGETRequest(endpoint, token, result, &minTlsVersion, nil)
 
 	// Check if the connection used TLS
 	if response.TLS != nil {
