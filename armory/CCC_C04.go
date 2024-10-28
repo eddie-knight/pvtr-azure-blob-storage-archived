@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
@@ -52,7 +53,11 @@ func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	storageAccountBlobResourceId := storageAccountResourceId + "/blobServices/default"
-	confirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId, armMonitorClientFactory, &result)
+	ArmoryLoggingFunctions.ConfirmLoggingToLogAnalyticsIsConfigured(
+		storageAccountBlobResourceId,
+		diagnosticsSettingsClient,
+		&result)
+
 	return
 }
 
@@ -71,7 +76,7 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	confirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
+	ArmoryLoggingFunctions.ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
 	return
 }
 
@@ -89,66 +94,39 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 		return
 	}
 
-	confirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
+	ArmoryLoggingFunctions.ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
 	return
 }
 
-func confirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient *azquery.LogsClient, result *raidengine.MovementResult) {
-	// Create a kusto query to find our request/response in the logs
-	kustoQuery := fmt.Sprintf(
-		"StorageBlobLogs | where StatusCode == %d and CorrelationId == '%s'",
-		response.StatusCode,
-		response.Header.Get("x-ms-request-id"))
+// --------------------------------------
+// Utility functions to support movements
+// --------------------------------------
 
-	// Time might not be same on client vs server so add some buffer
-	queryInterval := azquery.NewTimeInterval(time.Now().UTC().Add(-2*time.Minute), time.Now().UTC().Add(2*time.Minute))
-
-	// There is a 2-5 minute ingestion delay, wait for 90 seconds...
-	log.Default().Printf("Waiting 90 seconds for logs to be ingested")
-	time.Sleep(90 * time.Second)
-
-	// Then loop every 10 seconds until we have got to 5 minutes
-	for i := 0; i <= 21; i++ {
-
-		time.Sleep(10 * time.Second)
-
-		logsResult, err := logsClient.QueryResource(
-			context.Background(),
-			resourceId,
-			azquery.Body{
-				Query:    to.Ptr(kustoQuery),
-				Timespan: to.Ptr(queryInterval),
-			},
-			nil)
-
-		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to query logs: %v", err)
-			return
-		}
-
-		if logsResult.Error != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Error when querying logs: %v", logsResult.Error)
-			return
-		}
-
-		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
-			log.Default().Printf("Log result found after %d seconds", 90+(i*10))
-			result.Passed = true
-			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL.Host)
-			return
-		}
-
-		log.Default().Printf("Log result not found after %d seconds", 90+(i*10))
-	}
-
-	result.Passed = false
-	result.Message = fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL)
+type LoggingFunctions interface {
+	ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult)
+	ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult)
 }
 
-func confirmLoggingToLogAnalyticsIsConfigured(resourceId string, armMonitorClientFactory *armmonitor.ClientFactory, result *raidengine.MovementResult) {
-	pager := armMonitorClientFactory.NewDiagnosticSettingsClient().NewListPager(resourceId, nil)
+type loggingFunctions struct{}
+
+type logPollingVariables struct {
+	minimumIngestionTime time.Duration
+	maximumIngestionTime time.Duration
+	pollingDelay         time.Duration
+}
+
+var loggingVariables = logPollingVariables{
+	minimumIngestionTime: time.Duration(90 * time.Second),
+	maximumIngestionTime: time.Duration(5 * time.Minute),
+	pollingDelay:         time.Duration(10 * time.Second),
+}
+
+type DiagnosticSettingsClientInterface interface {
+	NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse]
+}
+
+func (*loggingFunctions) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
+	pager := diagnosticsClient.NewListPager(resourceId, nil)
 
 	for pager.More() {
 		page, err := pager.NextPage(context.Background())
@@ -193,7 +171,7 @@ func confirmLoggingToLogAnalyticsIsConfigured(resourceId string, armMonitorClien
 
 					// Try to extract the name of the log analytics workspace
 					logAnalyticsWorkspaceName := *v.Properties.WorkspaceID
-					match := regexp.MustCompile("^/subscriptions/[0-9a-z-]{36}/resourceGroups/.+?/providers/Microsoft.OperationalInsights/workspaces/(.*?)$").FindStringSubmatch(logAnalyticsWorkspaceName)
+					match := regexp.MustCompile("^/subscriptions/[0-9a-z-]+?/resourceGroups/.+?/providers/Microsoft.OperationalInsights/workspaces/(.*?)$").FindStringSubmatch(logAnalyticsWorkspaceName)
 
 					if len(match) > 0 {
 						logAnalyticsWorkspaceName = match[1]
@@ -208,4 +186,66 @@ func confirmLoggingToLogAnalyticsIsConfigured(resourceId string, armMonitorClien
 
 	result.Passed = false
 	result.Message = "Storage account is not configured to emit to log analytics workspace destination"
+}
+
+type LogsClientInterface interface {
+	QueryResource(ctx context.Context, resourceID string, body azquery.Body, options *azquery.LogsClientQueryResourceOptions) (azquery.LogsClientQueryResourceResponse, error)
+}
+
+func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {
+	// Create a kusto query to find our request/response in the logs
+	kustoQuery := fmt.Sprintf(
+		"StorageBlobLogs | where StatusCode == %d and CorrelationId == '%s'",
+		response.StatusCode,
+		response.Header.Get("x-ms-request-id"))
+
+	// Time might not be same on client vs server so add some buffer
+	queryInterval := azquery.NewTimeInterval(time.Now().UTC().Add(-2*time.Minute), time.Now().UTC().Add(2*time.Minute))
+
+	// Wait until we hit the minimum ingestion time for logs (usually 2 minutes)
+	log.Default().Printf("Waiting %v for logs to be ingested", loggingVariables.minimumIngestionTime)
+	time.Sleep(loggingVariables.minimumIngestionTime - loggingVariables.pollingDelay)
+
+	// Determine how many times we should retry until we hit the maximum
+	retries := int((loggingVariables.maximumIngestionTime.Seconds() - loggingVariables.minimumIngestionTime.Seconds()) / loggingVariables.pollingDelay.Seconds())
+
+	for i := 0; i < retries; i++ {
+
+		time.Sleep(loggingVariables.pollingDelay)
+
+		timeWaitedSoFar := loggingVariables.minimumIngestionTime + (loggingVariables.pollingDelay * time.Duration(i))
+
+		logsResult, err := logsClient.QueryResource(
+			context.Background(),
+			resourceId,
+			azquery.Body{
+				Query:    to.Ptr(kustoQuery),
+				Timespan: to.Ptr(queryInterval),
+			},
+			nil)
+
+		if err != nil {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Failed to query logs: %v", err)
+			return
+		}
+
+		if logsResult.Error != nil {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Error when querying logs: %v", logsResult.Error)
+			return
+		}
+
+		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
+			log.Default().Printf("Log result found after %v seconds", timeWaitedSoFar)
+			result.Passed = true
+			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL.Host)
+			return
+		}
+
+		log.Default().Printf("Log result not found after %v", timeWaitedSoFar)
+	}
+
+	result.Passed = false
+	result.Message = fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL)
 }

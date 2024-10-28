@@ -30,17 +30,19 @@ type ABS struct {
 }
 
 var (
-	storageAccountUri        string
-	token                    azcore.AccessToken
-	cred                     *azidentity.DefaultAzureCredential
-	subscriptionId           string
-	storageAccountResourceId string
-	storageAccountResource   armresources.GenericResource
-	logsClient               *azquery.LogsClient
-	armMonitorClientFactory  *armmonitor.ClientFactory
+	storageAccountUri         string
+	token                     azcore.AccessToken
+	cred                      *azidentity.DefaultAzureCredential
+	subscriptionId            string
+	storageAccountResourceId  string
+	storageAccountResource    armresources.GenericResource
+	logsClient                *azquery.LogsClient
+	armMonitorClientFactory   *armmonitor.ClientFactory
+	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
 
-	ArmoryCommonFunctions CommonFunctions = &commonFunctions{}
-	ArmoryTlsFunctions    TlsFunctions    = &tlsFunctions{}
+	ArmoryCommonFunctions  CommonFunctions  = &commonFunctions{}
+	ArmoryTlsFunctions     TlsFunctions     = &tlsFunctions{}
+	ArmoryLoggingFunctions LoggingFunctions = &loggingFunctions{}
 )
 
 func (a *ABS) SetLogger(loggerName string) hclog.Logger {
@@ -103,6 +105,8 @@ func (a *ABS) Initialize() error {
 	if err != nil {
 		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
 	}
+
+	diagnosticsSettingsClient = armMonitorClientFactory.NewDiagnosticSettingsClient()
 
 	return nil
 }
