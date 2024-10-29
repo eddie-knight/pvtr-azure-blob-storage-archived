@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -28,18 +30,20 @@ type ABS struct {
 }
 
 var (
-	storageAccountUri        string
-	token                    azcore.AccessToken
-	cred                     *azidentity.DefaultAzureCredential
-	subscriptionId           string
-	storageAccountResourceId string
-	storageAccountResource   armresources.GenericResource
-	logsClient               *azquery.LogsClient
-	armMonitorClientFactory  *armmonitor.ClientFactory
-)
+	storageAccountUri         string
+	token                     azcore.AccessToken
+	cred                      *azidentity.DefaultAzureCredential
+	subscriptionId            string
+	storageAccountResourceId  string
+	storageAccountResource    armresources.GenericResource
+	logsClient                *azquery.LogsClient
+	armMonitorClientFactory   *armmonitor.ClientFactory
+	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
 
-func init() {
-}
+	ArmoryCommonFunctions  CommonFunctions  = &commonFunctions{}
+	ArmoryTlsFunctions     TlsFunctions     = &tlsFunctions{}
+	ArmoryLoggingFunctions LoggingFunctions = &loggingFunctions{}
+)
 
 func (a *ABS) SetLogger(loggerName string) hclog.Logger {
 	a.Log = raidengine.GetLogger(loggerName, false)
@@ -47,39 +51,42 @@ func (a *ABS) SetLogger(loggerName string) hclog.Logger {
 }
 
 func (a *ABS) GetTactics() map[string][]raidengine.Strike {
+	return a.Tactics
+}
 
+func (a *ABS) Initialize() error {
 	// Get subscription ID
 	subscriptionId = viper.GetString("raids.ABS.subscriptionId")
 	if valid, err := ValidateVariableValue(subscriptionId, `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`); !valid {
-		log.Fatalf("Subscription ID variable validation failed with error: %s", err)
+		return fmt.Errorf("subscription ID variable validation failed with error: %s", err)
 	}
 
 	// Get storage account resource ID
 	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
 	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
-		log.Fatalf("Storage Account Resource ID variable validation failed with error: %s", err)
+		return fmt.Errorf("storage account resource ID variable validation failed with error: %s", err)
 	}
 
 	// Get an Azure credential
 	var err error
 	cred, err = azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatalf("Failed to get Azure credential: %v", err)
+		return fmt.Errorf("failed to get Azure credential: %v", err)
 	}
 
 	// Create an Azure resources client
 	client, err := armresources.NewClient(subscriptionId, cred, nil)
 	if err != nil {
-		log.Fatalf("Failed to create Azure resources client: %v", err)
+		return fmt.Errorf("failed to create Azure resources client: %v", err)
 	}
 
 	// Get storage account resource
 	getResourceResult, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
 	// TODO: Set context with timeout and appropriate cancellation
 	if err != nil {
-		log.Fatalf("Failed to get storage account resource: %v", err)
+		return fmt.Errorf("failed to get storage account resource: %v", err)
 	} else if *getResourceResult.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
-		log.Fatalf("Resource ID provided is not a storage account")
+		return fmt.Errorf("resource ID provided is not a storage account")
 	}
 
 	storageAccountResource = getResourceResult.GenericResource
@@ -99,10 +106,19 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
 	}
 
-	return a.Tactics
+	diagnosticsSettingsClient = armMonitorClientFactory.NewDiagnosticSettingsClient()
+
+	return nil
 }
 
-func GetToken(result *raidengine.MovementResult) string {
+type CommonFunctions interface {
+	GetToken(result *raidengine.MovementResult) string
+	MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response
+}
+
+type commonFunctions struct{}
+
+func (*commonFunctions) GetToken(result *raidengine.MovementResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
 
 		log.Default().Printf("Getting new access token")
@@ -122,6 +138,56 @@ func GetToken(result *raidengine.MovementResult) string {
 	return token.Token
 }
 
+// MakeGETRequest makes a GET request to the specified endpoint and returns the status code
+func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+	// Add query parameters to request URL
+	endpoint = endpoint + "?comp=list"
+
+	// If specific TLS versions are provided, configure the TLS version
+	tlsConfig := &tls.Config{}
+	if minTlsVersion != nil {
+		tlsConfig.MinVersion = uint16(*minTlsVersion)
+	}
+
+	if maxTlsVersion != nil {
+		tlsConfig.MaxVersion = uint16(*maxTlsVersion)
+	}
+
+	// Create an HTTP client with a timeout and the specified TLS configuration
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
+	// Create a new GET request
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		result.Passed = false
+		result.Message = err.Error()
+		return nil
+	}
+
+	// Set the required headers
+	req.Header.Set("x-ms-version", "2025-01-05")
+	req.Header.Set("x-ms-date", time.Now().UTC().Format(http.TimeFormat))
+	if token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
+
+	// Make the GET request
+	response, err := client.Do(req)
+	if err != nil {
+		result.Passed = false
+		result.Message = err.Error()
+		return response
+	}
+	defer response.Body.Close()
+
+	return response
+}
+
 func StrikeResultSetter(successMessage string, failureMessage string, result *raidengine.StrikeResult) {
 
 	// If any movement fails, set strike result to failed
@@ -138,139 +204,23 @@ func StrikeResultSetter(successMessage string, failureMessage string, result *ra
 	result.Message = successMessage
 }
 
-// -----
-// Strike and Movements for CCC_C01_TR01
-// -----
-
-// CCC_C01_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C01_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service enforces the use of secure transport protocols for all network communications (e.g., TLS 1.2 or higher).",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
+func ValidateVariableValue(variableValue string, regex string) (bool, error) {
+	// Check if variable is populated
+	if variableValue == "" {
+		return false, fmt.Errorf("variable is required and not populated")
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C01_TR01_T01)
-
-	StrikeResultSetter("Default TLS version is TLS 1.2 or TLS 1.3",
-		"Default TLS version is not TLS 1.2 or TLS 1.3, see movement results for more details",
-		&result)
-
-	return
-}
-
-// CCC_C01_TR01_T01 - Ensure GET requests communicate via TLS 1.2 or higher
-func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "Default TLS version is TLS 1.2 or TLS 1.3",
-		Function:    utils.CallerPath(0),
+	// Check if variable matches regex
+	matched, err := regexp.MatchString(regex, variableValue)
+	if err != nil {
+		return false, fmt.Errorf("validation of variable has failed with message: %s", err)
 	}
 
-	// Get access token
-	token := GetToken(&result)
-	if token == "" {
-		return
+	if !matched {
+		return false, fmt.Errorf("variable value is not valid")
 	}
 
-	// Check TLS version of response
-	CheckTLSVersion(storageAccountUri, token, &result)
-	if !result.Passed {
-		return
-	}
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C01_TR02
-// -----
-
-// CCC_C01_TR02 conforms to the Strike function type
-func (a *ABS) CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C01_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service automatically redirects incoming unencrypted HTTP requests to HTTPS.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C01_TR02_T01)
-
-	StrikeResultSetter("HTTP requests are not supported",
-		"HTTP requests are supported, see movement results for more details",
-		&result)
-
-	return
-}
-
-func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "HTTP requests are not supported",
-		Function:    utils.CallerPath(0),
-	}
-
-	ConfirmHTTPRequestFails(storageAccountUri, &result)
-
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C01_TR03
-// -----
-
-// CCC_C01_TR03 conforms to the Strike function type
-func (a *ABS) CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C01_TR03"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service rejects or blocks any attempts to establish outgoing connections using outdated or insecure protocols (e.g., SSL, TLS 1.0, or TLS 1.1).",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T01)
-	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T02)
-
-	StrikeResultSetter("All insecure TLS versions are not supported",
-		"One or more insecure TLS versions are supported, see movement results for more details",
-		&result)
-
-	return
-}
-
-func CCC_C01_TR03_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "TLS Version 1.0 is not supported",
-		Function:    utils.CallerPath(0),
-	}
-
-	tlsVersion := tls.VersionTLS10
-
-	ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersion)
-	return
-}
-
-func CCC_C01_TR03_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "TLS Version 1.1 is not supported",
-		Function:    utils.CallerPath(0),
-	}
-
-	tlsVersion := tls.VersionTLS11
-
-	ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersion)
-	return
+	return true, nil
 }
 
 // -----
