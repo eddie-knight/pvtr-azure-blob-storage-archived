@@ -42,9 +42,6 @@ func (mock *mockLogClient) QueryResource(ctx context.Context, resourceID string,
 
 type mockDiagnosticSettingsClient struct {
 	pages []armmonitor.DiagnosticSettingsClientListResponse
-
-	pageType    string
-	workspaceId string
 }
 
 func (mock *mockDiagnosticSettingsClient) NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse] {
