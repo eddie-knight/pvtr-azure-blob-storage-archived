@@ -104,7 +104,7 @@ func Test_CCC_C02_TR02_T01_succeeds_with_customer_managed_keys(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		encryptionEnabled: true,
-		keySource:         "Microsoft.KeyVault",
+		keySource:         "Microsoft.Keyvault",
 		keyVaultUri:       "https://example-vault.vault.azure.net/",
 	}
 
