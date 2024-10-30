@@ -26,8 +26,8 @@ func (a *ABS) CCC_C02_TR01() (strikeName string, result raidengine.StrikeResult)
 
 	raidengine.ExecuteMovement(&result, CCC_C02_TR01_T01)
 
-	StrikeResultSetter("Data at rest is encrypted with industry-standard encryption algorithms (e.g., AES-256)",
-		"Data at rest is not encrypted with industry-standard encryption algorithms (e.g., AES-256), see movement results for more details",
+	StrikeResultSetter("Data at rest is encrypted with industry-standard encryption algorithms (e.g., AES-256).",
+		"Data at rest is not encrypted with industry-standard encryption algorithms (e.g., AES-256), see movement results for more details.",
 		&result)
 
 	return
@@ -76,8 +76,8 @@ func (a *ABS) CCC_C02_TR02() (strikeName string, result raidengine.StrikeResult)
 
 	raidengine.ExecuteMovement(&result, CCC_C02_TR02_T01)
 
-	StrikeResultSetter("Encryption status for the Storage Account is available for audit",
-		"Encryption status for the Storage Account is not available for audit, see movement results for more details",
+	StrikeResultSetter("Encryption status for stored data at rest for the Storage Account is available for audit.",
+		"Encryption status for the Storage Account is not available for audit, see movement results for more details.",
 		&result)
 
 	return
@@ -92,7 +92,7 @@ func CCC_C02_TR02_T01() (result raidengine.MovementResult) {
 	if *storageAccountResource.Properties.Encryption.KeySource == "Microsoft.Storage" {
 		result.Message = "Encryption uses Microsoft-managed keys and can be audited directly on the Azure Storage Account."
 		result.Passed = true
-	} else if *storageAccountResource.Properties.Encryption.KeySource == "Microsoft.KeyVault" {
+	} else if *storageAccountResource.Properties.Encryption.KeySource == "Microsoft.Keyvault" {
 		result.Message = fmt.Sprintf("Encryption uses customer-managed keys and can be audited in the Azure Key Vault: %s.", *storageAccountResource.Properties.Encryption.KeyVaultProperties.KeyVaultURI)
 		result.Passed = true
 	} else {
