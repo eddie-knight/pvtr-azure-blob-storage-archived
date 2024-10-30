@@ -36,7 +36,7 @@ var (
 	subscriptionId            string
 	storageAccountResourceId  string
 	storageAccountResource    armstorage.Account
-	armstorageClient          *armstorage.AccountsClient
+	armstorageClient          *armstorage.AccountsClient //nolint:unused
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
