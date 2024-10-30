@@ -35,7 +35,7 @@ var (
 	cred                      *azidentity.DefaultAzureCredential
 	storageAccountResourceId  string
 	storageAccountResource    armstorage.Account
-	armstorageClient          *armstorage.AccountsClient //nolint:unused // Remove once strikes using this are implemented
+	armstorageClient          *armstorage.AccountsClient
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
@@ -79,7 +79,7 @@ func (a *ABS) Initialize() error {
 	subscriptionId, storageAccountResourceGroupName, storageAccountName := match[1], match[2], match[3]
 
 	// Create an Azure resources client
-	armstorageClient, err := armstorage.NewAccountsClient(subscriptionId, cred, nil)
+	armstorageClient, err = armstorage.NewAccountsClient(subscriptionId, cred, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create armstorage client: %v", err)
 	}
