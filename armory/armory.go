@@ -3,6 +3,7 @@ package armory
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
 
@@ -35,7 +37,7 @@ var (
 	cred                      *azidentity.DefaultAzureCredential
 	subscriptionId            string
 	storageAccountResourceId  string
-	storageAccountResource    armresources.GenericResource
+	storageAccountResource    armstorage.Account
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
@@ -81,18 +83,29 @@ func (a *ABS) Initialize() error {
 	}
 
 	// Get storage account resource
-	getResourceResult, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
+	getStorageAccountResponse, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
 	// TODO: Set context with timeout and appropriate cancellation
 	if err != nil {
 		return fmt.Errorf("failed to get storage account resource: %v", err)
-	} else if *getResourceResult.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
+	} else if *getStorageAccountResponse.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
 		return fmt.Errorf("resource ID provided is not a storage account")
 	}
 
-	storageAccountResource = getResourceResult.GenericResource
+	storageAccountResourcePropertiesJson, err := json.Marshal(getStorageAccountResponse.GenericResource)
 
-	// Get storage account URI
-	storageAccountUri = storageAccountResource.Properties.(map[string]interface{})["primaryEndpoints"].(map[string]interface{})["blob"].(string)
+	if err == nil {
+		err = json.Unmarshal(storageAccountResourcePropertiesJson, &storageAccountResource)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to convert generic resource to storage account resource: %v", err)
+	}
+
+	if storageAccountResource.Properties.PrimaryEndpoints.Blob != nil {
+		storageAccountUri = *storageAccountResource.Properties.PrimaryEndpoints.Blob
+	} else {
+		return fmt.Errorf("primary blob endpoint URI is nil")
+	}
 
 	// Get a logs client
 	logsClient, err = azquery.NewLogsClient(cred, nil)
@@ -221,72 +234,6 @@ func ValidateVariableValue(variableValue string, regex string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// -----
-// Strike and Movements for CCC_C02_TR01
-// -----
-
-// CCC_C02_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C02_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C02_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service encrypts all stored data at rest using industry-standard encryption algorithms (e.g., AES-256).",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C02",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C02_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C02_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C02_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C02_TR02
-// -----
-
-// CCC_C02_TR02 conforms to the Strike function type
-func (a *ABS) CCC_C02_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C02_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Admin users can verify and audit encryption status for stored data at rest, including verification of key management processes.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C02",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C02_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C02_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C02_TR02
-	return
 }
 
 // -----
