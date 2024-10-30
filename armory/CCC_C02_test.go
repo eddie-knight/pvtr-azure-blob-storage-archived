@@ -1,0 +1,136 @@
+package armory
+
+import (
+	"testing"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/stretchr/testify/assert"
+)
+
+type storageAccountMock struct {
+	encryptionEnabled bool
+	keySource         armstorage.KeySource
+	keyVaultUri       string
+}
+
+// Helper function to create a storage account resource with the specified properties
+func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
+	return armstorage.Account{
+		Properties: &armstorage.AccountProperties{
+			Encryption: &armstorage.Encryption{
+				Services: &armstorage.EncryptionServices{
+					Blob: &armstorage.EncryptionService{
+						Enabled: to.Ptr(mock.encryptionEnabled),
+					},
+				},
+				KeySource: (*armstorage.KeySource)(to.Ptr(mock.keySource)),
+				KeyVaultProperties: &armstorage.KeyVaultProperties{
+					KeyVaultURI: to.Ptr(mock.keyVaultUri),
+				},
+			},
+		},
+	}
+}
+
+func Test_CCC_C02_TR01_T01_succeeds_with_microsoft_managed_keys(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		encryptionEnabled: true,
+		keySource:         "Microsoft.Storage",
+	}
+
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C02_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Contains(t, result.Message, "Microsoft-managed keys")
+}
+
+func Test_CCC_C02_TR01_T01_succeeds_with_customer_managed_keys(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		encryptionEnabled: true,
+		keySource:         "Microsoft.KeyVault",
+	}
+
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C02_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Contains(t, result.Message, "customer-managed keys")
+}
+
+func Test_CCC_C02_TR01_T01_fails_if_encryption_disabled(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		encryptionEnabled: false,
+		keySource:         "Microsoft.Storage",
+	}
+
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C02_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_C02_TR02_T01_succeeds_with_microsoft_managed_keys(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		encryptionEnabled: true,
+		keySource:         "Microsoft.Storage",
+	}
+
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C02_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Contains(t, result.Message, "Microsoft-managed keys")
+}
+
+func Test_CCC_C02_TR02_T01_succeeds_with_customer_managed_keys(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		encryptionEnabled: true,
+		keySource:         "Microsoft.KeyVault",
+		keyVaultUri:       "https://example-vault.vault.azure.net/",
+	}
+
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C02_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Contains(t, result.Message, "customer-managed keys")
+	assert.Contains(t, result.Message, "https://example-vault.vault.azure.net/")
+}
+
+func Test_CCC_C02_TR02_T01_fails_if_key_source_unknown(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		encryptionEnabled: true,
+		keySource:         "Microsoft.Unknown",
+	}
+
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C02_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
