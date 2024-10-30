@@ -1,0 +1,64 @@
+name: Go
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  
+jobs:
+
+  continuous_integration:
+    # https://docs.github.com/en/actions/writing-workflows/choosing-where-your-workflow-runs/choosing-the-runner-for-a-job
+    runs-on: ubuntu-latest
+    steps:
+
+    # https://github.com/actions/checkout
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # https://github.com/actions/setup-go
+    - name: Setup Environment
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    # https://go.dev/ref/mod#go-get
+    # https://go.dev/ref/mod#go-mod-download
+    - name: Install Dependencies
+      run: |
+        go mod download
+        go get -t .
+
+    # https://github.com/golangci/golangci-lint-action
+    # https://github.com/golangci/golangci-lint
+    - name: Lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: v1.61.0
+
+    # https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies
+    - name: Build
+      run: |
+        go build -v ./...
+
+    # https://pkg.go.dev/cmd/go#hdr-Test_packages
+    - name: Test
+      run: |
+        go test -v ./... -coverprofile=coverage.out -covermode=count
+        go tool cover -func coverage.out
+
+    # Ensure code coverage
+    - name: Quality Gate - Test coverage shall be above threshold
+      env:
+          TESTCOVERAGE_THRESHOLD: 30
+      run: |
+            echo "Quality Gate: checking test coverage is above threshold ..."
+            echo "Threshold             : $TESTCOVERAGE_THRESHOLD %"
+            totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+            echo "Current test coverage : $totalCoverage %"
+            if (( $(echo "$totalCoverage $TESTCOVERAGE_THRESHOLD" | awk '{print ($1 > $2)}') )); then
+                echo "OK"
+            else
+                echo "Current test coverage is below threshold. Please add more unit tests or adjust threshold to a lower value."
+                echo "Failed"
+                exit 1
+            fi
