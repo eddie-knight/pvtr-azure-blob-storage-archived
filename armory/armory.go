@@ -33,7 +33,6 @@ var (
 	storageAccountUri         string
 	token                     azcore.AccessToken
 	cred                      *azidentity.DefaultAzureCredential
-	subscriptionId            string
 	storageAccountResourceId  string
 	storageAccountResource    armstorage.Account
 	armstorageClient          *armstorage.AccountsClient //nolint:unused // Remove once strikes using this are implemented
