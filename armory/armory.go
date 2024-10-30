@@ -77,9 +77,7 @@ func (a *ABS) Initialize() error {
 		return fmt.Errorf("failed to parse storage account resource ID")
 	}
 
-	subscriptionId = match[1]
-	storageAccountResourceGroupName := match[2]
-	storageAccountName := match[3]
+	subscriptionId, storageAccountResourceGroupName, storageAccountName := match[1], match[2], match[3]
 
 	// Create an Azure resources client
 	armstorageClient, err := armstorage.NewAccountsClient(subscriptionId, cred, nil)
