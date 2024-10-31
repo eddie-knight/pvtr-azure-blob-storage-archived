@@ -59,7 +59,7 @@ func Execute(version, commitHash, builtAt string) {
 
 func init() {
 	Armory.Tactics = map[string][]raidengine.Strike{
-		
+
 		"tlp_amber": {
 			Armory.CCC_C01_TR01,
 			Armory.CCC_C01_TR02,
@@ -141,8 +141,8 @@ func init() {
 			Armory.CCC_C02_TR02,
 			Armory.CCC_C03_TR01,
 			Armory.CCC_C03_TR02,
-			Armory.CCC_C04_TR01,
-			Armory.CCC_C04_TR02,
+			// Armory.CCC_C04_TR01,
+			// Armory.CCC_C04_TR02,
 			Armory.CCC_C05_TR01,
 			Armory.CCC_C05_TR02,
 			Armory.CCC_C05_TR04,
