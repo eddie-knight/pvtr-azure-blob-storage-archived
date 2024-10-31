@@ -3,7 +3,6 @@ package armory
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,7 +14,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
@@ -35,9 +33,9 @@ var (
 	storageAccountUri         string
 	token                     azcore.AccessToken
 	cred                      *azidentity.DefaultAzureCredential
-	subscriptionId            string
 	storageAccountResourceId  string
 	storageAccountResource    armstorage.Account
+	armstorageClient          *armstorage.AccountsClient
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
@@ -57,12 +55,6 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 }
 
 func (a *ABS) Initialize() error {
-	// Get subscription ID
-	subscriptionId = viper.GetString("raids.ABS.subscriptionId")
-	if valid, err := ValidateVariableValue(subscriptionId, `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`); !valid {
-		return fmt.Errorf("subscription ID variable validation failed with error: %s", err)
-	}
-
 	// Get storage account resource ID
 	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
 	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
@@ -76,30 +68,30 @@ func (a *ABS) Initialize() error {
 		return fmt.Errorf("failed to get Azure credential: %v", err)
 	}
 
+	// Get storage account name and resource group
+	re := regexp.MustCompile(`^/subscriptions/(?P<subscription>[0-9a-fA-F-]+)/resourceGroups/(?P<resourceGroup>[a-zA-Z0-9-_()]+)/providers/Microsoft\.Storage/storageAccounts/(?P<storageAccount>[a-z0-9]+)$`)
+	match := re.FindStringSubmatch(storageAccountResourceId)
+
+	if len(match) == 0 {
+		return fmt.Errorf("failed to parse storage account resource ID")
+	}
+
+	subscriptionId, storageAccountResourceGroupName, storageAccountName := match[1], match[2], match[3]
+
 	// Create an Azure resources client
-	client, err := armresources.NewClient(subscriptionId, cred, nil)
+	armstorageClient, err = armstorage.NewAccountsClient(subscriptionId, cred, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create Azure resources client: %v", err)
+		return fmt.Errorf("failed to create armstorage client: %v", err)
 	}
 
 	// Get storage account resource
-	getStorageAccountResponse, err := client.GetByID(context.Background(), storageAccountResourceId, "2021-04-01", nil)
+	storageAccountResponse, err := armstorageClient.GetProperties(context.Background(), storageAccountResourceGroupName, storageAccountName, nil)
 	// TODO: Set context with timeout and appropriate cancellation
 	if err != nil {
 		return fmt.Errorf("failed to get storage account resource: %v", err)
-	} else if *getStorageAccountResponse.GenericResource.Type != "Microsoft.Storage/storageAccounts" {
-		return fmt.Errorf("resource ID provided is not a storage account")
 	}
 
-	storageAccountResourcePropertiesJson, err := json.Marshal(getStorageAccountResponse.GenericResource)
-
-	if err == nil {
-		err = json.Unmarshal(storageAccountResourcePropertiesJson, &storageAccountResource)
-	}
-
-	if err != nil {
-		return fmt.Errorf("failed to convert generic resource to storage account resource: %v", err)
-	}
+	storageAccountResource = storageAccountResponse.Account
 
 	if storageAccountResource.Properties.PrimaryEndpoints.Blob != nil {
 		storageAccountUri = *storageAccountResource.Properties.PrimaryEndpoints.Blob
