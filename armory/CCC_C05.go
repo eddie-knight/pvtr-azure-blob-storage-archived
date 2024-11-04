@@ -50,6 +50,7 @@ func CCC_C05_TR01_T01() (result raidengine.MovementResult) {
 			result.Message = "Public network access is enabled for the storage account and the default action is not set to deny for sources outside of the allowlist."
 		}
 	} else if *storageAccountResource.Properties.PublicNetworkAccess == "SecuredByPerimeter" {
+		// This isn't publicly available yet so we shouldn't hit this condition with customers
 		result.Passed = false
 		result.Message = "Public network access to the storage account is secured by Network Security Perimeter, this raid does not support assessment of network access via Network Security Perimeter."
 	} else {
@@ -106,16 +107,46 @@ func (a *ABS) CCC_C05_TR04() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C05_TR04_T01)
+	raidengine.ExecuteMovement(&result, CCC_C05_TR04_T02)
+
+	StrikeResultSetter(
+		"This service blocks unauthorized cross-tenant access both via Shared Key access and public anonymous blob access",
+		"This service does not block unauthorized cross-tenant access via both Shared Key access and public anonymous blob access, see movement results for more details",
+		&result)
 
 	return
 }
 
 func CCC_C05_TR04_T01() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
+		Description: "Confirms that public anonymous blob access is disabled in configuration.",
 		Function:    utils.CallerPath(0),
 	}
 
-	// TODO: Use this section to write a single step or test that contributes to CCC_C05_TR04
+	if *storageAccountResource.Properties.AllowBlobPublicAccess {
+		result.Passed = false
+		result.Message = "Public anonymous blob access is enabled for the storage account."
+	} else {
+		result.Passed = true
+		result.Message = "Public anonymous blob access is disabled for the storage account."
+	}
+
+	return
+}
+
+func CCC_C05_TR04_T02() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "Confirms that Shared Key access is disabled in configuration.",
+		Function:    utils.CallerPath(0),
+	}
+
+	if *storageAccountResource.Properties.AllowSharedKeyAccess {
+		result.Passed = false
+		result.Message = "Shared Key access is enabled for the storage account."
+	} else {
+		result.Passed = true
+		result.Message = "Shared Key access is disabled for the storage account."
+	}
+
 	return
 }
