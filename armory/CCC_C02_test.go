@@ -3,35 +3,8 @@ package armory
 import (
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/stretchr/testify/assert"
 )
-
-type storageAccountMock struct {
-	encryptionEnabled bool
-	keySource         armstorage.KeySource
-	keyVaultUri       string
-}
-
-// Helper function to create a storage account resource with the specified properties
-func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
-	return armstorage.Account{
-		Properties: &armstorage.AccountProperties{
-			Encryption: &armstorage.Encryption{
-				Services: &armstorage.EncryptionServices{
-					Blob: &armstorage.EncryptionService{
-						Enabled: to.Ptr(mock.encryptionEnabled),
-					},
-				},
-				KeySource: (*armstorage.KeySource)(to.Ptr(mock.keySource)),
-				KeyVaultProperties: &armstorage.KeyVaultProperties{
-					KeyVaultURI: to.Ptr(mock.keyVaultUri),
-				},
-			},
-		},
-	}
-}
 
 func Test_CCC_C02_TR01_T01_succeeds_with_microsoft_managed_keys(t *testing.T) {
 	// Arrange

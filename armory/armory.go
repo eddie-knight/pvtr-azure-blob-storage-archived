@@ -39,10 +39,18 @@ var (
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
+	blobServiceProperties     *armstorage.BlobServiceProperties
 
-	ArmoryCommonFunctions  CommonFunctions  = &commonFunctions{}
-	ArmoryTlsFunctions     TlsFunctions     = &tlsFunctions{}
-	ArmoryLoggingFunctions LoggingFunctions = &loggingFunctions{}
+	resourceId struct {
+		subscriptionId     string
+		resourceGroupName  string
+		storageAccountName string
+	}
+
+	ArmoryCommonFunctions           CommonFunctions           = &commonFunctions{}
+	ArmoryTlsFunctions              TlsFunctions              = &tlsFunctions{}
+	ArmoryLoggingFunctions          LoggingFunctions          = &loggingFunctions{}
+	ArmoryDeleteProtectionFunctions DeleteProtectionFunctions = &deleteProtectionFunctions{}
 )
 
 func (a *ABS) SetLogger(loggerName string) hclog.Logger {
@@ -76,16 +84,16 @@ func (a *ABS) Initialize() error {
 		return fmt.Errorf("failed to parse storage account resource ID")
 	}
 
-	subscriptionId, storageAccountResourceGroupName, storageAccountName := match[1], match[2], match[3]
+	resourceId.subscriptionId, resourceId.resourceGroupName, resourceId.storageAccountName = match[1], match[2], match[3]
 
 	// Create an Azure resources client
-	armstorageClient, err = armstorage.NewAccountsClient(subscriptionId, cred, nil)
+	armstorageClient, err = armstorage.NewAccountsClient(resourceId.subscriptionId, cred, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create armstorage client: %v", err)
 	}
 
 	// Get storage account resource
-	storageAccountResponse, err := armstorageClient.GetProperties(context.Background(), storageAccountResourceGroupName, storageAccountName, nil)
+	storageAccountResponse, err := armstorageClient.GetProperties(context.Background(), resourceId.resourceGroupName, resourceId.storageAccountName, nil)
 	// TODO: Set context with timeout and appropriate cancellation
 	if err != nil {
 		return fmt.Errorf("failed to get storage account resource: %v", err)
@@ -106,7 +114,7 @@ func (a *ABS) Initialize() error {
 	}
 
 	// Get a client factory for ARM monitor
-	armMonitorClientFactory, err = armmonitor.NewClientFactory(subscriptionId, cred, nil)
+	armMonitorClientFactory, err = armmonitor.NewClientFactory(resourceId.subscriptionId, cred, nil)
 	if err != nil {
 		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
 	}
@@ -588,72 +596,6 @@ func CCC_ObjStor_C02_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C02_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_ObjStor_C03_TR01
-// -----
-
-// CCC_ObjStor_C03_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C03_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Object storage buckets cannot be deleted after creation.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C03_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C03_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_ObjStor_C03_TR02
-// -----
-
-// CCC_ObjStor_C03_TR02 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C03_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Retention policy for object storage buckets cannot be unset.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C03_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C03_TR02
 	return
 }
 

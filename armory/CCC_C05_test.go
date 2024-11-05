@@ -3,38 +3,16 @@ package armory
 import (
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/stretchr/testify/assert"
 )
 
-type untrustedEntitesStorageAccountMock struct {
-	publicNetworkAccess   armstorage.PublicNetworkAccess
-	defaultAction         armstorage.DefaultAction
-	allowBlobPublicAccess bool
-	allowSharedKeyAccess  bool
-}
-
-// Helper function to create a storage account resource with the specified properties
-func (mock *untrustedEntitesStorageAccountMock) SetStorageAccountUntrustedEntities() armstorage.Account {
-	return armstorage.Account{
-		Properties: &armstorage.AccountProperties{
-			PublicNetworkAccess:   to.Ptr(mock.publicNetworkAccess),
-			AllowBlobPublicAccess: to.Ptr(mock.allowBlobPublicAccess),
-			AllowSharedKeyAccess:  to.Ptr(mock.allowSharedKeyAccess),
-			NetworkRuleSet: &armstorage.NetworkRuleSet{
-				DefaultAction: to.Ptr(mock.defaultAction),
-			},
-		},
-	}
-}
-
 func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_disabled(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		publicNetworkAccess: armstorage.PublicNetworkAccessDisabled,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR01_T01()
@@ -46,11 +24,11 @@ func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_disabled(t *testi
 
 func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_enabled_and_default_action_deny(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		publicNetworkAccess: armstorage.PublicNetworkAccessEnabled,
 		defaultAction:       armstorage.DefaultActionDeny,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR01_T01()
@@ -62,11 +40,11 @@ func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_enabled_and_defau
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_enabled_and_default_action_not_deny(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		publicNetworkAccess: armstorage.PublicNetworkAccessEnabled,
 		defaultAction:       armstorage.DefaultActionAllow,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR01_T01()
@@ -78,10 +56,10 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_enabled_and_default_
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_secured_by_perimeter(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		publicNetworkAccess: armstorage.PublicNetworkAccessSecuredByPerimeter,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR01_T01()
@@ -93,10 +71,10 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_secured_by_perimeter
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		publicNetworkAccess: armstorage.PublicNetworkAccess("Unknown"),
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR01_T01()
@@ -107,10 +85,10 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *te
 
 func Test_CCC_C05_TR04_T01_succeeds(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		allowBlobPublicAccess: false,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR04_T01()
@@ -121,10 +99,10 @@ func Test_CCC_C05_TR04_T01_succeeds(t *testing.T) {
 
 func Test_CCC_C05_TR04_T01_fails(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		allowBlobPublicAccess: true,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR04_T01()
@@ -135,10 +113,10 @@ func Test_CCC_C05_TR04_T01_fails(t *testing.T) {
 
 func Test_CCC_C05_TR04_T02_succeeds(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		allowSharedKeyAccess: false,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR04_T02()
@@ -149,10 +127,10 @@ func Test_CCC_C05_TR04_T02_succeeds(t *testing.T) {
 
 func Test_CCC_C05_TR04_T02_fails(t *testing.T) {
 	// Arrange
-	myMock := untrustedEntitesStorageAccountMock{
+	myMock := storageAccountMock{
 		allowSharedKeyAccess: true,
 	}
-	storageAccountResource = myMock.SetStorageAccountUntrustedEntities()
+	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
 	result := CCC_C05_TR04_T02()
