@@ -328,36 +328,6 @@ func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C05_TR02
-// -----
-
-func (a *ABS) CCC_C05_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C05_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service logs all access attempts from untrusted entities, including failed connection attempts.",
-		Message:     "Strike has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C05_TR02_T01)
-
-	return
-}
-
-func CCC_C05_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "Confirms the service is configured to log all access attempts from untrusted entities, including failed connection attempts.",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C05_TR02
-	return
-}
-
-// -----
 // Strike and Movements for CCC_C06_TR01
 // -----
 
