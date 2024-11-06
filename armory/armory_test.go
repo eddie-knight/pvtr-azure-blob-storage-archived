@@ -2,6 +2,8 @@ package armory
 
 import (
 	"net/http"
+	"os"
+	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
@@ -24,6 +26,15 @@ type storageAccountMock struct {
 	immutabilityPolicyEnabled bool
 	immutabilityPolicyDays    int32
 	immutabilityPolicyState   armstorage.AccountImmutabilityPolicyState
+}
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+
+	// Post test clean up steps
+	blobServiceProperties = nil
+
+	os.Exit(code)
 }
 
 // Helper function to create a storage account resource with the specified properties

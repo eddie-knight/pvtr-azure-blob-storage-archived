@@ -1,7 +1,6 @@
 package armory
 
 import (
-	"os"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -28,23 +27,6 @@ func (mock *deleteProtectionFunctionsMock) GetBlobServiceProperties() error {
 	return mock.error
 }
 
-func setup() {
-	// Reset any global state or shared resources here
-	ArmoryDeleteProtectionFunctions = nil
-}
-
-func teardown() {
-	// Clean up any global state or shared resources here
-	ArmoryDeleteProtectionFunctions = nil
-}
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	teardown()
-	os.Exit(code)
-}
-
 func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := deleteProtectionFunctionsMock{
@@ -52,9 +34,6 @@ func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {
 		softDeleteRetentionDays: 7,
 	}
 	ArmoryDeleteProtectionFunctions = &myMock
-	t.Cleanup(func() {
-		blobServiceProperties = nil
-	})
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T01()
@@ -70,9 +49,6 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_error(t *testing.T) {
 		error: assert.AnError,
 	}
 	ArmoryDeleteProtectionFunctions = &myMock
-	t.Cleanup(func() {
-		blobServiceProperties = nil
-	})
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T01()
@@ -88,9 +64,6 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_soft_delete_disabled(t *testing.T)
 		softDeletePolicyEnabled: false,
 	}
 	ArmoryDeleteProtectionFunctions = &myMock
-	t.Cleanup(func() {
-		blobServiceProperties = nil
-	})
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T01()
@@ -100,7 +73,7 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_soft_delete_disabled(t *testing.T)
 	assert.Equal(t, "Soft delete is not enabled for Storage Account Containers.", result.Message)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T02_succeeds_with_immutability_enabled(t *testing.T) {
+func Test_CCC_ObjStor_C03_TR01_T03_succeeds_with_immutability_enabled(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		immutabilityPolicyEnabled: true,
@@ -109,26 +82,26 @@ func Test_CCC_ObjStor_C03_TR01_T02_succeeds_with_immutability_enabled(t *testing
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_ObjStor_C03_TR01_T02()
+	result := CCC_ObjStor_C03_TR01_T03()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, myMock.immutabilityPolicyDays, result.Value.(ImmutabilityPolicy).Days)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T02_fails_with_immutability_disabled_empty(t *testing.T) {
+func Test_CCC_ObjStor_C03_TR01_T03_fails_with_immutability_disabled_empty(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{}
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_ObjStor_C03_TR01_T02()
+	result := CCC_ObjStor_C03_TR01_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T02_fails_with_immutability_disabled_populated(t *testing.T) {
+func Test_CCC_ObjStor_C03_TR01_T03_fails_with_immutability_disabled_populated(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		immutabilityPolicyEnabled: false,
@@ -136,7 +109,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_immutability_disabled_populated(t 
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_ObjStor_C03_TR01_T02()
+	result := CCC_ObjStor_C03_TR01_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
