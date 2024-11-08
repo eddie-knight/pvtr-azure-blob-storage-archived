@@ -39,7 +39,9 @@ var (
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
+	blobServicesClient        *armstorage.BlobServicesClient
 	blobServiceProperties     *armstorage.BlobServiceProperties
+	blobContainersClient      *armstorage.BlobContainersClient
 
 	resourceId struct {
 		subscriptionId     string
