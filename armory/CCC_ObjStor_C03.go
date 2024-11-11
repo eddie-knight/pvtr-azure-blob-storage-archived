@@ -237,19 +237,19 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 					result.Message = "Deleted blob successfully restored. "
 				} else {
 					result.Passed = false
-					result.Message = fmt.Sprintf("Failed to undelete blob with error: %v. ", err)
+					result.Message = fmt.Sprintf("Failed to undelete blob with error: %v. ", blobUndeleteFailedError)
 				}
 			} else {
 				result.Passed = false
-				result.Message = fmt.Sprintf("Failed to delete blob with error: %v. ", err)
+				result.Message = fmt.Sprintf("Failed to delete blob with error: %v. ", blobDeleteFailedError)
 			}
 		} else {
 			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to create blob with error: %v. ", err)
+			result.Message = fmt.Sprintf("Failed to create blob with error: %v. ", uploadBlobFailedError)
 		}
 	} else {
 		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v. ", err)
+		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v. ", newBlockBlobClientFailedError)
 	}
 
 	err = ArmoryDeleteProtectionFunctions.DeleteContainer(containerName)
