@@ -104,7 +104,7 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	containerName := "privateer-test-container-" + generateRandomString(8)
+	containerName := "privateer-test-container-" + ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
 
 	err = ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
 
@@ -158,11 +158,7 @@ func CCC_ObjStor_C03_TR01_T03() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	var err error
-
-	if blobServiceProperties == nil {
-		err = ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
-	}
+	err := ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
 
 	if err != nil {
 		result.Passed = false
@@ -206,7 +202,7 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 		return
 	}
 
-	randomString := generateRandomString(8)
+	randomString := ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
 	err = ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
@@ -270,11 +266,7 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	var err error
-
-	if blobServiceProperties == nil {
-		err = ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
-	}
+	err := ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
 
 	if err != nil {
 		result.Passed = false
@@ -310,7 +302,7 @@ func CCC_ObjStor_C03_TR01_T06() (result raidengine.MovementResult) {
 		return
 	}
 
-	randomString := generateRandomString(8)
+	randomString := ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
 	err = ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
@@ -524,6 +516,7 @@ type DeleteProtectionFunctions interface {
 	CreateContainer(containerName string) error
 	DeleteContainer(containerName string) error
 	GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
+	GenerateRandomString(n int) string
 }
 
 type deleteProtectionFunctions struct{}
@@ -611,7 +604,7 @@ func (*deleteProtectionFunctions) DeleteBlob(blockBlobClient *blockblob.Client) 
 	return err
 }
 
-func generateRandomString(n int) string {
+func (*deleteProtectionFunctions) GenerateRandomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyz"
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]byte, n)
