@@ -78,7 +78,7 @@ func (mock *deleteProtectionFunctionsMock) GetContainers(blobContainerListOption
 		},
 	}
 
-	return ReturnPager(containersPages)
+	return CreatePager(containersPages)
 }
 
 func (mock *deleteProtectionFunctionsMock) GenerateRandomString(length int) string {
@@ -127,7 +127,7 @@ func (mock *mockBlobClient) NewListBlobsFlatPager(containerName string, options 
 		},
 	}
 
-	return ReturnPager([]azblob.ListBlobsFlatResponse{blobFlatListResponse})
+	return CreatePager([]azblob.ListBlobsFlatResponse{blobFlatListResponse})
 }
 
 func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {

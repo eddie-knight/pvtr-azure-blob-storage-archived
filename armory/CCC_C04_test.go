@@ -10,7 +10,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/privateerproj/privateer-sdk/raidengine"
@@ -41,24 +40,18 @@ func (mock *mockLogClient) QueryResource(ctx context.Context, resourceID string,
 }
 
 type mockDiagnosticSettingsClient struct {
-	pages []armmonitor.DiagnosticSettingsClientListResponse
+	pages        []armmonitor.DiagnosticSettingsClientListResponse
+	diagSettings []*armmonitor.DiagnosticSettingsResource
 }
 
 func (mock *mockDiagnosticSettingsClient) NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse] {
-	return runtime.NewPager(runtime.PagingHandler[armmonitor.DiagnosticSettingsClientListResponse]{
-		More: func(page armmonitor.DiagnosticSettingsClientListResponse) bool {
-			return len(mock.pages) > 0
+	page := armmonitor.DiagnosticSettingsClientListResponse{
+		DiagnosticSettingsResourceCollection: armmonitor.DiagnosticSettingsResourceCollection{
+			Value: mock.diagSettings,
 		},
-		Fetcher: func(ctx context.Context, page *armmonitor.DiagnosticSettingsClientListResponse) (armmonitor.DiagnosticSettingsClientListResponse, error) {
-			if len(mock.pages) == 0 {
-				return armmonitor.DiagnosticSettingsClientListResponse{}, fmt.Errorf("No more pages")
-			}
-			myPage := mock.pages[0]
-			mock.pages = mock.pages[1:]
-			return myPage, nil
-		},
-		Tracer: tracing.Tracer{},
-	})
+	}
+
+	return CreatePager([]armmonitor.DiagnosticSettingsClientListResponse{page})
 }
 
 func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
@@ -197,21 +190,15 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(t *testing.T) {
 	// Arrange
 	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		pages: []armmonitor.DiagnosticSettingsClientListResponse{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{
 			{
-				DiagnosticSettingsResourceCollection: armmonitor.DiagnosticSettingsResourceCollection{
-					Value: []*armmonitor.DiagnosticSettingsResource{
+				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+				Properties: &armmonitor.DiagnosticSettings{
+					WorkspaceID: to.Ptr("/subscriptions/subscriptionid/resourceGroups/rg-test/providers/Microsoft.OperationalInsights/workspaces/hello-world"),
+					Logs: []*armmonitor.LogSettings{
 						{
-							Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
-							Properties: &armmonitor.DiagnosticSettings{
-								WorkspaceID: to.Ptr("/subscriptions/subscriptionid/resourceGroups/rg-test/providers/Microsoft.OperationalInsights/workspaces/hello-world"),
-								Logs: []*armmonitor.LogSettings{
-									{
-										CategoryGroup: to.Ptr("allLogs"),
-										Enabled:       to.Ptr(true),
-									},
-								},
-							},
+							CategoryGroup: to.Ptr("allLogs"),
+							Enabled:       to.Ptr(true),
 						},
 					},
 				},
@@ -230,29 +217,23 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *testing.T) {
 	// Arrange
 	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		pages: []armmonitor.DiagnosticSettingsClientListResponse{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{
 			{
-				DiagnosticSettingsResourceCollection: armmonitor.DiagnosticSettingsResourceCollection{
-					Value: []*armmonitor.DiagnosticSettingsResource{
+				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+				Properties: &armmonitor.DiagnosticSettings{
+					WorkspaceID: to.Ptr("dummy_workspace_id"),
+					Logs: []*armmonitor.LogSettings{
 						{
-							Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
-							Properties: &armmonitor.DiagnosticSettings{
-								WorkspaceID: to.Ptr("dummy_workspace_id"),
-								Logs: []*armmonitor.LogSettings{
-									{
-										Category: to.Ptr("StorageRead"),
-										Enabled:  to.Ptr(true),
-									},
-									{
-										Category: to.Ptr("StorageWrite"),
-										Enabled:  to.Ptr(true),
-									},
-									{
-										Category: to.Ptr("StorageDelete"),
-										Enabled:  to.Ptr(true),
-									},
-								},
-							},
+							Category: to.Ptr("StorageRead"),
+							Enabled:  to.Ptr(true),
+						},
+						{
+							Category: to.Ptr("StorageWrite"),
+							Enabled:  to.Ptr(true),
+						},
+						{
+							Category: to.Ptr("StorageDelete"),
+							Enabled:  to.Ptr(true),
 						},
 					},
 				},
@@ -271,33 +252,27 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *t
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categories(t *testing.T) {
 	// Arrange
 	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		pages: []armmonitor.DiagnosticSettingsClientListResponse{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{
 			{
-				DiagnosticSettingsResourceCollection: armmonitor.DiagnosticSettingsResourceCollection{
-					Value: []*armmonitor.DiagnosticSettingsResource{
+				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+				Properties: &armmonitor.DiagnosticSettings{
+					WorkspaceID: to.Ptr("dummy_workspace_id"),
+					Logs: []*armmonitor.LogSettings{
 						{
-							Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
-							Properties: &armmonitor.DiagnosticSettings{
-								WorkspaceID: to.Ptr("dummy_workspace_id"),
-								Logs: []*armmonitor.LogSettings{
-									{
-										CategoryGroup: to.Ptr("allLogs"),
-										Enabled:       to.Ptr(false),
-									},
-									{
-										Category: to.Ptr("StorageRead"),
-										Enabled:  to.Ptr(false),
-									},
-									{
-										Category: to.Ptr("StorageWrite"),
-										Enabled:  to.Ptr(true),
-									},
-									{
-										Category: to.Ptr("StorageDelete"),
-										Enabled:  to.Ptr(true),
-									},
-								},
-							},
+							CategoryGroup: to.Ptr("allLogs"),
+							Enabled:       to.Ptr(false),
+						},
+						{
+							Category: to.Ptr("StorageRead"),
+							Enabled:  to.Ptr(false),
+						},
+						{
+							Category: to.Ptr("StorageWrite"),
+							Enabled:  to.Ptr(true),
+						},
+						{
+							Category: to.Ptr("StorageDelete"),
+							Enabled:  to.Ptr(true),
 						},
 					},
 				},

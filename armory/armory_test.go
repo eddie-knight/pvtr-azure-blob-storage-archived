@@ -79,7 +79,7 @@ func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
 	}
 }
 
-func ReturnPager[T any](listItems []T) *runtime.Pager[T] {
+func CreatePager[T any](listItems []T) *runtime.Pager[T] {
 	return runtime.NewPager(runtime.PagingHandler[T]{
 		More: func(page T) bool {
 			return len(listItems) > 0
