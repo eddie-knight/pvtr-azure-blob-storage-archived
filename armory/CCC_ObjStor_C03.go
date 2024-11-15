@@ -67,7 +67,7 @@ func CCC_ObjStor_C03_TR01_T01() (result raidengine.MovementResult) {
 
 	if err != nil {
 		result.Passed = false
-		result.Message = fmt.Sprintf("Failed with error: %v", err)
+		result.Message = fmt.Sprintf("Failed to get blob service properties with error: %v", err)
 		return
 	}
 
@@ -158,7 +158,7 @@ func CCC_ObjStor_C03_TR01_T03() (result raidengine.MovementResult) {
 
 	if err != nil {
 		result.Passed = false
-		result.Message = fmt.Sprintf("Failed with error: %v", err)
+		result.Message = fmt.Sprintf("Failed to get blob service properties with error: %v", err)
 		return
 	}
 
@@ -266,7 +266,7 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 
 	if err != nil {
 		result.Passed = false
-		result.Message = fmt.Sprintf("Failed with error: %v", err)
+		result.Message = fmt.Sprintf("Failed to get blob service properties with error: %v", err)
 		return
 	}
 
@@ -323,7 +323,7 @@ func CCC_ObjStor_C03_TR01_T06() (result raidengine.MovementResult) {
 			_, updateBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(updatedBlobContent), nil)
 
 			if updateBlobFailedError == nil {
-				azblobClient, newBlobClientFailedError := ArmoryDeleteProtectionFunctions.GetBlobClient(storageAccountUri) //azblob.NewClient(storageAccountUri, cred, nil)
+				azblobClient, newBlobClientFailedError := ArmoryDeleteProtectionFunctions.GetBlobClient(storageAccountUri)
 
 				if newBlobClientFailedError == nil {
 					blobVersionsPager := azblobClient.NewListBlobsFlatPager(containerName, &azblob.ListBlobsFlatOptions{

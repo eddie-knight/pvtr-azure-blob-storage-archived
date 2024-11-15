@@ -26,13 +26,12 @@ type deleteProtectionFunctionsMock struct {
 	getBlobContainerClientError      error
 	createContainerError             error
 	deleteContainerError             error
-	// containersPages                  []armstorage.BlobContainersClientListResponse
-	randomString            string
-	containerItem           armstorage.ListContainerItem
-	getBlobBlockClientError error
-	blobBlockClient         BlockBlobClientInterface
-	blobClient              BlobClientInterface
-	getBlobClientError      error
+	randomString                     string
+	containerItem                    armstorage.ListContainerItem
+	getBlobBlockClientError          error
+	blobBlockClient                  BlockBlobClientInterface
+	blobClient                       BlobClientInterface
+	getBlobClientError               error
 }
 
 func (mock *deleteProtectionFunctionsMock) GetBlobServiceProperties() error {
@@ -158,7 +157,7 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_error(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed with error:")
+	assert.Contains(t, result.Message, "Failed to get blob service properties")
 }
 
 func Test_CCC_ObjStor_C03_TR01_T01_fails_with_soft_delete_disabled(t *testing.T) {
@@ -308,7 +307,7 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_error(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed with error:")
+	assert.Contains(t, result.Message, "Failed to get blob service properties")
 }
 
 func Test_CCC_ObjStor_C03_TR01_T03_fails_with_soft_delete_disabled(t *testing.T) {
@@ -468,7 +467,7 @@ func Test_CCC_ObjStor_C03_TR01_T05_fails_with_error(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed with error:")
+	assert.Contains(t, result.Message, "Failed to get blob service properties")
 }
 
 func Test_CCC_ObjStor_C03_TR01_T06_succeeds(t *testing.T) {

@@ -40,7 +40,6 @@ func (mock *mockLogClient) QueryResource(ctx context.Context, resourceID string,
 }
 
 type mockDiagnosticSettingsClient struct {
-	pages        []armmonitor.DiagnosticSettingsClientListResponse
 	diagSettings []*armmonitor.DiagnosticSettingsResource
 }
 
@@ -291,7 +290,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categ
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testing.T) {
 	// Arrange
 	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		pages: []armmonitor.DiagnosticSettingsClientListResponse{{}},
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{},
 	}
 
 	// Act
