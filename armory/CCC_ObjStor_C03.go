@@ -226,7 +226,7 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 
 				if blobUndeleteFailedError == nil {
 					result.Passed = true
-					result.Message = "Deleted blob successfully restored. "
+					result.Message = "Deleted blob successfully restored."
 				} else {
 					result.Passed = false
 					result.Message = fmt.Sprintf("Failed to undelete blob with error: %v. ", blobUndeleteFailedError)
@@ -353,10 +353,10 @@ func CCC_ObjStor_C03_TR01_T06() (result raidengine.MovementResult) {
 
 					if versions < 2 {
 						result.Passed = false
-						result.Message = "Previous versions are not accessible when a blob is updated"
+						result.Message = "Previous versions are not accessible when a blob is updated."
 					} else {
 						result.Passed = true
-						result.Message = "Previous versions are accessible when a blob is updated"
+						result.Message = "Previous versions are accessible when a blob is updated."
 					}
 
 				} else {
@@ -384,7 +384,7 @@ func CCC_ObjStor_C03_TR01_T06() (result raidengine.MovementResult) {
 	if deleteContainerFailedError != nil {
 		result.Passed = false
 		// Append error message to existing message so that we don't lose the error message from the previous step
-		result.Message += fmt.Sprintf("Failed to delete blob container with error: %v", deleteContainerFailedError)
+		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
 		return
 	}
 
