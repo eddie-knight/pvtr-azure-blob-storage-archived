@@ -18,6 +18,7 @@ import (
 
 type loggingFunctionsMock struct {
 	commonFunctionsMock
+	azureUtilsMock
 	confirmLoggingToLogAnalyticsIsConfiguredResult bool
 	confirmHTTPResponseIsLoggedResult              bool
 }
@@ -89,10 +90,15 @@ func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
 		confirmHTTPResponseIsLoggedResult: true,
 		commonFunctionsMock: commonFunctionsMock{
 			httpResponse: &http.Response{StatusCode: http.StatusOK},
-			tokenResult:  "mocked_token"}}
+		},
+		azureUtilsMock: azureUtilsMock{
+			tokenResult: "mocked_token",
+		},
+	}
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C04_TR01_T02()
@@ -123,10 +129,15 @@ func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 		confirmHTTPResponseIsLoggedResult: false,
 		commonFunctionsMock: commonFunctionsMock{
 			httpResponse: &http.Response{StatusCode: http.StatusOK},
-			tokenResult:  "mocked_token"}}
+		},
+		azureUtilsMock: azureUtilsMock{
+			tokenResult: "mocked_token",
+		},
+	}
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C04_TR01_T02()
@@ -174,10 +185,15 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 		confirmHTTPResponseIsLoggedResult: false,
 		commonFunctionsMock: commonFunctionsMock{
 			httpResponse: &http.Response{StatusCode: http.StatusOK},
-			tokenResult:  "mocked_token"}}
+		},
+		azureUtilsMock: azureUtilsMock{
+			tokenResult: "mocked_token",
+		},
+	}
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C04_TR01_T03()

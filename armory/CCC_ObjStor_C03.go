@@ -3,7 +3,6 @@ package armory
 import (
 	"context"
 	"fmt"
-	"io"
 	"math/rand"
 	"strings"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
@@ -63,14 +61,6 @@ func CCC_ObjStor_C03_TR01_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	err := ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to get blob service properties with error: %v", err)
-		return
-	}
-
 	if *blobServiceProperties.BlobServiceProperties.ContainerDeleteRetentionPolicy.Enabled {
 		retentionPolicy := RetentionPolicy{
 			Name: "Soft Delete Policy Retention Period in Days",
@@ -98,17 +88,9 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	err := ArmoryDeleteProtectionFunctions.GetBlobContainerClient()
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob containers client with error: %v", err)
-		return
-	}
-
 	containerName := "privateer-test-container-" + ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
 
-	err = ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
+	err := ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -154,14 +136,6 @@ func CCC_ObjStor_C03_TR01_T03() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	err := ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to get blob service properties with error: %v", err)
-		return
-	}
-
 	if *blobServiceProperties.BlobServiceProperties.DeleteRetentionPolicy.Enabled {
 		retentionPolicy := RetentionPolicy{
 			Name: "Soft Delete Policy Retention Period in Days",
@@ -190,18 +164,10 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	err := ArmoryDeleteProtectionFunctions.GetBlobContainerClient()
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob containers client with error: %v", err)
-		return
-	}
-
 	randomString := ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
-	err = ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
+	err := ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -262,14 +228,6 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	err := ArmoryDeleteProtectionFunctions.GetBlobServiceProperties()
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to get blob service properties with error: %v", err)
-		return
-	}
-
 	if blobServiceProperties.BlobServiceProperties.IsVersioningEnabled == nil {
 		result.Passed = false
 		result.Message = "Versioning is not enabled for Storage Account Blobs."
@@ -290,18 +248,10 @@ func CCC_ObjStor_C03_TR01_T06() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	err := ArmoryDeleteProtectionFunctions.GetBlobContainerClient()
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob containers client with error: %v", err)
-		return
-	}
-
 	randomString := ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
-	err = ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
+	err := ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -507,8 +457,6 @@ type RetentionPolicy struct {
 }
 
 type DeleteProtectionFunctions interface {
-	GetBlobServiceProperties() error
-	GetBlobContainerClient() error
 	CreateContainer(containerName string) error
 	DeleteContainer(containerName string) error
 	GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
@@ -518,50 +466,6 @@ type DeleteProtectionFunctions interface {
 }
 
 type deleteProtectionFunctions struct{}
-
-type BlockBlobClientInterface interface {
-	UploadStream(ctx context.Context, body io.Reader, o *blockblob.UploadStreamOptions) (blockblob.UploadStreamResponse, error)
-	Delete(ctx context.Context, options *blob.DeleteOptions) (blob.DeleteResponse, error)
-	Undelete(ctx context.Context, options *blob.UndeleteOptions) (blob.UndeleteResponse, error)
-}
-
-type BlobClientInterface interface {
-	NewListBlobsFlatPager(containerName string, options *azblob.ListBlobsFlatOptions) *runtime.Pager[azblob.ListBlobsFlatResponse]
-}
-
-func (*deleteProtectionFunctions) GetBlobServiceProperties() error {
-	if blobServiceProperties == nil {
-		var err error
-		blobServicesClient, err = armstorage.NewBlobServicesClient(resourceId.subscriptionId, cred, nil)
-
-		if err != nil {
-			return fmt.Errorf("failed to create blob services client with error: %v", err)
-		}
-
-		blobServicePropertiesResponse, err := blobServicesClient.GetServiceProperties(context.Background(), resourceId.resourceGroupName, resourceId.storageAccountName, nil)
-
-		if err != nil {
-			return fmt.Errorf("failed to get blob service properties for storage account with error: %v", err)
-		}
-
-		blobServiceProperties = &blobServicePropertiesResponse.BlobServiceProperties
-	}
-
-	return nil
-}
-
-func (*deleteProtectionFunctions) GetBlobContainerClient() error {
-
-	if blobContainersClient == nil {
-		var err error
-
-		blobContainersClient, err = armstorage.NewBlobContainersClient(resourceId.subscriptionId, cred, nil)
-
-		return err
-	}
-
-	return nil
-}
 
 func (*deleteProtectionFunctions) CreateContainer(containerName string) error {
 
