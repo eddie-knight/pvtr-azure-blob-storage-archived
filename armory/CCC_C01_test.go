@@ -66,7 +66,8 @@ func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
-		azureUtilsMock: azureUtilsMock{tokenResult: "mocked_token"},
+		checkTlsVersionResult: true,
+		azureUtilsMock:        azureUtilsMock{tokenResult: ""},
 	}
 
 	ArmoryTlsFunctions = &myMock
