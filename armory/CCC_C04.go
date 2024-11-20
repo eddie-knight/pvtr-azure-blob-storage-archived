@@ -8,10 +8,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -67,7 +65,7 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	token := ArmoryCommonFunctions.GetToken(&result)
+	token := ArmoryAzureUtils.GetToken(&result)
 	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, token, &result, nil, nil)
 
 	if response.StatusCode != http.StatusOK {
@@ -119,10 +117,6 @@ var loggingVariables = logPollingVariables{
 	minimumIngestionTime: time.Duration(90 * time.Second),
 	maximumIngestionTime: time.Duration(5 * time.Minute),
 	pollingDelay:         time.Duration(10 * time.Second),
-}
-
-type DiagnosticSettingsClientInterface interface {
-	NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse]
 }
 
 func (*loggingFunctions) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
@@ -186,10 +180,6 @@ func (*loggingFunctions) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId str
 
 	result.Passed = false
 	result.Message = "Storage account is not configured to emit to log analytics workspace destination"
-}
-
-type LogsClientInterface interface {
-	QueryResource(ctx context.Context, resourceID string, body azquery.Body, options *azquery.LogsClientQueryResourceOptions) (azquery.LogsClientQueryResourceResponse, error)
 }
 
 func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {

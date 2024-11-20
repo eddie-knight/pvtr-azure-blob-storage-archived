@@ -41,7 +41,7 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	// Get access token
-	token := ArmoryCommonFunctions.GetToken(&result)
+	token := ArmoryAzureUtils.GetToken(&result)
 	if token == "" {
 		return
 	}

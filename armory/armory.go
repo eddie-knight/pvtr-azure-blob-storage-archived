@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
@@ -30,11 +29,16 @@ type ABS struct {
 }
 
 var (
-	storageAccountUri         string
-	token                     azcore.AccessToken
-	cred                      *azidentity.DefaultAzureCredential
-	storageAccountResourceId  string
-	storageAccountResource    armstorage.Account
+	storageAccountResourceId string
+	storageAccountUri        string
+	token                    azcore.AccessToken
+	cred                     *azidentity.DefaultAzureCredential
+	storageAccountResource   armstorage.Account
+	resourceId               struct {
+		subscriptionId     string
+		resourceGroupName  string
+		storageAccountName string
+	}
 	armstorageClient          *armstorage.AccountsClient
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
@@ -43,13 +47,8 @@ var (
 	blobServiceProperties     *armstorage.BlobServiceProperties
 	blobContainersClient      *armstorage.BlobContainersClient
 
-	resourceId struct {
-		subscriptionId     string
-		resourceGroupName  string
-		storageAccountName string
-	}
-
 	ArmoryCommonFunctions           CommonFunctions           = &commonFunctions{}
+	ArmoryAzureUtils                AzureUtils                = &azureUtils{}
 	ArmoryTlsFunctions              TlsFunctions              = &tlsFunctions{}
 	ArmoryLoggingFunctions          LoggingFunctions          = &loggingFunctions{}
 	ArmoryDeleteProtectionFunctions DeleteProtectionFunctions = &deleteProtectionFunctions{}
@@ -65,20 +64,13 @@ func (a *ABS) GetTactics() map[string][]raidengine.Strike {
 }
 
 func (a *ABS) Initialize() error {
-	// Get storage account resource ID
+	// Parse resource ID
 	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
-	if valid, err := ValidateVariableValue(storageAccountResourceId, `^/subscriptions/[0-9a-fA-F-]+/resourceGroups/[a-zA-Z0-9-_()]+/providers/Microsoft\.Storage/storageAccounts/[a-z0-9]+$`); !valid {
-		return fmt.Errorf("storage account resource ID variable validation failed with error: %s", err)
+
+	if storageAccountResourceId == "" {
+		return fmt.Errorf("required variable storage account resource ID is not provided")
 	}
 
-	// Get an Azure credential
-	var err error
-	cred, err = azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		return fmt.Errorf("failed to get Azure credential: %v", err)
-	}
-
-	// Get storage account name and resource group
 	re := regexp.MustCompile(`^/subscriptions/(?P<subscription>[0-9a-fA-F-]+)/resourceGroups/(?P<resourceGroup>[a-zA-Z0-9-_()]+)/providers/Microsoft\.Storage/storageAccounts/(?P<storageAccount>[a-z0-9]+)$`)
 	match := re.FindStringSubmatch(storageAccountResourceId)
 
@@ -88,72 +80,81 @@ func (a *ABS) Initialize() error {
 
 	resourceId.subscriptionId, resourceId.resourceGroupName, resourceId.storageAccountName = match[1], match[2], match[3]
 
+	// Get an Azure credential
+	var err error
+	cred, err = azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		return fmt.Errorf("failed to get Azure credential: %v", err)
+	}
+
 	// Create an Azure resources client
 	armstorageClient, err = armstorage.NewAccountsClient(resourceId.subscriptionId, cred, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create armstorage client: %v", err)
 	}
 
+	// Set context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	// Get storage account resource
-	storageAccountResponse, err := armstorageClient.GetProperties(context.Background(), resourceId.resourceGroupName, resourceId.storageAccountName, nil)
-	// TODO: Set context with timeout and appropriate cancellation
+	storageAccountResponse, err := armstorageClient.GetProperties(ctx, resourceId.resourceGroupName, resourceId.storageAccountName, nil)
+
 	if err != nil {
 		return fmt.Errorf("failed to get storage account resource: %v", err)
 	}
 
 	storageAccountResource = storageAccountResponse.Account
-
-	if storageAccountResource.Properties.PrimaryEndpoints.Blob != nil {
-		storageAccountUri = *storageAccountResource.Properties.PrimaryEndpoints.Blob
-	} else {
-		return fmt.Errorf("primary blob endpoint URI is nil")
-	}
+	storageAccountUri = *storageAccountResource.Properties.PrimaryEndpoints.Blob
 
 	// Get a logs client
 	logsClient, err = azquery.NewLogsClient(cred, nil)
+
 	if err != nil {
 		log.Fatalf("Failed to create Azure logs client: %v", err)
 	}
 
-	// Get a client factory for ARM monitor
+	// Get a diagnostic settings client
 	armMonitorClientFactory, err = armmonitor.NewClientFactory(resourceId.subscriptionId, cred, nil)
+
 	if err != nil {
 		log.Fatalf("Failed to create Azure monitor client factory: %v", err)
 	}
 
 	diagnosticsSettingsClient = armMonitorClientFactory.NewDiagnosticSettingsClient()
 
+	// Get a blob services client
+	blobServicesClient, err = armstorage.NewBlobServicesClient(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Failed to create blob services client with error: %v", err)
+	}
+
+	// Get blob service properties
+	blobServicePropertiesResponse, err := blobServicesClient.GetServiceProperties(ctx, resourceId.resourceGroupName, resourceId.storageAccountName, nil)
+
+	if err != nil {
+		log.Fatalf("Failed to get blob service properties for storage account with error: %v", err)
+	}
+
+	blobServiceProperties = &blobServicePropertiesResponse.BlobServiceProperties
+
+	// Get a blob containers client
+	blobContainersClient, err = armstorage.NewBlobContainersClient(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Failed to create blob containers client with error: %v", err)
+	}
+
 	return nil
 }
 
 type CommonFunctions interface {
-	GetToken(result *raidengine.MovementResult) string
 	MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response
 }
 
 type commonFunctions struct{}
 
-func (*commonFunctions) GetToken(result *raidengine.MovementResult) string {
-	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
-
-		log.Default().Printf("Getting new access token")
-		var err error
-		token, err = cred.GetToken(context.Background(), policy.TokenRequestOptions{
-			Scopes: []string{"https://storage.azure.com/.default"},
-		})
-		if err != nil {
-			result.Message = fmt.Sprintf("Failed to get access token: %v", err)
-			return ""
-		}
-
-		return token.Token
-	}
-
-	log.Default().Printf("Using existing access token")
-	return token.Token
-}
-
-// MakeGETRequest makes a GET request to the specified endpoint and returns the status code
 func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	// Add query parameters to request URL
 	endpoint = endpoint + "?comp=list"
@@ -217,91 +218,6 @@ func StrikeResultSetter(successMessage string, failureMessage string, result *ra
 	// If no movements failed, set strike result to passed
 	result.Passed = true
 	result.Message = successMessage
-}
-
-func ValidateVariableValue(variableValue string, regex string) (bool, error) {
-	// Check if variable is populated
-	if variableValue == "" {
-		return false, fmt.Errorf("variable is required and not populated")
-	}
-
-	// Check if variable matches regex
-	matched, err := regexp.MatchString(regex, variableValue)
-	if err != nil {
-		return false, fmt.Errorf("validation of variable has failed with message: %s", err)
-	}
-
-	if !matched {
-		return false, fmt.Errorf("variable value is not valid")
-	}
-
-	return true, nil
-}
-
-// -----
-// Strike and Movements for CCC_C03_TR01
-// -----
-
-// CCC_C03_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C03_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Ensure that MFA is required for all user access to the service interface.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C03_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C03_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C03_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C03_TR02
-// -----
-
-// CCC_C03_TR02 conforms to the Strike function type
-func (a *ABS) CCC_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C03_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Ensure that MFA is required for all administrative access to the management interface.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C03_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C03_TR02
-	return
 }
 
 // -----

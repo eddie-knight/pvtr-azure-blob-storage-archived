@@ -16,45 +16,14 @@ import (
 )
 
 type deleteProtectionFunctionsMock struct {
-	softDeleteContainerPolicyEnabled bool
-	softDeleteContainerRetentionDays int32
-	softDeleteBlobPolicyEnabled      bool
-	softDeleteBlobRetentionDays      int32
-	blobVersioningEnabled            bool
-	allowPermanentDelete             bool
-	getBlobServicePropertiesError    error
-	getBlobContainerClientError      error
-	createContainerError             error
-	deleteContainerError             error
-	randomString                     string
-	containerItem                    armstorage.ListContainerItem
-	getBlobBlockClientError          error
-	blobBlockClient                  BlockBlobClientInterface
-	blobClient                       BlobClientInterface
-	getBlobClientError               error
-}
-
-func (mock *deleteProtectionFunctionsMock) GetBlobServiceProperties() error {
-	blobServiceProperties = &armstorage.BlobServiceProperties{
-		BlobServiceProperties: &armstorage.BlobServicePropertiesProperties{
-			IsVersioningEnabled: to.Ptr(mock.blobVersioningEnabled),
-			DeleteRetentionPolicy: &armstorage.DeleteRetentionPolicy{
-				Enabled:              to.Ptr(mock.softDeleteBlobPolicyEnabled),
-				Days:                 to.Ptr(mock.softDeleteBlobRetentionDays),
-				AllowPermanentDelete: to.Ptr(mock.allowPermanentDelete),
-			},
-			ContainerDeleteRetentionPolicy: &armstorage.DeleteRetentionPolicy{
-				Enabled: to.Ptr(mock.softDeleteContainerPolicyEnabled),
-				Days:    to.Ptr(mock.softDeleteContainerRetentionDays),
-			},
-		},
-	}
-
-	return mock.getBlobServicePropertiesError
-}
-
-func (mock *deleteProtectionFunctionsMock) GetBlobContainerClient() error {
-	return mock.getBlobContainerClientError
+	createContainerError    error
+	deleteContainerError    error
+	randomString            string
+	containerItem           armstorage.ListContainerItem
+	getBlobBlockClientError error
+	blobBlockClient         BlockBlobClientInterface
+	blobClient              BlobClientInterface
+	getBlobClientError      error
 }
 
 func (mock *deleteProtectionFunctionsMock) CreateContainer(containerName string) error {
@@ -131,11 +100,11 @@ func (mock *mockBlobClient) NewListBlobsFlatPager(containerName string, options 
 
 func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		softDeleteContainerPolicyEnabled: true,
 		softDeleteContainerRetentionDays: 7,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T01()
@@ -145,27 +114,12 @@ func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {
 	assert.Equal(t, myMock.softDeleteContainerRetentionDays, result.Value.(RetentionPolicy).Days)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T01_fails_with_error(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		getBlobServicePropertiesError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T01()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to get blob service properties")
-}
-
 func Test_CCC_ObjStor_C03_TR01_T01_fails_with_soft_delete_disabled(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		softDeleteContainerPolicyEnabled: false,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T01()
@@ -177,12 +131,12 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_soft_delete_disabled(t *testing.T)
 
 func Test_CCC_ObjStor_C03_TR01_T01_fails_with_permanent_delete_enabled(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		softDeleteContainerPolicyEnabled: true,
 		softDeleteContainerRetentionDays: 7,
 		allowPermanentDelete:             true,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T01()
@@ -233,21 +187,6 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T
 	assert.Equal(t, false, result.Passed)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T02_fails_with_container_client_error(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		getBlobContainerClientError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T02()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "containers client")
-}
-
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.T) {
 	// Arrange
 	myMock := deleteProtectionFunctionsMock{
@@ -280,12 +219,13 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_delete_container_error(t *testing.
 
 func Test_CCC_ObjStor_C03_TR01_T03_succeeds(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		allowPermanentDelete:        false,
 		softDeleteBlobPolicyEnabled: true,
 		softDeleteBlobRetentionDays: 7,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	// ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T03()
@@ -295,27 +235,13 @@ func Test_CCC_ObjStor_C03_TR01_T03_succeeds(t *testing.T) {
 	assert.Equal(t, myMock.softDeleteBlobRetentionDays, result.Value.(RetentionPolicy).Days)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T03_fails_with_error(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		getBlobServicePropertiesError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T03()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to get blob service properties")
-}
-
 func Test_CCC_ObjStor_C03_TR01_T03_fails_with_soft_delete_disabled(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		softDeleteBlobPolicyEnabled: false,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	// ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T03()
@@ -327,12 +253,13 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_soft_delete_disabled(t *testing.T)
 
 func Test_CCC_ObjStor_C03_TR01_T03_fails_with_permanent_delete_enabled(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		softDeleteBlobPolicyEnabled: true,
 		softDeleteBlobRetentionDays: 7,
 		allowPermanentDelete:        true,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	// ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T03()
@@ -443,31 +370,17 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T05_succeeds(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := blobServicePropertiesMock{
 		blobVersioningEnabled: true,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	// ArmoryDeleteProtectionFunctions = &myMock
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T05()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T05_fails_with_error(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		getBlobServicePropertiesError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T05()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to get blob service properties")
 }
 
 func Test_CCC_ObjStor_C03_TR01_T06_succeeds(t *testing.T) {
@@ -495,20 +408,6 @@ func Test_CCC_ObjStor_C03_TR01_T06_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_fails_get_container_client_fails(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		getBlobContainerClientError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T06_fails_fails_create_container_fails(t *testing.T) {

@@ -15,8 +15,11 @@ import (
 )
 
 type commonFunctionsMock struct {
-	tokenResult  string
 	httpResponse *http.Response
+}
+
+type azureUtilsMock struct {
+	tokenResult string
 }
 
 type storageAccountMock struct {
@@ -31,6 +34,15 @@ type storageAccountMock struct {
 	immutabilityPolicyEnabled bool
 	immutabilityPolicyDays    int32
 	immutabilityPolicyState   armstorage.AccountImmutabilityPolicyState
+}
+
+type blobServicePropertiesMock struct {
+	softDeleteContainerPolicyEnabled bool
+	softDeleteContainerRetentionDays int32
+	softDeleteBlobPolicyEnabled      bool
+	softDeleteBlobRetentionDays      int32
+	blobVersioningEnabled            bool
+	allowPermanentDelete             bool
 }
 
 func TestMain(m *testing.M) {
@@ -79,6 +91,25 @@ func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
 	}
 }
 
+func (mock *blobServicePropertiesMock) SetBlobServiceProperties() *armstorage.BlobServiceProperties {
+	blobServiceProperties := armstorage.BlobServiceProperties{
+		BlobServiceProperties: &armstorage.BlobServicePropertiesProperties{
+			IsVersioningEnabled: to.Ptr(mock.blobVersioningEnabled),
+			DeleteRetentionPolicy: &armstorage.DeleteRetentionPolicy{
+				Enabled:              to.Ptr(mock.softDeleteBlobPolicyEnabled),
+				Days:                 to.Ptr(mock.softDeleteBlobRetentionDays),
+				AllowPermanentDelete: to.Ptr(mock.allowPermanentDelete),
+			},
+			ContainerDeleteRetentionPolicy: &armstorage.DeleteRetentionPolicy{
+				Enabled: to.Ptr(mock.softDeleteContainerPolicyEnabled),
+				Days:    to.Ptr(mock.softDeleteContainerRetentionDays),
+			},
+		},
+	}
+
+	return to.Ptr(blobServiceProperties)
+}
+
 func CreatePager[T any](listItems []T) *runtime.Pager[T] {
 	return runtime.NewPager(runtime.PagingHandler[T]{
 		More: func(page T) bool {
@@ -97,7 +128,7 @@ func CreatePager[T any](listItems []T) *runtime.Pager[T] {
 	})
 }
 
-func (mock *commonFunctionsMock) GetToken(result *raidengine.MovementResult) string {
+func (mock *azureUtilsMock) GetToken(result *raidengine.MovementResult) string {
 	return mock.tokenResult
 }
 

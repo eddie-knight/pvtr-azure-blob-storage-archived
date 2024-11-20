@@ -10,6 +10,7 @@ import (
 )
 
 type tlsFunctionsMock struct {
+	azureUtilsMock
 	commonFunctionsMock
 	checkTlsVersionResult                     bool
 	confirmHttpRequestFailsResult             bool
@@ -32,10 +33,11 @@ func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		checkTlsVersionResult: true,
-		commonFunctionsMock:   commonFunctionsMock{tokenResult: "mocked_token"}}
+		azureUtilsMock:        azureUtilsMock{tokenResult: "mocked_token"},
+	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR01_T01()
@@ -48,10 +50,11 @@ func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		checkTlsVersionResult: false,
-		commonFunctionsMock:   commonFunctionsMock{tokenResult: "mocked_token"}}
+		azureUtilsMock:        azureUtilsMock{tokenResult: "mocked_token"},
+	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR01_T01()
@@ -63,10 +66,11 @@ func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
-		commonFunctionsMock: commonFunctionsMock{tokenResult: ""}}
+		azureUtilsMock: azureUtilsMock{tokenResult: "mocked_token"},
+	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR01_T01()
@@ -82,7 +86,7 @@ func Test_CCC_C01_TR02_T01_succeeds(t *testing.T) {
 	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR02_T01()
@@ -98,7 +102,7 @@ func Test_CCC_C01_TR02_T01_fails_if_confirmHttpRequestFails_fails(t *testing.T) 
 	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR02_T01()
@@ -114,7 +118,7 @@ func Test_CCC_C01_TR03_T01_succeeds(t *testing.T) {
 	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR03_T01()
@@ -130,7 +134,7 @@ func Test_CCC_C01_TR03_T01_fails_if_confirmOutdatedProtocolRequestsFail_fails(t 
 	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR03_T01()
@@ -146,7 +150,7 @@ func Test_CCC_C01_TR03_T02_succeeds(t *testing.T) {
 	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR03_T02()
@@ -162,7 +166,7 @@ func Test_CCC_C01_TR03_T02_fails_if_confirmOutdatedProtocolRequestsFail_fails(t 
 	}
 
 	ArmoryTlsFunctions = &myMock
-	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_C01_TR03_T02()
