@@ -3,15 +3,10 @@ package armory
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"strings"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -42,11 +37,6 @@ func (a *ABS) CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.Strik
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T05)
-	if result.Movements["CCC_ObjStor_C03_TR01_T05"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T06)
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T07)
 
 	StrikeResultSetter("Object storage buckets cannot be deleted after creation.",
 		"Object storage buckets can be deleted after creation, see movement results for more details.",
@@ -88,9 +78,9 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	containerName := "privateer-test-container-" + ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
+	containerName := "privateer-test-container-" + ArmoryCommonFunctions.GenerateRandomString(8)
 
-	err := ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
+	err := ArmoryAzureUtils.CreateContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -98,7 +88,7 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	err = ArmoryDeleteProtectionFunctions.DeleteContainer(containerName)
+	err = ArmoryAzureUtils.DeleteContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -106,7 +96,7 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	containersPager := ArmoryDeleteProtectionFunctions.GetContainers(armstorage.BlobContainersClientListOptions{
+	containersPager := ArmoryAzureUtils.GetContainers(armstorage.BlobContainersClientListOptions{
 		Include: to.Ptr(armstorage.ListContainersIncludeDeleted),
 	})
 
@@ -164,10 +154,10 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	randomString := ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
+	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
-	err := ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
+	err := ArmoryAzureUtils.CreateContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -179,7 +169,7 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 	blobUri := fmt.Sprintf("%s%s/%s", storageAccountUri, containerName, blobName)
 	blobContent := "Privateer test blob content"
 
-	blobBlockClient, newBlockBlobClientFailedError := ArmoryDeleteProtectionFunctions.GetBlockBlobClient(blobUri)
+	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
 	if newBlockBlobClientFailedError == nil {
 		_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
@@ -210,7 +200,7 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v. ", newBlockBlobClientFailedError)
 	}
 
-	err = ArmoryDeleteProtectionFunctions.DeleteContainer(containerName)
+	err = ArmoryAzureUtils.DeleteContainer(containerName)
 
 	if err != nil {
 		result.Passed = false
@@ -223,125 +213,6 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 }
 
 func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "Confirms that versioning for blobs is configured for the Storage Account.",
-		Function:    utils.CallerPath(0),
-	}
-
-	if blobServiceProperties.BlobServiceProperties.IsVersioningEnabled == nil {
-		result.Passed = false
-		result.Message = "Versioning is not enabled for Storage Account Blobs."
-	} else if *blobServiceProperties.BlobServiceProperties.IsVersioningEnabled {
-		result.Passed = true
-		result.Message = "Versioning is enabled for Storage Account Blobs."
-	} else {
-		result.Passed = false
-		result.Message = "Versioning is not enabled for Storage Account Blobs."
-	}
-
-	return
-}
-
-func CCC_ObjStor_C03_TR01_T06() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "Confirms that previous versions are accessible when a blob is updated.",
-		Function:    utils.CallerPath(0),
-	}
-
-	randomString := ArmoryDeleteProtectionFunctions.GenerateRandomString(8)
-	containerName := "privateer-test-container-" + randomString
-
-	err := ArmoryDeleteProtectionFunctions.CreateContainer(containerName)
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
-		return
-	}
-
-	blobName := "privateer-test-blob-" + randomString
-	blobUri := fmt.Sprintf("%s%s/%s", storageAccountUri, containerName, blobName)
-	blobContent := "Privateer test blob content"
-	updatedBlobContent := "Updated " + blobContent
-
-	blobBlockClient, newBlockBlobClientFailedError := ArmoryDeleteProtectionFunctions.GetBlockBlobClient(blobUri)
-
-	if newBlockBlobClientFailedError == nil {
-		_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
-
-		if uploadBlobFailedError == nil {
-			_, updateBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(updatedBlobContent), nil)
-
-			if updateBlobFailedError == nil {
-				azblobClient, newBlobClientFailedError := ArmoryDeleteProtectionFunctions.GetBlobClient(storageAccountUri)
-
-				if newBlobClientFailedError == nil {
-					blobVersionsPager := azblobClient.NewListBlobsFlatPager(containerName, &azblob.ListBlobsFlatOptions{
-						Prefix:  &blobName,
-						Include: azblob.ListBlobsInclude{Versions: true},
-					})
-
-					var versions int
-					for blobVersionsPager.More() {
-						page, err := blobVersionsPager.NextPage(context.Background())
-						if err != nil {
-							result.Passed = false
-							result.Message = fmt.Sprintf("Failed to list blob versions with error: %v", err)
-							return
-						}
-
-						for _, blobItem := range page.Segment.BlobItems {
-							if *blobItem.Name == blobName {
-								versions++
-							}
-						}
-
-						if versions > 2 {
-							break
-						}
-					}
-
-					if versions < 2 {
-						result.Passed = false
-						result.Message = "Previous versions are not accessible when a blob is updated."
-					} else {
-						result.Passed = true
-						result.Message = "Previous versions are accessible when a blob is updated."
-					}
-
-				} else {
-					result.Passed = false
-					result.Message = fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError)
-				}
-
-			} else {
-				result.Passed = false
-				result.Message = fmt.Sprintf("Failed to update blob with error: %v", updateBlobFailedError)
-			}
-
-		} else {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError)
-		}
-
-	} else {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
-	}
-
-	deleteContainerFailedError := ArmoryDeleteProtectionFunctions.DeleteContainer(containerName)
-
-	if deleteContainerFailedError != nil {
-		result.Passed = false
-		// Append error message to existing message so that we don't lose the error message from the previous step
-		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
-		return
-	}
-
-	return
-}
-
-func CCC_ObjStor_C03_TR01_T07() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
 		Description: "Confirms that immutability is enabled on the storage account for all blob storage.",
 		Function:    utils.CallerPath(0),
@@ -454,82 +325,4 @@ type ImmutabilityPolicyState struct {
 type RetentionPolicy struct {
 	Name string
 	Days int32
-}
-
-type DeleteProtectionFunctions interface {
-	CreateContainer(containerName string) error
-	DeleteContainer(containerName string) error
-	GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
-	GenerateRandomString(n int) string
-	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
-	GetBlobClient(blobUri string) (BlobClientInterface, error)
-}
-
-type deleteProtectionFunctions struct{}
-
-func (*deleteProtectionFunctions) CreateContainer(containerName string) error {
-
-	_, err := blobContainersClient.Create(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		armstorage.BlobContainer{
-			ContainerProperties: &armstorage.ContainerProperties{},
-		},
-		nil,
-	)
-
-	return err
-}
-
-func (*deleteProtectionFunctions) DeleteContainer(containerName string) error {
-
-	_, err := blobContainersClient.Delete(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		nil,
-	)
-
-	return err
-}
-
-func (*deleteProtectionFunctions) GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
-
-	containersPager := blobContainersClient.NewListPager(resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		&blobContainerListOptions,
-	)
-
-	return containersPager
-}
-
-func (*deleteProtectionFunctions) UploadBlobContent(blockBlobClient *blockblob.Client, blobContent string) error {
-	_, err := blockBlobClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
-
-	return err
-}
-
-func (*deleteProtectionFunctions) DeleteBlob(blockBlobClient *blockblob.Client) error {
-	_, err := blockBlobClient.Delete(context.Background(), nil)
-
-	return err
-}
-
-func (*deleteProtectionFunctions) GenerateRandomString(n int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyz"
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[r.Intn(len(letters))]
-	}
-	return string(b)
-}
-
-func (*deleteProtectionFunctions) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
-	return blockblob.NewClient(blobUri, cred, nil)
-}
-
-func (*deleteProtectionFunctions) GetBlobClient(blobUri string) (BlobClientInterface, error) {
-	return azblob.NewClient(blobUri, cred, nil)
 }

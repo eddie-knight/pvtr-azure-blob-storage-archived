@@ -1,102 +1,12 @@
 package armory
 
 import (
-	"context"
-	"io"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/stretchr/testify/assert"
 )
-
-type deleteProtectionFunctionsMock struct {
-	createContainerError    error
-	deleteContainerError    error
-	randomString            string
-	containerItem           armstorage.ListContainerItem
-	getBlobBlockClientError error
-	blobBlockClient         BlockBlobClientInterface
-	blobClient              BlobClientInterface
-	getBlobClientError      error
-}
-
-func (mock *deleteProtectionFunctionsMock) CreateContainer(containerName string) error {
-	return mock.createContainerError
-}
-
-func (mock *deleteProtectionFunctionsMock) DeleteContainer(containerName string) error {
-	return mock.deleteContainerError
-}
-
-func (mock *deleteProtectionFunctionsMock) GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
-
-	containersPages := []armstorage.BlobContainersClientListResponse{
-		{
-			ListContainerItems: armstorage.ListContainerItems{
-				Value: []*armstorage.ListContainerItem{
-					&mock.containerItem,
-				},
-			},
-		},
-	}
-
-	return CreatePager(containersPages)
-}
-
-func (mock *deleteProtectionFunctionsMock) GenerateRandomString(length int) string {
-	return mock.randomString
-}
-
-func (mock *deleteProtectionFunctionsMock) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
-	return mock.blobBlockClient, mock.getBlobBlockClientError
-}
-
-func (mock *deleteProtectionFunctionsMock) GetBlobClient(storageAccountUri string) (BlobClientInterface, error) {
-	return mock.blobClient, mock.getBlobClientError
-}
-
-type mockBlockBlobClient struct {
-	uploadResponse   blockblob.UploadStreamResponse
-	uploadError      error
-	deleteResponse   blob.DeleteResponse
-	deleteError      error
-	undeleteResponse blob.UndeleteResponse
-	undeleteError    error
-}
-
-func (mock *mockBlockBlobClient) UploadStream(ctx context.Context, body io.Reader, options *blockblob.UploadStreamOptions) (blockblob.UploadStreamResponse, error) {
-	return mock.uploadResponse, mock.uploadError
-}
-
-func (mock *mockBlockBlobClient) Delete(ctx context.Context, options *blob.DeleteOptions) (blob.DeleteResponse, error) {
-	return mock.deleteResponse, mock.deleteError
-}
-
-func (mock *mockBlockBlobClient) Undelete(ctx context.Context, options *blob.UndeleteOptions) (blob.UndeleteResponse, error) {
-	return mock.undeleteResponse, mock.undeleteError
-}
-
-type mockBlobClient struct {
-	blobItems []*container.BlobItem
-}
-
-func (mock *mockBlobClient) NewListBlobsFlatPager(containerName string, options *azblob.ListBlobsFlatOptions) *runtime.Pager[azblob.ListBlobsFlatResponse] {
-	blobFlatListResponse := container.ListBlobsFlatResponse{
-		ListBlobsFlatSegmentResponse: container.ListBlobsFlatSegmentResponse{
-			Segment: &container.BlobFlatListSegment{
-				BlobItems: mock.blobItems,
-			},
-		},
-	}
-
-	return CreatePager([]azblob.ListBlobsFlatResponse{blobFlatListResponse})
-}
 
 func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
@@ -148,17 +58,20 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_permanent_delete_enabled(t *testin
 
 func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		containerItem: armstorage.ListContainerItem{
 			Name: to.Ptr("privateer-test-container-randomst"),
 			Properties: &armstorage.ContainerProperties{
 				Deleted: to.Ptr(true),
 			},
 		},
+	}
+	myCommonFunctionsMock := commonFunctionsMock{
 		randomString: "randomst",
 	}
 
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myCommonFunctionsMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -169,7 +82,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		containerItem: armstorage.ListContainerItem{
 			Name: to.Ptr("privateer-test-container"),
 			Properties: &armstorage.ContainerProperties{
@@ -178,7 +91,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T
 		},
 	}
 
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -189,10 +102,10 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		createContainerError: assert.AnError,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -204,10 +117,10 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_delete_container_error(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		deleteContainerError: assert.AnError,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -258,7 +171,6 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_permanent_delete_enabled(t *testin
 		softDeleteBlobRetentionDays: 7,
 		allowPermanentDelete:        true,
 	}
-	// ArmoryDeleteProtectionFunctions = &myMock
 	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
@@ -272,10 +184,10 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_permanent_delete_enabled(t *testin
 func Test_CCC_ObjStor_C03_TR01_T04_succeeds(t *testing.T) {
 	// Arrange
 	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		blobBlockClient: &myBlockBlobClient,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -286,11 +198,11 @@ func Test_CCC_ObjStor_C03_TR01_T04_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_get_block_client_fails(t *testing.T) {
 	// Arrange
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		blobBlockClient:         nil,
 		getBlobBlockClientError: assert.AnError,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -304,10 +216,10 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_upload_blob_fails(t *testing.T) {
 	myBlockBlobClient := mockBlockBlobClient{
 		uploadError: assert.AnError,
 	}
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		blobBlockClient: &myBlockBlobClient,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -321,10 +233,10 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_delete_blob_fails(t *testing.T) {
 	myBlockBlobClient := mockBlockBlobClient{
 		deleteError: assert.AnError,
 	}
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		blobBlockClient: &myBlockBlobClient,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -338,10 +250,10 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_undelete_blob_fails(t *testing.T) {
 	myBlockBlobClient := mockBlockBlobClient{
 		undeleteError: assert.AnError,
 	}
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		blobBlockClient: &myBlockBlobClient,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -353,11 +265,11 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_undelete_blob_fails(t *testing.T) {
 func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
 	// Arrange
 	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
+	myMock := azureUtilsMock{
 		blobBlockClient:      &myBlockBlobClient,
 		deleteContainerError: assert.AnError,
 	}
-	ArmoryDeleteProtectionFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -368,192 +280,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
 	assert.Contains(t, result.Message, "Deleted blob successfully restored")
 }
 
-func Test_CCC_ObjStor_C03_TR01_T05_succeeds(t *testing.T) {
-	// Arrange
-	myMock := blobServicePropertiesMock{
-		blobVersioningEnabled: true,
-	}
-	// ArmoryDeleteProtectionFunctions = &myMock
-	blobServiceProperties = myMock.SetBlobServiceProperties()
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T05()
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_succeeds(t *testing.T) {
-	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-		},
-	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
-		blobClient:      &myBlobClient,
-		blobBlockClient: &myBlockBlobClient,
-		randomString:    "randomst",
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_fails_create_container_fails(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		createContainerError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_fails_get_block_client_fails(t *testing.T) {
-	// Arrange
-	myMock := deleteProtectionFunctionsMock{
-		getBlobBlockClientError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_fails_get_blob_client_fails(t *testing.T) {
-	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
-		blobBlockClient:    &myBlockBlobClient,
-		getBlobClientError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_upload_fails(t *testing.T) {
-	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{
-		uploadError: assert.AnError,
-	}
-	myMock := deleteProtectionFunctionsMock{
-		blobBlockClient: &myBlockBlobClient,
-		randomString:    "randomst",
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_no_previous_version(t *testing.T) {
-	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-		},
-	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
-		blobClient:      &myBlobClient,
-		blobBlockClient: &myBlockBlobClient,
-		randomString:    "randomst",
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_succeeds_but_delete_container_fails(t *testing.T) {
-	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-		},
-	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
-		blobClient:           &myBlobClient,
-		blobBlockClient:      &myBlockBlobClient,
-		randomString:         "randomst",
-		deleteContainerError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Previous versions are accessible")
-}
-
-func Test_CCC_ObjStor_C03_TR01_T06_fails_fails_and_delete_container_fails(t *testing.T) {
-	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-		},
-	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := deleteProtectionFunctionsMock{
-		blobClient:           &myBlobClient,
-		blobBlockClient:      &myBlockBlobClient,
-		randomString:         "randomst",
-		deleteContainerError: assert.AnError,
-	}
-	ArmoryDeleteProtectionFunctions = &myMock
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T06()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Previous versions are not accessible")
-}
-
-func Test_CCC_ObjStor_C03_TR01_T07_succeeds_with_immutability_enabled(t *testing.T) {
+func Test_CCC_ObjStor_C03_TR01_T05_succeeds_with_immutability_enabled(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		immutabilityPopulated:     true,
@@ -563,14 +290,14 @@ func Test_CCC_ObjStor_C03_TR01_T07_succeeds_with_immutability_enabled(t *testing
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_ObjStor_C03_TR01_T07()
+	result := CCC_ObjStor_C03_TR01_T05()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, myMock.immutabilityPolicyDays, result.Value.(RetentionPolicy).Days)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T07_fails_with_immutability_empty(t *testing.T) {
+func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_empty(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		immutabilityPopulated: false,
@@ -578,13 +305,13 @@ func Test_CCC_ObjStor_C03_TR01_T07_fails_with_immutability_empty(t *testing.T) {
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_ObjStor_C03_TR01_T07()
+	result := CCC_ObjStor_C03_TR01_T05()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 }
 
-func Test_CCC_ObjStor_C03_TR01_T07_fails_with_immutability_disabled_populated(t *testing.T) {
+func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_disabled_populated(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		immutabilityPopulated:     true,
@@ -593,7 +320,7 @@ func Test_CCC_ObjStor_C03_TR01_T07_fails_with_immutability_disabled_populated(t 
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_ObjStor_C03_TR01_T07()
+	result := CCC_ObjStor_C03_TR01_T05()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)

@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
@@ -20,6 +22,11 @@ import (
 
 type AzureUtils interface {
 	GetToken(result *raidengine.MovementResult) string
+	CreateContainer(containerName string) error
+	DeleteContainer(containerName string) error
+	GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
+	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
+	GetBlobClient(blobUri string) (BlobClientInterface, error)
 }
 
 type azureUtils struct{}
@@ -42,6 +49,63 @@ func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
 
 	log.Default().Printf("Using existing access token")
 	return token.Token
+}
+
+func (*azureUtils) CreateContainer(containerName string) error {
+
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
+
+	return err
+}
+
+func (*azureUtils) DeleteContainer(containerName string) error {
+
+	_, err := blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
+
+	return err
+}
+
+func (*azureUtils) GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
+
+	containersPager := blobContainersClient.NewListPager(resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		&blobContainerListOptions,
+	)
+
+	return containersPager
+}
+
+func (*azureUtils) UploadBlobContent(blockBlobClient *blockblob.Client, blobContent string) error {
+	_, err := blockBlobClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
+
+	return err
+}
+
+func (*azureUtils) DeleteBlob(blockBlobClient *blockblob.Client) error {
+	_, err := blockBlobClient.Delete(context.Background(), nil)
+
+	return err
+}
+
+func (*azureUtils) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
+	return blockblob.NewClient(blobUri, cred, nil)
+}
+
+func (*azureUtils) GetBlobClient(blobUri string) (BlobClientInterface, error) {
+	return azblob.NewClient(blobUri, cred, nil)
 }
 
 type DiagnosticSettingsClientInterface interface {

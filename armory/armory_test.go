@@ -3,6 +3,7 @@ package armory
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -11,15 +12,99 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
 
 type commonFunctionsMock struct {
 	httpResponse *http.Response
+	randomString string
+}
+
+func (mock *commonFunctionsMock) GenerateRandomString(length int) string {
+	return mock.randomString
 }
 
 type azureUtilsMock struct {
-	tokenResult string
+	tokenResult             string
+	createContainerError    error
+	deleteContainerError    error
+	containerItem           armstorage.ListContainerItem
+	getBlobBlockClientError error
+	blobBlockClient         BlockBlobClientInterface
+	blobClient              BlobClientInterface
+	getBlobClientError      error
+}
+
+func (mock *azureUtilsMock) CreateContainer(containerName string) error {
+	return mock.createContainerError
+}
+
+func (mock *azureUtilsMock) DeleteContainer(containerName string) error {
+	return mock.deleteContainerError
+}
+
+func (mock *azureUtilsMock) GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
+
+	containersPages := []armstorage.BlobContainersClientListResponse{
+		{
+			ListContainerItems: armstorage.ListContainerItems{
+				Value: []*armstorage.ListContainerItem{
+					&mock.containerItem,
+				},
+			},
+		},
+	}
+
+	return CreatePager(containersPages)
+}
+
+func (mock *azureUtilsMock) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
+	return mock.blobBlockClient, mock.getBlobBlockClientError
+}
+
+func (mock *azureUtilsMock) GetBlobClient(storageAccountUri string) (BlobClientInterface, error) {
+	return mock.blobClient, mock.getBlobClientError
+}
+
+type mockBlockBlobClient struct {
+	uploadResponse   blockblob.UploadStreamResponse
+	uploadError      error
+	deleteResponse   blob.DeleteResponse
+	deleteError      error
+	undeleteResponse blob.UndeleteResponse
+	undeleteError    error
+}
+
+func (mock *mockBlockBlobClient) UploadStream(ctx context.Context, body io.Reader, options *blockblob.UploadStreamOptions) (blockblob.UploadStreamResponse, error) {
+	return mock.uploadResponse, mock.uploadError
+}
+
+func (mock *mockBlockBlobClient) Delete(ctx context.Context, options *blob.DeleteOptions) (blob.DeleteResponse, error) {
+	return mock.deleteResponse, mock.deleteError
+}
+
+func (mock *mockBlobClient) NewListBlobsFlatPager(containerName string, options *azblob.ListBlobsFlatOptions) *runtime.Pager[azblob.ListBlobsFlatResponse] {
+	blobFlatListResponse := container.ListBlobsFlatResponse{
+		ListBlobsFlatSegmentResponse: container.ListBlobsFlatSegmentResponse{
+			Segment: &container.BlobFlatListSegment{
+				BlobItems: mock.blobItems,
+			},
+		},
+	}
+
+	return CreatePager([]azblob.ListBlobsFlatResponse{blobFlatListResponse})
+}
+
+func (mock *mockBlockBlobClient) Undelete(ctx context.Context, options *blob.UndeleteOptions) (blob.UndeleteResponse, error) {
+	return mock.undeleteResponse, mock.undeleteError
+}
+
+type mockBlobClient struct {
+	blobItems []*container.BlobItem
 }
 
 type storageAccountMock struct {
