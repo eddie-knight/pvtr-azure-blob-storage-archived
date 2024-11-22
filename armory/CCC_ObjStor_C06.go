@@ -111,102 +111,70 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 
 	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
-
-	_, err := blobContainersClient.Create(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		armstorage.BlobContainer{
-			ContainerProperties: &armstorage.ContainerProperties{},
-		},
-		nil,
-	)
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
-		return
-	}
-
 	blobName := "privateer-test-blob-" + randomString
 	blobUri := fmt.Sprintf("%s%s/%s", storageAccountUri, containerName, blobName)
 	blobContent := "Privateer test blob content"
 
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
-	if newBlockBlobClientFailedError == nil {
-		_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
+	if newBlockBlobClientFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		return
+	}
 
-		if uploadBlobFailedError == nil {
-			_, deleteBlobFailedError := blobBlockClient.Delete(context.Background(), &blob.DeleteOptions{})
+	azblobClient, newBlobClientFailedError := ArmoryAzureUtils.GetBlobClient(storageAccountUri)
 
-			if deleteBlobFailedError == nil {
-				azblobClient, newBlobClientFailedError := ArmoryAzureUtils.GetBlobClient(storageAccountUri)
+	if newBlobClientFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError)
+		return
+	}
 
-				if newBlobClientFailedError == nil {
-					blobVersionsPager := azblobClient.NewListBlobsFlatPager(containerName, &azblob.ListBlobsFlatOptions{
-						Prefix:  &blobName,
-						Include: azblob.ListBlobsInclude{Versions: true},
-					})
+	blobBlockClient, createContainerSucceeded := ArmoryBlobVersioningFunctions.CreateContainerWithBlobContent(&result, blobBlockClient, containerName, blobName, blobContent)
 
-					var deletedBlobFound bool
-					for blobVersionsPager.More() {
-						page, err := blobVersionsPager.NextPage(context.Background())
-						if err != nil {
-							result.Passed = false
-							result.Message = fmt.Sprintf("Failed to list blob versions with error: %v", err)
-							return
-						}
+	if createContainerSucceeded {
 
-						for _, blobItem := range page.Segment.BlobItems {
-							if *blobItem.Name == blobName {
-								deletedBlobFound = true
-								break
-							}
-						}
-					}
+		_, deleteBlobFailedError := blobBlockClient.Delete(context.Background(), &blob.DeleteOptions{})
 
-					if deletedBlobFound {
-						result.Passed = true
-						result.Message = "Previous version is accessible when a blob is deleted."
-					} else {
-						result.Passed = false
-						result.Message = "Previous version is not accessible when a blob is deleted."
-					}
+		if deleteBlobFailedError == nil {
+			blobVersionsPager := azblobClient.NewListBlobsFlatPager(containerName, &azblob.ListBlobsFlatOptions{
+				Prefix:  &blobName,
+				Include: azblob.ListBlobsInclude{Versions: true},
+			})
 
-				} else {
+			var deletedBlobFound bool
+			for blobVersionsPager.More() {
+				page, err := blobVersionsPager.NextPage(context.Background())
+				if err != nil {
 					result.Passed = false
-					result.Message = fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError)
+					result.Message = fmt.Sprintf("Failed to list blob versions with error: %v", err)
+					return
 				}
 
+				for _, blobItem := range page.Segment.BlobItems {
+					if *blobItem.Name == blobName {
+						deletedBlobFound = true
+						break
+					}
+				}
+			}
+
+			if deletedBlobFound {
+				result.Passed = true
+				result.Message = "Previous version is accessible when a blob is deleted."
 			} else {
 				result.Passed = false
-				result.Message = fmt.Sprintf("Failed to delete blob with error: %v", deleteBlobFailedError)
+				result.Message = "Previous version is not accessible when a blob is deleted."
 			}
 
 		} else {
 			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError)
+			result.Message = fmt.Sprintf("Failed to delete blob with error: %v", deleteBlobFailedError)
 		}
-
-	} else {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
 	}
 
-	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		nil,
-	)
-
-	if deleteContainerFailedError != nil {
-		result.Passed = false
-		// Append error message to existing message so that we don't lose the error message from the previous step
-		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
-		return
-	}
+	ArmoryBlobVersioningFunctions.DeleteTestContainer(&result, containerName)
 
 	return
 }
@@ -218,6 +186,8 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 type BlobVersioningFunctions interface {
 	CheckVersioningIsEnabled(result *raidengine.MovementResult)
 	CheckPreviousVersionAccessibleOnUpdate(result *raidengine.MovementResult)
+	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
+	DeleteTestContainer(result *raidengine.MovementResult, containerName string)
 }
 
 type blobVersioningFunctions struct{}
@@ -232,6 +202,50 @@ func (b *blobVersioningFunctions) CheckVersioningIsEnabled(result *raidengine.Mo
 	} else {
 		result.Passed = false
 		result.Message = "Versioning is not enabled for Storage Account Blobs."
+	}
+}
+
+func (b *blobVersioningFunctions) CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool) {
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
+
+	if err != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
+		return nil, false
+	}
+
+	_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
+
+	if uploadBlobFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError)
+		return nil, false
+	}
+
+	return blobBlockClient, true
+}
+
+func (b *blobVersioningFunctions) DeleteTestContainer(result *raidengine.MovementResult, containerName string) {
+	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
+
+	if deleteContainerFailedError != nil {
+		result.Passed = false
+		// Append error message to existing message so that we don't lose the error message from the previous step
+		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
+		return
 	}
 }
 
