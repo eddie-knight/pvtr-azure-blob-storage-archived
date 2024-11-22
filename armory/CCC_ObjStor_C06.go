@@ -65,7 +65,7 @@ func (a *ABS) CCC_ObjStor_C06_TR04() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C06_TR04"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "Previous versions of an object can be accessed and restored after  an object is modified or deleted.",
+		Description: "Previous versions of an object can be accessed and restored after an object is modified or deleted.",
 		Message:     "Strike has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C06",
