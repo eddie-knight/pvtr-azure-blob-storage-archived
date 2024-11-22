@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
@@ -20,6 +22,10 @@ import (
 
 type AzureUtils interface {
 	GetToken(result *raidengine.MovementResult) string
+	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
+	GetBlobClient(blobUri string) (BlobClientInterface, error)
+	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
+	DeleteTestContainer(result *raidengine.MovementResult, containerName string)
 }
 
 type azureUtils struct{}
@@ -44,6 +50,62 @@ func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
 	return token.Token
 }
 
+func (*azureUtils) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
+	return blockblob.NewClient(blobUri, cred, nil)
+}
+
+func (*azureUtils) GetBlobClient(blobUri string) (BlobClientInterface, error) {
+	return azblob.NewClient(blobUri, cred, nil)
+}
+
+func (*azureUtils) CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool) {
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
+
+	if err != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
+		return nil, false
+	}
+
+	_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
+
+	if uploadBlobFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError)
+		return nil, false
+	}
+
+	return blobBlockClient, true
+}
+
+func (*azureUtils) DeleteTestContainer(result *raidengine.MovementResult, containerName string) {
+	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
+
+	if deleteContainerFailedError != nil {
+		result.Passed = false
+		// Append error message to existing message so that we don't lose the error message from the previous step
+		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
+		return
+	}
+}
+
+// -----
+// Azure Client Interfaces
+// -----
+
 type DiagnosticSettingsClientInterface interface {
 	NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse]
 }
@@ -60,4 +122,10 @@ type BlockBlobClientInterface interface {
 
 type BlobClientInterface interface {
 	NewListBlobsFlatPager(containerName string, options *azblob.ListBlobsFlatOptions) *runtime.Pager[azblob.ListBlobsFlatResponse]
+}
+
+type blobContainersClientInterface interface {
+	Create(ctx context.Context, resourceGroupName string, accountName string, containerName string, properties armstorage.BlobContainer, options *armstorage.BlobContainersClientCreateOptions) (armstorage.BlobContainersClientCreateResponse, error)
+	Delete(ctx context.Context, resourceGroupName string, accountName string, containerName string, options *armstorage.BlobContainersClientDeleteOptions) (armstorage.BlobContainersClientDeleteResponse, error)
+	NewListPager(resourceGroupName string, accountName string, options *armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"time"
@@ -45,13 +46,13 @@ var (
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
 	blobServicesClient        *armstorage.BlobServicesClient
 	blobServiceProperties     *armstorage.BlobServiceProperties
-	blobContainersClient      *armstorage.BlobContainersClient
+	blobContainersClient      blobContainersClientInterface
 
-	ArmoryCommonFunctions           CommonFunctions           = &commonFunctions{}
-	ArmoryAzureUtils                AzureUtils                = &azureUtils{}
-	ArmoryTlsFunctions              TlsFunctions              = &tlsFunctions{}
-	ArmoryLoggingFunctions          LoggingFunctions          = &loggingFunctions{}
-	ArmoryDeleteProtectionFunctions DeleteProtectionFunctions = &deleteProtectionFunctions{}
+	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
+	ArmoryAzureUtils              AzureUtils              = &azureUtils{}
+	ArmoryTlsFunctions            TlsFunctions            = &tlsFunctions{}
+	ArmoryLoggingFunctions        LoggingFunctions        = &loggingFunctions{}
+	ArmoryBlobVersioningFunctions BlobVersioningFunctions = &blobVersioningFunctions{}
 )
 
 func (a *ABS) SetLogger(loggerName string) hclog.Logger {
@@ -151,9 +152,20 @@ func (a *ABS) Initialize() error {
 
 type CommonFunctions interface {
 	MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response
+	GenerateRandomString(n int) string
 }
 
 type commonFunctions struct{}
+
+func (*commonFunctions) GenerateRandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyz"
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[r.Intn(len(letters))]
+	}
+	return string(b)
+}
 
 func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	// Add query parameters to request URL
@@ -494,7 +506,7 @@ func (a *ABS) CCC_ObjStor_C02_TR01() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C02_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "Admin users can configure bucket-level permissions uniformly across  all buckets, ensuring that object-level permissions cannot be  applied without explicit authorization.",
+		Description: "Admin users can configure bucket-level permissions uniformly across all buckets, ensuring that object-level permissions cannot be  applied without explicit authorization.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C02",
@@ -527,7 +539,7 @@ func (a *ABS) CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C05_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "All objects stored in the object storage system automatically receive  a default retention policy that prevents premature deletion or  modification.",
+		Description: "All objects stored in the object storage system automatically receive a default retention policy that prevents premature deletion or  modification.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C05",
@@ -560,7 +572,7 @@ func (a *ABS) CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C05_TR04"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "Attempts to delete or modify objects that are subject to an active  retention policy are prevented.",
+		Description: "Attempts to delete or modify objects that are subject to an active retention policy are prevented.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C05",
@@ -580,72 +592,6 @@ func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C05_TR04
-	return
-}
-
-// -----
-// Strike and Movements for CCC_ObjStor_C06_TR01
-// -----
-
-// CCC_ObjStor_C06_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C06_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Verify that when two objects with the same name are uploaded to the  bucket, the object with the same name is not overwritten and that  both objects are stored with unique identifiers.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C06_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C06_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_ObjStor_C06_TR04
-// -----
-
-// CCC_ObjStor_C06_TR04 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C06_TR04() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C06_TR04"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Previous versions of an object can be accessed and restored after  an object is modified or deleted.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR04_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C06_TR04_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C06_TR04
 	return
 }
 
