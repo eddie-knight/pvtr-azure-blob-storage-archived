@@ -29,6 +29,7 @@ func (mock *commonFunctionsMock) GenerateRandomString(length int) string {
 }
 
 type azureUtilsMock struct {
+	azureUtils
 	tokenResult             string
 	getBlobBlockClientError error
 	blobBlockClient         BlockBlobClientInterface

@@ -24,6 +24,8 @@ type AzureUtils interface {
 	GetToken(result *raidengine.MovementResult) string
 	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
 	GetBlobClient(blobUri string) (BlobClientInterface, error)
+	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
+	DeleteTestContainer(result *raidengine.MovementResult, containerName string)
 }
 
 type azureUtils struct{}
@@ -48,18 +50,6 @@ func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
 	return token.Token
 }
 
-func (*azureUtils) UploadBlobContent(blockBlobClient *blockblob.Client, blobContent string) error {
-	_, err := blockBlobClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
-
-	return err
-}
-
-func (*azureUtils) DeleteBlob(blockBlobClient *blockblob.Client) error {
-	_, err := blockBlobClient.Delete(context.Background(), nil)
-
-	return err
-}
-
 func (*azureUtils) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
 	return blockblob.NewClient(blobUri, cred, nil)
 }
@@ -67,6 +57,54 @@ func (*azureUtils) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface,
 func (*azureUtils) GetBlobClient(blobUri string) (BlobClientInterface, error) {
 	return azblob.NewClient(blobUri, cred, nil)
 }
+
+func (*azureUtils) CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool) {
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
+
+	if err != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
+		return nil, false
+	}
+
+	_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
+
+	if uploadBlobFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError)
+		return nil, false
+	}
+
+	return blobBlockClient, true
+}
+
+func (*azureUtils) DeleteTestContainer(result *raidengine.MovementResult, containerName string) {
+	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
+
+	if deleteContainerFailedError != nil {
+		result.Passed = false
+		// Append error message to existing message so that we don't lose the error message from the previous step
+		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
+		return
+	}
+}
+
+// -----
+// Azure Client Interfaces
+// -----
 
 type DiagnosticSettingsClientInterface interface {
 	NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse]

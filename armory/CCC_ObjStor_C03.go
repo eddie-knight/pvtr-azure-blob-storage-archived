@@ -3,7 +3,6 @@ package armory
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
@@ -172,71 +171,40 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 
 	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
-
-	_, err := blobContainersClient.Create(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		armstorage.BlobContainer{
-			ContainerProperties: &armstorage.ContainerProperties{},
-		},
-		nil,
-	)
-
-	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
-		return
-	}
-
 	blobName := "privateer-test-blob-" + randomString
 	blobUri := fmt.Sprintf("%s%s/%s", storageAccountUri, containerName, blobName)
 	blobContent := "Privateer test blob content"
 
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
-	if newBlockBlobClientFailedError == nil {
-		_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
+	if newBlockBlobClientFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		return
+	}
 
-		if uploadBlobFailedError == nil {
-			_, blobDeleteFailedError := blobBlockClient.Delete(context.Background(), nil)
+	blobBlockClient, createContainerSucceeded := ArmoryAzureUtils.CreateContainerWithBlobContent(&result, blobBlockClient, containerName, blobName, blobContent)
 
-			if blobDeleteFailedError == nil {
-				_, blobUndeleteFailedError := blobBlockClient.Undelete(context.Background(), nil)
+	if createContainerSucceeded {
+		_, blobDeleteFailedError := blobBlockClient.Delete(context.Background(), nil)
 
-				if blobUndeleteFailedError == nil {
-					result.Passed = true
-					result.Message = "Deleted blob successfully restored."
-				} else {
-					result.Passed = false
-					result.Message = fmt.Sprintf("Failed to undelete blob with error: %v. ", blobUndeleteFailedError)
-				}
+		if blobDeleteFailedError == nil {
+			_, blobUndeleteFailedError := blobBlockClient.Undelete(context.Background(), nil)
+
+			if blobUndeleteFailedError == nil {
+				result.Passed = true
+				result.Message = "Deleted blob successfully restored."
 			} else {
 				result.Passed = false
-				result.Message = fmt.Sprintf("Failed to delete blob with error: %v. ", blobDeleteFailedError)
+				result.Message = fmt.Sprintf("Failed to undelete blob with error: %v. ", blobUndeleteFailedError)
 			}
 		} else {
 			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to create blob with error: %v. ", uploadBlobFailedError)
+			result.Message = fmt.Sprintf("Failed to delete blob with error: %v. ", blobDeleteFailedError)
 		}
-	} else {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v. ", newBlockBlobClientFailedError)
 	}
 
-	_, err = blobContainersClient.Delete(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		nil,
-	)
-
-	if err != nil {
-		result.Passed = false
-		// Append error message to existing message so that we don't lose the error message from the previous step
-		result.Message += fmt.Sprintf("Failed to delete blob container with error: %v", err)
-		return
-	}
+	ArmoryAzureUtils.DeleteTestContainer(&result, containerName)
 
 	return
 }
