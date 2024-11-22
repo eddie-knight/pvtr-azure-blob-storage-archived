@@ -124,6 +124,8 @@ type storageAccountMock struct {
 	immutabilityPolicyEnabled bool
 	immutabilityPolicyDays    int32
 	immutabilityPolicyState   armstorage.AccountImmutabilityPolicyState
+	sku                       armstorage.SKUName
+	secondaryLocationEndpoint *string
 }
 
 type blobServicePropertiesMock struct {
@@ -147,6 +149,9 @@ func TestMain(m *testing.M) {
 // Helper function to create a storage account resource with the specified properties
 func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
 	return armstorage.Account{
+		SKU: &armstorage.SKU{
+			Name: to.Ptr(mock.sku),
+		},
 		Properties: &armstorage.AccountProperties{
 			PublicNetworkAccess:   to.Ptr(mock.publicNetworkAccess),
 			AllowBlobPublicAccess: to.Ptr(mock.allowBlobPublicAccess),
@@ -177,6 +182,9 @@ func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
 				}
 				return nil
 			}(),
+			SecondaryEndpoints: &armstorage.Endpoints{
+				Blob: mock.secondaryLocationEndpoint,
+			},
 		},
 	}
 }
