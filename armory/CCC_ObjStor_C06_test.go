@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,26 +39,27 @@ func Test_CCC_ObjStor_C06_TR01_T01_fails_versioning_disabled(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobClient:      &myBlobClient,
-		blobBlockClient: &myBlockBlobClient,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
 		randomString: "randomst",
 	}
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+
+	blobContainersClient = &blobContainersClientMock{
+		createResponse: armstorage.BlobContainersClientCreateResponse{},
+	}
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -68,10 +70,9 @@ func Test_CCC_ObjStor_C06_TR01_T02_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_create_container_fails(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
-		createContainerError: assert.AnError,
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -82,10 +83,9 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_create_container_fails(t *testing
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_block_client_fails(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
+	ArmoryAzureUtils = &azureUtilsMock{
 		getBlobBlockClientError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -96,12 +96,10 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_block_client_fails(t *testing
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_blob_client_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobBlockClient:    &myBlockBlobClient,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient:    &mockBlockBlobClient{},
 		getBlobClientError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -112,18 +110,15 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_blob_client_fails(t *testing.
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_upload_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{
-		uploadError: assert.AnError,
-	}
-	myMock := azureUtilsMock{
-		blobBlockClient: &myBlockBlobClient,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
-		randomString: "randomst",
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			uploadError: assert.AnError,
+		},
 	}
 
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -134,24 +129,20 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_upload_fails(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_no_previous_version(t *testing.T) {
 	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
-	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobClient:      &myBlobClient,
-		blobBlockClient: &myBlockBlobClient,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
-		randomString: "randomst",
+		blobBlockClient: &mockBlockBlobClient{},
 	}
 
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -162,28 +153,27 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_no_previous_version(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_succeeds_but_delete_container_fails(t *testing.T) {
 	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobClient:           &myBlobClient,
-		blobBlockClient:      &myBlockBlobClient,
-		deleteContainerError: assert.AnError,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
 		randomString: "randomst",
 	}
 
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+	blobContainersClient = &blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -196,25 +186,24 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_succeeds_but_delete_container_fails(t *
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_and_delete_container_fails(t *testing.T) {
 	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobClient:           &myBlobClient,
-		blobBlockClient:      &myBlockBlobClient,
-		deleteContainerError: assert.AnError,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
 		randomString: "randomst",
 	}
 
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+	blobContainersClient = &blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
 
 	// Act
 	result := CCC_ObjStor_C06_TR01_T02()
@@ -255,26 +244,25 @@ func Test_CCC_ObjStor_C06_TR04_T01_fails_versioning_disabled(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR04_T02_succeeds(t *testing.T) {
 	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
-			},
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobClient:      &myBlobClient,
-		blobBlockClient: &myBlockBlobClient,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
 		randomString: "randomst",
 	}
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C06_TR04_T02()
@@ -285,23 +273,22 @@ func Test_CCC_ObjStor_C06_TR04_T02_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR04_T03_succeeds(t *testing.T) {
 	// Arrange
-	myBlobClient := mockBlobClient{
-		blobItems: []*container.BlobItem{
-			{
-				Name: to.Ptr("privateer-test-blob-randomst"),
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobClient:      &myBlobClient,
-		blobBlockClient: &myBlockBlobClient,
-	}
-	myCommonFunctionsMock := commonFunctionsMock{
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
 		randomString: "randomst",
 	}
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C06_TR04_T03()
@@ -312,10 +299,9 @@ func Test_CCC_ObjStor_C06_TR04_T03_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_create_container_fails(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
-		createContainerError: assert.AnError,
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C06_TR04_T03()
@@ -326,10 +312,11 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_create_container_fails(t *testing
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_block_client_fails(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
+	ArmoryAzureUtils = &azureUtilsMock{
 		getBlobBlockClientError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C06_TR04_T03()
@@ -340,12 +327,12 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_block_client_fails(t *testing
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_blob_client_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobBlockClient:    &myBlockBlobClient,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient:    &mockBlockBlobClient{},
 		getBlobClientError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C06_TR04_T03()
@@ -365,6 +352,8 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_upload_fails(t *testing.T) {
 	myCommonFunctionsMock := commonFunctionsMock{
 		randomString: "randomst",
 	}
+	myBlobContainersClientMock := blobContainersClientMock{}
+	blobContainersClient = &myBlobContainersClientMock
 
 	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myCommonFunctionsMock
@@ -389,6 +378,8 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_no_previous_version(t *testing.T) {
 	myCommonFunctionsMock := commonFunctionsMock{
 		randomString: "randomst",
 	}
+	myBlobContainersClientMock := blobContainersClientMock{}
+	blobContainersClient = &myBlobContainersClientMock
 
 	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myCommonFunctionsMock
@@ -410,12 +401,15 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_succeeds_but_delete_container_fails(t *
 				},
 			},
 		},
-		blobBlockClient:      &mockBlockBlobClient{},
-		deleteContainerError: assert.AnError,
+		blobBlockClient: &mockBlockBlobClient{},
 	}
 	myCommonFunctionsMock := commonFunctionsMock{
 		randomString: "randomst",
 	}
+	myBlobContainersClientMock := blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
+	blobContainersClient = &myBlobContainersClientMock
 
 	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myCommonFunctionsMock
@@ -436,13 +430,16 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_and_delete_container_fails(t *tes
 	}
 	myBlockBlobClient := mockBlockBlobClient{}
 	myMock := azureUtilsMock{
-		blobClient:           &myBlobClient,
-		blobBlockClient:      &myBlockBlobClient,
-		deleteContainerError: assert.AnError,
+		blobClient:      &myBlobClient,
+		blobBlockClient: &myBlockBlobClient,
 	}
 	myCommonFunctionsMock := commonFunctionsMock{
 		randomString: "randomst",
 	}
+	myBlobContainersClientMock := blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
+	blobContainersClient = &myBlobContainersClientMock
 
 	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myCommonFunctionsMock

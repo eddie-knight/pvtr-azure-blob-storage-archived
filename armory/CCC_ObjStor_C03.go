@@ -80,7 +80,15 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 
 	containerName := "privateer-test-container-" + ArmoryCommonFunctions.GenerateRandomString(8)
 
-	err := ArmoryAzureUtils.CreateContainer(containerName)
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
 
 	if err != nil {
 		result.Passed = false
@@ -88,7 +96,12 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	err = ArmoryAzureUtils.DeleteContainer(containerName)
+	_, err = blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
 
 	if err != nil {
 		result.Passed = false
@@ -96,9 +109,12 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 		return
 	}
 
-	containersPager := ArmoryAzureUtils.GetContainers(armstorage.BlobContainersClientListOptions{
-		Include: to.Ptr(armstorage.ListContainersIncludeDeleted),
-	})
+	containersPager := blobContainersClient.NewListPager(resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		&armstorage.BlobContainersClientListOptions{
+			Include: to.Ptr(armstorage.ListContainersIncludeDeleted),
+		},
+	)
 
 	for containersPager.More() {
 		page, err := containersPager.NextPage(context.Background())
@@ -157,7 +173,15 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
-	err := ArmoryAzureUtils.CreateContainer(containerName)
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
 
 	if err != nil {
 		result.Passed = false
@@ -200,7 +224,12 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v. ", newBlockBlobClientFailedError)
 	}
 
-	err = ArmoryAzureUtils.DeleteContainer(containerName)
+	_, err = blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
 
 	if err != nil {
 		result.Passed = false

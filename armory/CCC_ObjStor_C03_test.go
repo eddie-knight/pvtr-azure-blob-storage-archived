@@ -58,7 +58,11 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_permanent_delete_enabled(t *testin
 
 func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	blobContainersClient = &blobContainersClientMock{
 		containerItem: armstorage.ListContainerItem{
 			Name: to.Ptr("privateer-test-container-randomst"),
 			Properties: &armstorage.ContainerProperties{
@@ -66,12 +70,6 @@ func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
 			},
 		},
 	}
-	myCommonFunctionsMock := commonFunctionsMock{
-		randomString: "randomst",
-	}
-
-	ArmoryAzureUtils = &myMock
-	ArmoryCommonFunctions = &myCommonFunctionsMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -82,7 +80,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
+	blobContainersClient = &blobContainersClientMock{
 		containerItem: armstorage.ListContainerItem{
 			Name: to.Ptr("privateer-test-container"),
 			Properties: &armstorage.ContainerProperties{
@@ -90,8 +88,6 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T
 			},
 		},
 	}
-
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -102,10 +98,9 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
-		createContainerError: assert.AnError,
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -117,10 +112,9 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_delete_container_error(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
-		deleteContainerError: assert.AnError,
+	blobContainersClient = &blobContainersClientMock{
+		deleteError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T02()
@@ -137,7 +131,7 @@ func Test_CCC_ObjStor_C03_TR01_T03_succeeds(t *testing.T) {
 		softDeleteBlobPolicyEnabled: true,
 		softDeleteBlobRetentionDays: 7,
 	}
-	// ArmoryDeleteProtectionFunctions = &myMock
+
 	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
@@ -153,7 +147,7 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_soft_delete_disabled(t *testing.T)
 	myMock := blobServicePropertiesMock{
 		softDeleteBlobPolicyEnabled: false,
 	}
-	// ArmoryDeleteProtectionFunctions = &myMock
+
 	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
@@ -171,6 +165,7 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_permanent_delete_enabled(t *testin
 		softDeleteBlobRetentionDays: 7,
 		allowPermanentDelete:        true,
 	}
+
 	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
@@ -183,11 +178,11 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_permanent_delete_enabled(t *testin
 
 func Test_CCC_ObjStor_C03_TR01_T04_succeeds(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobBlockClient: &myBlockBlobClient,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -198,11 +193,12 @@ func Test_CCC_ObjStor_C03_TR01_T04_succeeds(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_get_block_client_fails(t *testing.T) {
 	// Arrange
-	myMock := azureUtilsMock{
+	ArmoryAzureUtils = &azureUtilsMock{
 		blobBlockClient:         nil,
 		getBlobBlockClientError: assert.AnError,
 	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -213,13 +209,13 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_get_block_client_fails(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_upload_blob_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{
-		uploadError: assert.AnError,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			uploadError: assert.AnError,
+		},
 	}
-	myMock := azureUtilsMock{
-		blobBlockClient: &myBlockBlobClient,
-	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -230,13 +226,13 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_upload_blob_fails(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_delete_blob_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{
-		deleteError: assert.AnError,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: assert.AnError,
+		},
 	}
-	myMock := azureUtilsMock{
-		blobBlockClient: &myBlockBlobClient,
-	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -247,13 +243,13 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_delete_blob_fails(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_undelete_blob_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{
-		undeleteError: assert.AnError,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			undeleteError: assert.AnError,
+		},
 	}
-	myMock := azureUtilsMock{
-		blobBlockClient: &myBlockBlobClient,
-	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()
@@ -264,12 +260,13 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_undelete_blob_fails(t *testing.T) {
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
 	// Arrange
-	myBlockBlobClient := mockBlockBlobClient{}
-	myMock := azureUtilsMock{
-		blobBlockClient:      &myBlockBlobClient,
-		deleteContainerError: assert.AnError,
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	ArmoryAzureUtils = &myMock
+
+	blobContainersClient = &blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
 
 	// Act
 	result := CCC_ObjStor_C03_TR01_T04()

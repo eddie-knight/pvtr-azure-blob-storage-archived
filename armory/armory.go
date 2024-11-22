@@ -46,7 +46,7 @@ var (
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
 	blobServicesClient        *armstorage.BlobServicesClient
 	blobServiceProperties     *armstorage.BlobServiceProperties
-	blobContainersClient      *armstorage.BlobContainersClient
+	blobContainersClient      blobContainersClientInterface
 
 	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
 	ArmoryAzureUtils              AzureUtils              = &azureUtils{}

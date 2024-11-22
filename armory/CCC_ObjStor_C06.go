@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/privateerproj/privateer-sdk/raidengine"
@@ -111,7 +112,15 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
-	err := ArmoryAzureUtils.CreateContainer(containerName)
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
 
 	if err != nil {
 		result.Passed = false
@@ -185,7 +194,12 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
 	}
 
-	deleteContainerFailedError := ArmoryAzureUtils.DeleteContainer(containerName)
+	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
 
 	if deleteContainerFailedError != nil {
 		result.Passed = false
@@ -225,7 +239,15 @@ func (b *blobVersioningFunctions) CheckPreviousVersionAccessibleOnUpdate(result 
 	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
 	containerName := "privateer-test-container-" + randomString
 
-	err := ArmoryAzureUtils.CreateContainer(containerName)
+	_, err := blobContainersClient.Create(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		armstorage.BlobContainer{
+			ContainerProperties: &armstorage.ContainerProperties{},
+		},
+		nil,
+	)
 
 	if err != nil {
 		result.Passed = false
@@ -303,7 +325,12 @@ func (b *blobVersioningFunctions) CheckPreviousVersionAccessibleOnUpdate(result 
 		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
 	}
 
-	deleteContainerFailedError := ArmoryAzureUtils.DeleteContainer(containerName)
+	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
+		resourceId.resourceGroupName,
+		resourceId.storageAccountName,
+		containerName,
+		nil,
+	)
 
 	if deleteContainerFailedError != nil {
 		result.Passed = false

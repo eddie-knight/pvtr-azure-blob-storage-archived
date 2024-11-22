@@ -30,25 +30,29 @@ func (mock *commonFunctionsMock) GenerateRandomString(length int) string {
 
 type azureUtilsMock struct {
 	tokenResult             string
-	createContainerError    error
-	deleteContainerError    error
-	containerItem           armstorage.ListContainerItem
 	getBlobBlockClientError error
 	blobBlockClient         BlockBlobClientInterface
 	blobClient              BlobClientInterface
 	getBlobClientError      error
 }
 
-func (mock *azureUtilsMock) CreateContainer(containerName string) error {
-	return mock.createContainerError
+type blobContainersClientMock struct {
+	createResponse armstorage.BlobContainersClientCreateResponse
+	createError    error
+	deleteResponse armstorage.BlobContainersClientDeleteResponse
+	deleteError    error
+	containerItem  armstorage.ListContainerItem
 }
 
-func (mock *azureUtilsMock) DeleteContainer(containerName string) error {
-	return mock.deleteContainerError
+func (mock *blobContainersClientMock) Create(ctx context.Context, resourceGroupName string, accountName string, containerName string, properties armstorage.BlobContainer, options *armstorage.BlobContainersClientCreateOptions) (armstorage.BlobContainersClientCreateResponse, error) {
+	return mock.createResponse, mock.createError
 }
 
-func (mock *azureUtilsMock) GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
+func (mock *blobContainersClientMock) Delete(ctx context.Context, resourceGroupName string, accountName string, containerName string, options *armstorage.BlobContainersClientDeleteOptions) (armstorage.BlobContainersClientDeleteResponse, error) {
+	return mock.deleteResponse, mock.deleteError
+}
 
+func (mock *blobContainersClientMock) NewListPager(resourceGroupName string, accountName string, options *armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
 	containersPages := []armstorage.BlobContainersClientListResponse{
 		{
 			ListContainerItems: armstorage.ListContainerItems{

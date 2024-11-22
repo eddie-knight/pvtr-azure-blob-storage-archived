@@ -22,9 +22,6 @@ import (
 
 type AzureUtils interface {
 	GetToken(result *raidengine.MovementResult) string
-	CreateContainer(containerName string) error
-	DeleteContainer(containerName string) error
-	GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
 	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
 	GetBlobClient(blobUri string) (BlobClientInterface, error)
 }
@@ -49,43 +46,6 @@ func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
 
 	log.Default().Printf("Using existing access token")
 	return token.Token
-}
-
-func (*azureUtils) CreateContainer(containerName string) error {
-
-	_, err := blobContainersClient.Create(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		armstorage.BlobContainer{
-			ContainerProperties: &armstorage.ContainerProperties{},
-		},
-		nil,
-	)
-
-	return err
-}
-
-func (*azureUtils) DeleteContainer(containerName string) error {
-
-	_, err := blobContainersClient.Delete(context.Background(),
-		resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		containerName,
-		nil,
-	)
-
-	return err
-}
-
-func (*azureUtils) GetContainers(blobContainerListOptions armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse] {
-
-	containersPager := blobContainersClient.NewListPager(resourceId.resourceGroupName,
-		resourceId.storageAccountName,
-		&blobContainerListOptions,
-	)
-
-	return containersPager
 }
 
 func (*azureUtils) UploadBlobContent(blockBlobClient *blockblob.Client, blobContent string) error {
@@ -124,4 +84,10 @@ type BlockBlobClientInterface interface {
 
 type BlobClientInterface interface {
 	NewListBlobsFlatPager(containerName string, options *azblob.ListBlobsFlatOptions) *runtime.Pager[azblob.ListBlobsFlatResponse]
+}
+
+type blobContainersClientInterface interface {
+	Create(ctx context.Context, resourceGroupName string, accountName string, containerName string, properties armstorage.BlobContainer, options *armstorage.BlobContainersClientCreateOptions) (armstorage.BlobContainersClientCreateResponse, error)
+	Delete(ctx context.Context, resourceGroupName string, accountName string, containerName string, options *armstorage.BlobContainersClientDeleteOptions) (armstorage.BlobContainersClientDeleteResponse, error)
+	NewListPager(resourceGroupName string, accountName string, options *armstorage.BlobContainersClientListOptions) *runtime.Pager[armstorage.BlobContainersClientListResponse]
 }
