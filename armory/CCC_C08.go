@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -25,8 +26,16 @@ func (a *ABS) CCC_C08_TR01() (strikeName string, result raidengine.StrikeResult)
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_C08_TR01_T01)
-	if result.Movements["CCC_C08_TR01_T01"].Message == "Data is replicated across multiple regions." {
-		raidengine.ExecuteMovement(&result, CCC_C08_TR01_T02)
+
+	if result.Movements["CCC_C08_TR01_T01"].Passed {
+
+		if strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GRS") ||
+			strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GZRS") {
+			raidengine.ExecuteMovement(&result, CCC_C08_TR01_T02)
+		} else if strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGRS") ||
+			strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGZRS") {
+			raidengine.ExecuteMovement(&result, CCC_C08_TR01_T03)
+		}
 	}
 
 	return
@@ -64,6 +73,27 @@ func CCC_C08_TR01_T01() (result raidengine.MovementResult) {
 }
 
 func CCC_C08_TR01_T02() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "Confirms that the secondary location for the storage account is available.",
+		Function:    utils.CallerPath(0),
+	}
+
+	if storageAccountResource.Properties.StatusOfSecondary == nil {
+		result.Passed = false
+		result.Message = "Secondary location is not enabled."
+		return
+	} else if *storageAccountResource.Properties.StatusOfSecondary == armstorage.AccountStatusAvailable {
+		result.Passed = true
+		result.Message = "Secondary location is enabled and available."
+		return
+	} else {
+		result.Passed = false
+		result.Message = "Secondary location is enabled but not available."
+		return
+	}
+}
+
+func CCC_C08_TR01_T03() (result raidengine.MovementResult) {
 	result = raidengine.MovementResult{
 		Description: "Confirms that the storage account can be accessed via the secondary blob URI in the backup region.",
 		Function:    utils.CallerPath(0),

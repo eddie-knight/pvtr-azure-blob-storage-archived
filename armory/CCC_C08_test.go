@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,6 +74,48 @@ func Test_CCC_C08_TR01_fails_with_unknown_replication(t *testing.T) {
 
 func Test_CCC_C08_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
+	myMock := storageAccountMock{
+		StatusOfSecondary: to.Ptr(armstorage.AccountStatusAvailable),
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C08_TR01_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_CCC_C08_TR01_T02_fails_secondary_status_is_nil(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		StatusOfSecondary: nil,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C08_TR01_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_C08_TR01_T02_fails_secondary_status_is_not_available(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		StatusOfSecondary: to.Ptr(armstorage.AccountStatusUnavailable),
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C08_TR01_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_C08_TR01_T03_succeeds(t *testing.T) {
+	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
 		tokenResult: "mockToken",
 	}
@@ -88,13 +131,13 @@ func Test_CCC_C08_TR01_T02_succeeds(t *testing.T) {
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_C08_TR01_T02()
+	result := CCC_C08_TR01_T03()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 }
 
-func Test_CCC_C08_TR01_T02_fails_with_access_error(t *testing.T) {
+func Test_CCC_C08_TR01_T03_fails_with_access_error(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
 		tokenResult: "mockToken",
@@ -111,14 +154,14 @@ func Test_CCC_C08_TR01_T02_fails_with_access_error(t *testing.T) {
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_C08_TR01_T02()
+	result := CCC_C08_TR01_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Contains(t, result.Message, "cannot be accessed via the secondary")
 }
 
-func Test_CCC_C08_TR01_T02_fails_with_request_error(t *testing.T) {
+func Test_CCC_C08_TR01_T03_fails_with_request_error(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
 		tokenResult: "mockToken",
@@ -132,14 +175,14 @@ func Test_CCC_C08_TR01_T02_fails_with_request_error(t *testing.T) {
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_C08_TR01_T02()
+	result := CCC_C08_TR01_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Contains(t, result.Message, "Request to storage account secondary location failed with error")
 }
 
-func Test_CCC_C08_TR01_T02_fails_with_endpoint_nil(t *testing.T) {
+func Test_CCC_C08_TR01_T03_fails_with_endpoint_nil(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
 		tokenResult: "mockToken",
@@ -150,7 +193,7 @@ func Test_CCC_C08_TR01_T02_fails_with_endpoint_nil(t *testing.T) {
 	storageAccountResource = myMock.SetStorageAccount()
 
 	// Act
-	result := CCC_C08_TR01_T02()
+	result := CCC_C08_TR01_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)

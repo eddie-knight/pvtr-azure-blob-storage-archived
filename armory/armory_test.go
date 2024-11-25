@@ -126,6 +126,7 @@ type storageAccountMock struct {
 	immutabilityPolicyState   armstorage.AccountImmutabilityPolicyState
 	sku                       armstorage.SKUName
 	secondaryLocationEndpoint *string
+	StatusOfSecondary         *armstorage.AccountStatus
 }
 
 type blobServicePropertiesMock struct {
@@ -179,6 +180,12 @@ func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
 							State:                                 to.Ptr(mock.immutabilityPolicyState),
 						},
 					}
+				}
+				return nil
+			}(),
+			StatusOfSecondary: func() *armstorage.AccountStatus {
+				if mock.StatusOfSecondary != nil {
+					return mock.StatusOfSecondary
 				}
 				return nil
 			}(),
