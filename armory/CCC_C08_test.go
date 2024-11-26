@@ -215,7 +215,7 @@ func Test_CCC_ObjStor_C08_TR02_T01_succeeds(t *testing.T) {
 	assert.Equal(t, true, result.Passed)
 }
 
-func Test_CCC_ObjStor_C08_TR02_T01_fails_lastsync_nil(t *testing.T) {
+func Test_CCC_ObjStor_C08_TR02_T01_fails_last_sync_nil(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		LastSyncTime: nil,
@@ -230,7 +230,7 @@ func Test_CCC_ObjStor_C08_TR02_T01_fails_lastsync_nil(t *testing.T) {
 	assert.Contains(t, result.Message, "not available")
 }
 
-func Test_CCC_ObjStor_C08_TR02_T01_fails_lastsync_30mins_ago(t *testing.T) {
+func Test_CCC_ObjStor_C08_TR02_T01_fails_last_sync_30mins_ago(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		LastSyncTime: to.Ptr(time.Now().Add(-30 * time.Minute)),
