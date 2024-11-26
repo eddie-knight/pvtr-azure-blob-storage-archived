@@ -31,11 +31,16 @@ func (mock *commonFunctionsMock) GenerateRandomString(length int) string {
 
 type azureUtilsMock struct {
 	azureUtils
-	tokenResult             string
-	getBlobBlockClientError error
-	blobBlockClient         BlockBlobClientInterface
-	blobClient              BlobClientInterface
-	getBlobClientError      error
+	tokenResult                                    string
+	getBlobBlockClientError                        error
+	blobBlockClient                                BlockBlobClientInterface
+	blobClient                                     BlobClientInterface
+	getBlobClientError                             error
+	confirmLoggingToLogAnalyticsIsConfiguredResult bool
+}
+
+func (mock *azureUtilsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
+	result.Passed = mock.confirmLoggingToLogAnalyticsIsConfiguredResult
 }
 
 type blobContainersClientMock struct {
