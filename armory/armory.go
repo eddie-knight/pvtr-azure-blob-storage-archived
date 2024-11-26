@@ -31,12 +31,13 @@ type ABS struct {
 }
 
 var (
-	storageAccountResourceId string
-	storageAccountUri        string
-	token                    azcore.AccessToken
-	cred                     *azidentity.DefaultAzureCredential
-	storageAccountResource   armstorage.Account
-	resourceId               struct {
+	storageAccountResourceId          string
+	storageAccountUri                 string
+	token                             azcore.AccessToken
+	cred                              *azidentity.DefaultAzureCredential
+	storageAccountResource            armstorage.Account
+	storageAccountPropertiesTimestamp time.Time
+	resourceId                        struct {
 		subscriptionId     string
 		resourceGroupName  string
 		storageAccountName string
@@ -101,6 +102,8 @@ func (a *ABS) Initialize() error {
 
 	// Get storage account resource
 	storageAccountResponse, err := armstorageClient.GetProperties(ctx, resourceId.resourceGroupName, resourceId.storageAccountName, &armstorage.AccountsClientGetPropertiesOptions{Expand: to.Ptr(armstorage.StorageAccountExpandGeoReplicationStats)})
+
+	storageAccountPropertiesTimestamp = time.Now()
 
 	if err != nil {
 		return fmt.Errorf("failed to get storage account resource: %v", err)

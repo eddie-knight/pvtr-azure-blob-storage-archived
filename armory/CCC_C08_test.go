@@ -236,6 +236,7 @@ func Test_CCC_ObjStor_C08_TR02_T01_fails_lastsync_30mins_ago(t *testing.T) {
 		LastSyncTime: to.Ptr(time.Now().Add(-30 * time.Minute)),
 	}
 	storageAccountResource = myMock.SetStorageAccount()
+	storageAccountPropertiesTimestamp = time.Now()
 
 	// Act
 	result := CCC_ObjStor_C08_TR02_T01()
