@@ -147,6 +147,9 @@ func (a *ABS) CCC_ObjStor_C08_TR02() (strikeName string, result raidengine.Strik
 	}
 
 	raidengine.ExecuteMovement(&result, CCC_ObjStor_C08_TR02_T01)
+	StrikeResultSetter("Replication is working as expected and data has recently synchronized across multiple regions or zones.",
+		"Replication is not working as expected or data has not recently synchronized across multiple regions or zones, see movement results for more details.",
+		&result)
 
 	return
 }
