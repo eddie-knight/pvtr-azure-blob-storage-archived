@@ -19,12 +19,7 @@ import (
 type loggingFunctionsMock struct {
 	commonFunctionsMock
 	azureUtilsMock
-	confirmLoggingToLogAnalyticsIsConfiguredResult bool
-	confirmHTTPResponseIsLoggedResult              bool
-}
-
-func (mock *loggingFunctionsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
-	result.Passed = mock.confirmLoggingToLogAnalyticsIsConfiguredResult
+	confirmHTTPResponseIsLoggedResult bool
 }
 
 func (mock *loggingFunctionsMock) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {
@@ -57,9 +52,12 @@ func (mock *mockDiagnosticSettingsClient) NewListPager(resourceURI string, optio
 func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
-		confirmLoggingToLogAnalyticsIsConfiguredResult: true}
+		azureUtilsMock: azureUtilsMock{
+			confirmLoggingToLogAnalyticsIsConfiguredResult: true,
+		},
+	}
 
-	ArmoryLoggingFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myMock
 
 	// Act
@@ -72,9 +70,12 @@ func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
 func Test_CCC_C04_TR01_T01_fails_if_confirmLoggingToLogAnalyticsIsConfigured_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
-		confirmLoggingToLogAnalyticsIsConfiguredResult: false}
+		azureUtilsMock: azureUtilsMock{
+			confirmLoggingToLogAnalyticsIsConfiguredResult: false,
+		},
+	}
 
-	ArmoryLoggingFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myMock
 
 	// Act
@@ -223,7 +224,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(
 
 	// Act
 	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
@@ -258,7 +259,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *t
 
 	// Act
 	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
@@ -297,7 +298,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categ
 
 	// Act
 	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
@@ -311,7 +312,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testin
 
 	// Act
 	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
