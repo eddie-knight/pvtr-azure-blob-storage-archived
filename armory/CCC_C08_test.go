@@ -3,6 +3,7 @@ package armory
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
@@ -198,4 +199,48 @@ func Test_CCC_C08_TR01_T03_fails_with_endpoint_nil(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Contains(t, result.Message, "endpoint is not available")
+}
+
+func Test_CCC_ObjStor_C08_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		LastSyncTime: to.Ptr(time.Now()),
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C08_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_CCC_ObjStor_C08_TR02_T01_fails_lastsync_nil(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		LastSyncTime: nil,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C08_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "not available")
+}
+
+func Test_CCC_ObjStor_C08_TR02_T01_fails_lastsync_30mins_ago(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		LastSyncTime: to.Ptr(time.Now().Add(-30 * time.Minute)),
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C08_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "not within 15")
 }
