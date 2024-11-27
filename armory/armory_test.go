@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -127,6 +128,7 @@ type storageAccountMock struct {
 	sku                       armstorage.SKUName
 	secondaryLocationEndpoint *string
 	StatusOfSecondary         *armstorage.AccountStatus
+	LastSyncTime              *time.Time
 }
 
 type blobServicePropertiesMock struct {
@@ -191,6 +193,14 @@ func (mock *storageAccountMock) SetStorageAccount() armstorage.Account {
 			}(),
 			SecondaryEndpoints: &armstorage.Endpoints{
 				Blob: mock.secondaryLocationEndpoint,
+			},
+			GeoReplicationStats: &armstorage.GeoReplicationStats{
+				LastSyncTime: func() *time.Time {
+					if mock.LastSyncTime != nil {
+						return mock.LastSyncTime
+					}
+					return nil
+				}(),
 			},
 		},
 	}

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
@@ -30,12 +31,13 @@ type ABS struct {
 }
 
 var (
-	storageAccountResourceId string
-	storageAccountUri        string
-	token                    azcore.AccessToken
-	cred                     *azidentity.DefaultAzureCredential
-	storageAccountResource   armstorage.Account
-	resourceId               struct {
+	storageAccountResourceId          string
+	storageAccountUri                 string
+	token                             azcore.AccessToken
+	cred                              *azidentity.DefaultAzureCredential
+	storageAccountResource            armstorage.Account
+	storageAccountPropertiesTimestamp time.Time
+	resourceId                        struct {
 		subscriptionId     string
 		resourceGroupName  string
 		storageAccountName string
@@ -99,7 +101,9 @@ func (a *ABS) Initialize() error {
 	defer cancel()
 
 	// Get storage account resource
-	storageAccountResponse, err := armstorageClient.GetProperties(ctx, resourceId.resourceGroupName, resourceId.storageAccountName, nil)
+	storageAccountResponse, err := armstorageClient.GetProperties(ctx, resourceId.resourceGroupName, resourceId.storageAccountName, &armstorage.AccountsClientGetPropertiesOptions{Expand: to.Ptr(armstorage.StorageAccountExpandGeoReplicationStats)})
+
+	storageAccountPropertiesTimestamp = time.Now()
 
 	if err != nil {
 		return fmt.Errorf("failed to get storage account resource: %v", err)
@@ -398,39 +402,6 @@ func CCC_C07_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C08_TR02
-// -----
-
-// CCC_ObjStor_C08_TR02 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C08_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C08_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Admin users can verify the replication status of data across multiple zones or regions, including the replication locations and data synchronization status.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C08",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C08_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C08_TR02
-	return
-}
-
-// -----
 // Strike and Movements for CCC_ObjStor_C01_TR01
 // -----
 
@@ -440,7 +411,7 @@ func (a *ABS) CCC_ObjStor_C01_TR01() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C01_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "The service prevents access to any object storage bucket or object  that uses KMS keys not listed as trusted by the organization.",
+		Description: "The service prevents access to any object storage bucket or object that uses KMS keys not listed as trusted by the organization.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C01",
@@ -473,7 +444,7 @@ func (a *ABS) CCC_ObjStor_C02_TR01() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C02_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "Admin users can configure bucket-level permissions uniformly across all buckets, ensuring that object-level permissions cannot be  applied without explicit authorization.",
+		Description: "Admin users can configure bucket-level permissions uniformly across all buckets, ensuring that object-level permissions cannot be applied without explicit authorization.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C02",
@@ -572,7 +543,7 @@ func (a *ABS) CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C07_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "Access logs for all object storage buckets are stored in a separate  bucket.",
+		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C07",
@@ -605,7 +576,7 @@ func (a *ABS) CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.Strik
 	strikeName = "CCC_ObjStor_C08_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "Object replication to destinations outside of the defined trust  perimeter is automatically blocked, preventing replication to  untrusted resources.",
+		Description: "Object replication to destinations outside of the defined trust perimeter is automatically blocked, preventing replication to untrusted resources.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.08",
