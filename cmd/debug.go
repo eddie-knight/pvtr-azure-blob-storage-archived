@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-pack-ABS/armory"
 	"github.com/spf13/cobra"
 )
 
@@ -13,9 +13,18 @@ var (
 		Use:   "debug",
 		Short: "Run the Raid in debug mode",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := raidengine.Run(RaidName, Armory)
+			err := Vessel.StockArmory(&armory.Armory)
+
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err.Error()) // TO DO: Not printing error as expected
+				return
+			}
+
+			err = Vessel.Mobilize()
+
+			if err != nil {
+				log.Printf(err.Error())
+				return
 			}
 		},
 	}

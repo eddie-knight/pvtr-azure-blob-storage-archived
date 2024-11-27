@@ -14,7 +14,7 @@ import (
 // Strike and Movements for CCC_C08_TR01
 // -----
 
-func (a *ABS) CCC_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_C08_TR01"
 	result = raidengine.StrikeResult{
@@ -26,16 +26,16 @@ func (a *ABS) CCC_C08_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C08_TR01_T01)
+	result.ExecuteMovement(CCC_C08_TR01_T01)
 
 	if result.Movements["CCC_C08_TR01_T01"].Passed {
 
 		if strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GRS") ||
 			strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GZRS") {
-			raidengine.ExecuteMovement(&result, CCC_C08_TR01_T02)
+			result.ExecuteMovement(CCC_C08_TR01_T02)
 		} else if strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGRS") ||
 			strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGZRS") {
-			raidengine.ExecuteMovement(&result, CCC_C08_TR01_T03)
+			result.ExecuteMovement(CCC_C08_TR01_T03)
 		}
 	}
 
@@ -135,7 +135,7 @@ func CCC_C08_TR01_T03() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_ObjStor_C08_TR02
 // -----
 
-func (a *ABS) CCC_ObjStor_C08_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C08_TR02() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_ObjStor_C08_TR02"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -146,7 +146,7 @@ func (a *ABS) CCC_ObjStor_C08_TR02() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C08_TR02_T01)
+	result.ExecuteMovement(CCC_ObjStor_C08_TR02_T01)
 	StrikeResultSetter("Replication is working as expected and data has recently synchronized across multiple regions or zones.",
 		"Replication is not working as expected or data has not recently synchronized across multiple regions or zones, see movement results for more details.",
 		&result)

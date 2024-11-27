@@ -15,7 +15,7 @@ import (
 // Strike and Movements for CCC_ObjStor_C06_TR01
 // -----
 
-func (a *ABS) CCC_ObjStor_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_ObjStor_C06_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -26,9 +26,9 @@ func (a *ABS) CCC_ObjStor_C06_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C06_TR01_T01)
 	if result.Movements["CCC_ObjStor_C06_TR01_T01"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR01_T02)
+		result.ExecuteMovement(CCC_ObjStor_C06_TR01_T02)
 	}
 
 	return
@@ -89,7 +89,7 @@ func CCC_ObjStor_C06_TR01_T02() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_ObjStor_C06_TR04
 // -----
 
-func (a *ABS) CCC_ObjStor_C06_TR04() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C06_TR04() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_ObjStor_C06_TR04"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -100,10 +100,10 @@ func (a *ABS) CCC_ObjStor_C06_TR04() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR04_T01)
+	result.ExecuteMovement(CCC_ObjStor_C06_TR04_T01)
 	if result.Movements["CCC_ObjStor_C06_TR04_T01"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR04_T02)
-		raidengine.ExecuteMovement(&result, CCC_ObjStor_C06_TR04_T03)
+		result.ExecuteMovement(CCC_ObjStor_C06_TR04_T02)
+		result.ExecuteMovement(CCC_ObjStor_C06_TR04_T03)
 	}
 
 	return

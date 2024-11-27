@@ -9,7 +9,7 @@ import (
 // Strike and Movements for CCC_C03_TR01
 // -----
 
-func (a *ABS) CCC_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C03_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -20,7 +20,7 @@ func (a *ABS) CCC_C03_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C03_TR01_T01)
+	result.ExecuteMovement(CCC_C03_TR01_T01)
 
 	return
 }
@@ -41,7 +41,7 @@ func CCC_C03_TR01_T01() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_C03_TR02
 // -----
 
-func (a *ABS) CCC_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C03_TR02"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -52,7 +52,7 @@ func (a *ABS) CCC_C03_TR02() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C03_TR02_T01)
+	result.ExecuteMovement(CCC_C03_TR02_T01)
 
 	return
 }

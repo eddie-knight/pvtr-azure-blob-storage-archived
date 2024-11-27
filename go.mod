@@ -65,3 +65,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// Uncomment if you're working locally on a privateer SDK improvement
+replace github.com/privateerproj/privateer-sdk => ../privateer-sdk
