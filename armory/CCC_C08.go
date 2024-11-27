@@ -172,7 +172,7 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 			Value: *storageAccountResource.Properties.GeoReplicationStats.LastSyncTime,
 		}
 
-		if time.Since(*storageAccountResource.Properties.GeoReplicationStats.LastSyncTime) <= 15*time.Minute {
+		if storageAccountPropertiesTimestamp.Sub(*storageAccountResource.Properties.GeoReplicationStats.LastSyncTime) <= 15*time.Minute {
 			result.Passed = true
 			result.Message = "Last sync time is within 15 minutes."
 			return
