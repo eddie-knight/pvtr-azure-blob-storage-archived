@@ -5,7 +5,7 @@ import (
 
 	// "github.com/privateerproj/privateer-pack-ABS/armory"
 
-	"github.com/azure/finos-azure-blob-storage-raid/absArmory"
+	abs "github.com/azure/finos-azure-blob-storage-raid/ABS"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ var (
 		Use:   "debug",
 		Short: "Run the Raid in debug mode",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := Vessel.StockArmory(&absArmory.Armory)
+			err := Vessel.StockArmory(&abs.Armory)
 
 			if err != nil {
 				log.Print(err.Error()) // TO DO: Not printing error as expected
@@ -23,7 +23,7 @@ var (
 			}
 
 			// Initialize armory
-			if err := absArmory.Initialize(); err != nil {
+			if err := abs.Initialize(); err != nil {
 				log.Printf("Failed to initialize armory: %v", err)
 				return
 			}

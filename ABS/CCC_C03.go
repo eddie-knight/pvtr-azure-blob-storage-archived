@@ -1,4 +1,4 @@
-package absArmory
+package abs
 
 import (
 	"github.com/privateerproj/privateer-sdk/raidengine"

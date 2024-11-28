@@ -2,7 +2,7 @@ package cmd
 
 import (
 	// "github.com/privateerproj/privateer-pack-ABS/armory"
-	"github.com/azure/finos-azure-blob-storage-raid/absArmory"
+	abs "github.com/azure/finos-azure-blob-storage-raid/ABS"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 )
 
@@ -16,14 +16,14 @@ var (
 // At minimum, this should call raidengine.Run()
 // Adding raidengine.SetupCloseHandler(cleanupFunc) will allow you to append custom cleanup behavior
 func (r *Raid) Start() error {
-	err := Vessel.StockArmory(&absArmory.Armory)
+	err := Vessel.StockArmory(&abs.Armory)
 
 	if err != nil {
 		return err
 	}
 
 	// Initialize armory
-	if err := absArmory.Initialize(); err != nil {
+	if err := abs.Initialize(); err != nil {
 		return err
 	}
 

@@ -1,4 +1,4 @@
-package absArmory
+package abs
 
 import (
 	"fmt"
