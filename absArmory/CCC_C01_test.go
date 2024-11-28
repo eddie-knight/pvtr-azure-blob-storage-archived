@@ -1,4 +1,4 @@
-package armory
+package absArmory
 
 import (
 	"crypto/tls"

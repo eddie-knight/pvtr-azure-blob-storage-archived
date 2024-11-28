@@ -1,4 +1,4 @@
-module github.com/privateerproj/privateer-pack-ABS
+module github.com/azure/finos-azure-blob-storage-raid
 
 go 1.20
 

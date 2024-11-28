@@ -1,4 +1,4 @@
-package armory
+package absArmory
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	Armory = raidengine.Armory{ // TO DO: Clashing names Armory and armory
+	Armory = raidengine.Armory{
 		RaidName: "ABS",
 		Tactics: map[string][]raidengine.Strike{
 			"tlp_amber": {
