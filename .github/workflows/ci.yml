@@ -15,6 +15,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    # This is required until the SDK refactor is released and can be safely removed afterwards
+    - name: Checkout Privateer SDK to use unreleased changes
+      uses: actions/checkout@v4
+      with:
+        repository: privateerproj/privateer-sdk
+        path: ../privateer-sdk
+        ref: feat/config-struct
+
     # https://github.com/actions/setup-go
     - name: Setup Environment
       uses: actions/setup-go@v5
