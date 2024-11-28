@@ -25,10 +25,6 @@ jobs:
         path: privateer-sdk
         ref: feat/config-struct
 
-    - name: Debugging step
-      run: |
-        ls -la
-
     # https://github.com/actions/setup-go
     - name: Setup Environment
       uses: actions/setup-go@v5
