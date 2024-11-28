@@ -20,10 +20,16 @@ var (
 				return
 			}
 
+			// Initialize armory
+			if err := armory.Initialize(); err != nil {
+				log.Printf("Failed to initialize armory: %v", err)
+				return
+			}
+
 			err = Vessel.Mobilize()
 
 			if err != nil {
-				log.Printf(err.Error())
+				log.Print(err.Error())
 				return
 			}
 		},

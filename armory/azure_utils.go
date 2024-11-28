@@ -31,7 +31,6 @@ type AzureUtils interface {
 type azureUtils struct{}
 
 func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
-	Initialize()
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
 
 		log.Default().Printf("Getting new access token")

@@ -21,6 +21,11 @@ func (r *Raid) Start() error {
 		return err
 	}
 
+	// Initialize armory
+	if err := armory.Initialize(); err != nil {
+		return err
+	}
+
 	err = Vessel.Mobilize()
 
 	return err
