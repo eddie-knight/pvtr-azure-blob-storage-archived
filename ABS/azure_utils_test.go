@@ -3,14 +3,18 @@ package abs
 import (
 	"context"
 	"io"
+	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/stretchr/testify/assert"
 )
 
 type azureUtilsMock struct {
@@ -104,4 +108,119 @@ func (mock *mockBlobClient) NewListBlobsFlatPager(containerName string, options 
 	}
 
 	return CreatePager([]azblob.ListBlobsFlatResponse{blobFlatListResponse})
+}
+
+func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(t *testing.T) {
+	// Arrange
+	myDiagnosticsClient := mockDiagnosticSettingsClient{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{
+			{
+				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+				Properties: &armmonitor.DiagnosticSettings{
+					WorkspaceID: to.Ptr("/subscriptions/subscriptionid/resourceGroups/rg-test/providers/Microsoft.OperationalInsights/workspaces/hello-world"),
+					Logs: []*armmonitor.LogSettings{
+						{
+							CategoryGroup: to.Ptr("allLogs"),
+							Enabled:       to.Ptr(true),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *testing.T) {
+	// Arrange
+	myDiagnosticsClient := mockDiagnosticSettingsClient{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{
+			{
+				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+				Properties: &armmonitor.DiagnosticSettings{
+					WorkspaceID: to.Ptr("dummy_workspace_id"),
+					Logs: []*armmonitor.LogSettings{
+						{
+							Category: to.Ptr("StorageRead"),
+							Enabled:  to.Ptr(true),
+						},
+						{
+							Category: to.Ptr("StorageWrite"),
+							Enabled:  to.Ptr(true),
+						},
+						{
+							Category: to.Ptr("StorageDelete"),
+							Enabled:  to.Ptr(true),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categories(t *testing.T) {
+	// Arrange
+	myDiagnosticsClient := mockDiagnosticSettingsClient{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{
+			{
+				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
+				Properties: &armmonitor.DiagnosticSettings{
+					WorkspaceID: to.Ptr("dummy_workspace_id"),
+					Logs: []*armmonitor.LogSettings{
+						{
+							CategoryGroup: to.Ptr("allLogs"),
+							Enabled:       to.Ptr(false),
+						},
+						{
+							Category: to.Ptr("StorageRead"),
+							Enabled:  to.Ptr(false),
+						},
+						{
+							Category: to.Ptr("StorageWrite"),
+							Enabled:  to.Ptr(true),
+						},
+						{
+							Category: to.Ptr("StorageDelete"),
+							Enabled:  to.Ptr(true),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
+
+func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testing.T) {
+	// Arrange
+	myDiagnosticsClient := mockDiagnosticSettingsClient{
+		diagSettings: []*armmonitor.DiagnosticSettingsResource{},
+	}
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
 }
