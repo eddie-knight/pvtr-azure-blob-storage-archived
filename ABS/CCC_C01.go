@@ -1,4 +1,4 @@
-package armory
+package abs
 
 import (
 	"crypto/tls"
@@ -14,7 +14,7 @@ import (
 // Strike and Movements for CCC_C01_TR01
 // -------------------------------------
 
-func (a *ABS) CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C01_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -25,7 +25,7 @@ func (a *ABS) CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C01_TR01_T01)
+	result.ExecuteMovement(CCC_C01_TR01_T01)
 
 	StrikeResultSetter("Default TLS version is TLS 1.2 or TLS 1.3",
 		"Default TLS version is not TLS 1.2 or TLS 1.3, see movement results for more details",
@@ -58,7 +58,7 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_C01_TR02
 // -------------------------------------
 
-func (a *ABS) CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C01_TR02"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -69,7 +69,7 @@ func (a *ABS) CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C01_TR02_T01)
+	result.ExecuteMovement(CCC_C01_TR02_T01)
 
 	StrikeResultSetter("HTTP requests are not supported",
 		"HTTP requests are supported, see movement results for more details",
@@ -93,7 +93,7 @@ func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_C01_TR03
 // -------------------------------------
 
-func (a *ABS) CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C01_TR03"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -104,8 +104,8 @@ func (a *ABS) CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T01)
-	raidengine.ExecuteMovement(&result, CCC_C01_TR03_T02)
+	result.ExecuteMovement(CCC_C01_TR03_T01)
+	result.ExecuteMovement(CCC_C01_TR03_T02)
 
 	StrikeResultSetter("All insecure TLS versions are not supported",
 		"One or more insecure TLS versions are supported, see movement results for more details",

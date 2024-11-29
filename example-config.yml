@@ -1,11 +1,12 @@
 loglevel: Debug
-WriteDirectory: output
-raids:
-  ABS:
-    subscriptionid: 
-    storageAccountResourceId:
-    tactics: 
+write-directory: output
+services:
+  myStorageAccount:
+    raid: ABS
+    tactics:
       - tlp_red
       # - tlp_amber
       # - tlp_green
       # - tlp_clear
+    vars:
+      storageAccountResourceId: 

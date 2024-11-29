@@ -3,7 +3,9 @@ package cmd
 import (
 	"log"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	// "github.com/privateerproj/privateer-pack-ABS/armory"
+
+	abs "github.com/azure/finos-azure-blob-storage-raid/ABS"
 	"github.com/spf13/cobra"
 )
 
@@ -13,9 +15,24 @@ var (
 		Use:   "debug",
 		Short: "Run the Raid in debug mode",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := raidengine.Run(RaidName, Armory)
+			err := Vessel.StockArmory(&abs.Armory)
+
 			if err != nil {
-				log.Fatal(err)
+				log.Default().Print(err.Error())
+				return
+			}
+
+			// Initialize armory
+			if err := abs.Initialize(); err != nil {
+				log.Default().Printf("Failed to initialize armory: %v", err)
+				return
+			}
+
+			err = Vessel.Mobilize()
+
+			if err != nil {
+				log.Default().Print(err.Error())
+				return
 			}
 		},
 	}
