@@ -167,7 +167,7 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 
 	} else {
 
-		result.Value = lastSyncTime{
+		result.Value = LastSyncTime{
 			Name:  "Last Sync Time (UTC)",
 			Value: *storageAccountResource.Properties.GeoReplicationStats.LastSyncTime,
 		}
@@ -192,7 +192,7 @@ type SKU struct {
 	SKUName string
 }
 
-type lastSyncTime struct {
+type LastSyncTime struct {
 	Name  string
 	Value time.Time
 }

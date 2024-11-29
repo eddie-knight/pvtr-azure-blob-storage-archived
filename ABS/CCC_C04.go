@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -51,7 +50,7 @@ func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	storageAccountBlobResourceId := storageAccountResourceId + "/blobServices/default"
-	ArmoryLoggingFunctions.ConfirmLoggingToLogAnalyticsIsConfigured(
+	ArmoryAzureUtils.ConfirmLoggingToLogAnalyticsIsConfigured(
 		storageAccountBlobResourceId,
 		diagnosticsSettingsClient,
 		&result)
@@ -101,7 +100,6 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 // --------------------------------------
 
 type LoggingFunctions interface {
-	ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult)
 	ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult)
 }
 
@@ -117,69 +115,6 @@ var loggingVariables = logPollingVariables{
 	minimumIngestionTime: time.Duration(90 * time.Second),
 	maximumIngestionTime: time.Duration(5 * time.Minute),
 	pollingDelay:         time.Duration(10 * time.Second),
-}
-
-func (*loggingFunctions) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
-	pager := diagnosticsClient.NewListPager(resourceId, nil)
-
-	for pager.More() {
-		page, err := pager.NextPage(context.Background())
-
-		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Could not find diagnostic setting: %v", err)
-			return
-		}
-
-		for _, v := range page.Value {
-			if *v.Type == "Microsoft.Insights/diagnosticSettings" && *v.Properties.WorkspaceID != "" {
-
-				readLogged := false
-				writeLogged := false
-				deleteLogged := false
-
-				for _, logSetting := range v.Properties.Logs {
-					if *logSetting.Enabled {
-						if logSetting.CategoryGroup != nil {
-							switch *logSetting.CategoryGroup {
-							case "audit", "allLogs":
-								readLogged = true
-								writeLogged = true
-								deleteLogged = true
-							}
-						} else if logSetting.Category != nil {
-							switch *logSetting.Category {
-							case "StorageRead":
-								readLogged = true
-							case "StorageWrite":
-								writeLogged = true
-							case "StorageDelete":
-								deleteLogged = true
-							}
-						}
-					}
-				}
-
-				if readLogged && writeLogged && deleteLogged {
-					result.Passed = true
-
-					// Try to extract the name of the log analytics workspace
-					logAnalyticsWorkspaceName := *v.Properties.WorkspaceID
-					match := regexp.MustCompile("^/subscriptions/[0-9a-z-]+?/resourceGroups/.+?/providers/Microsoft.OperationalInsights/workspaces/(.*?)$").FindStringSubmatch(logAnalyticsWorkspaceName)
-
-					if len(match) > 0 {
-						logAnalyticsWorkspaceName = match[1]
-					}
-
-					result.Message = fmt.Sprintf("Storage account is configured to emit to log analytics workspace %s", logAnalyticsWorkspaceName)
-					return
-				}
-			}
-		}
-	}
-
-	result.Passed = false
-	result.Message = "Storage account is not configured to emit to log analytics workspace destination"
 }
 
 func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {

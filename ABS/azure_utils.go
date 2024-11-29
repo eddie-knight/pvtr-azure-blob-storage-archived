@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ type AzureUtils interface {
 	GetBlobClient(blobUri string) (BlobClientInterface, error)
 	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
 	DeleteTestContainer(result *raidengine.MovementResult, containerName string)
+	ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult)
 }
 
 type azureUtils struct{}
@@ -102,9 +104,82 @@ func (*azureUtils) DeleteTestContainer(result *raidengine.MovementResult, contai
 	}
 }
 
-// -----
+func (*azureUtils) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
+	pager := diagnosticsClient.NewListPager(resourceId, nil)
+
+	for pager.More() {
+		page, err := pager.NextPage(context.Background())
+
+		if err != nil {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Could not find diagnostic setting: %v", err)
+			return
+		}
+
+		for _, v := range page.Value {
+			if *v.Type == "Microsoft.Insights/diagnosticSettings" && *v.Properties.WorkspaceID != "" {
+
+				readLogged := false
+				writeLogged := false
+				deleteLogged := false
+
+				for _, logSetting := range v.Properties.Logs {
+					if *logSetting.Enabled {
+						if logSetting.CategoryGroup != nil {
+							switch *logSetting.CategoryGroup {
+							case "audit", "allLogs":
+								readLogged = true
+								writeLogged = true
+								deleteLogged = true
+							}
+						} else if logSetting.Category != nil {
+							switch *logSetting.Category {
+							case "StorageRead":
+								readLogged = true
+							case "StorageWrite":
+								writeLogged = true
+							case "StorageDelete":
+								deleteLogged = true
+							}
+						}
+					}
+				}
+
+				if readLogged && writeLogged && deleteLogged {
+					result.Passed = true
+
+					// Try to extract the name of the log analytics workspace
+					logAnalyticsWorkspaceName := *v.Properties.WorkspaceID
+					match := regexp.MustCompile("^/subscriptions/[0-9a-z-]+?/resourceGroups/.+?/providers/Microsoft.OperationalInsights/workspaces/(.*?)$").FindStringSubmatch(logAnalyticsWorkspaceName)
+
+					if len(match) > 0 {
+						logAnalyticsWorkspaceName = match[1]
+					}
+
+					result.Value = logAnalyticsWorkspace{
+						Name:  logAnalyticsWorkspaceName,
+						Value: logAnalyticsWorkspaceName,
+					}
+
+					result.Message = "Storage account is configured to emit to log analytics workspace."
+					return
+				}
+			}
+		}
+	}
+
+	result.Passed = false
+	result.Message = "Storage account is not configured to emit to log analytics workspace destination."
+}
+
+type logAnalyticsWorkspace struct {
+	Name  string
+	Value string
+}
+
+// -----------------------
 // Azure Client Interfaces
-// -----
+// -----------------------
 
 type DiagnosticSettingsClientInterface interface {
 	NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse]

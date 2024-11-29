@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/privateerproj/privateer-sdk/raidengine"
@@ -19,12 +18,7 @@ import (
 type loggingFunctionsMock struct {
 	commonFunctionsMock
 	azureUtilsMock
-	confirmLoggingToLogAnalyticsIsConfiguredResult bool
-	confirmHTTPResponseIsLoggedResult              bool
-}
-
-func (mock *loggingFunctionsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
-	result.Passed = mock.confirmLoggingToLogAnalyticsIsConfiguredResult
+	confirmHTTPResponseIsLoggedResult bool
 }
 
 func (mock *loggingFunctionsMock) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {
@@ -57,9 +51,12 @@ func (mock *mockDiagnosticSettingsClient) NewListPager(resourceURI string, optio
 func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
-		confirmLoggingToLogAnalyticsIsConfiguredResult: true}
+		azureUtilsMock: azureUtilsMock{
+			confirmLoggingToLogAnalyticsIsConfiguredResult: true,
+		},
+	}
 
-	ArmoryLoggingFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myMock
 
 	// Act
@@ -72,9 +69,12 @@ func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
 func Test_CCC_C04_TR01_T01_fails_if_confirmLoggingToLogAnalyticsIsConfigured_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
-		confirmLoggingToLogAnalyticsIsConfiguredResult: false}
+		azureUtilsMock: azureUtilsMock{
+			confirmLoggingToLogAnalyticsIsConfiguredResult: false,
+		},
+	}
 
-	ArmoryLoggingFunctions = &myMock
+	ArmoryAzureUtils = &myMock
 	ArmoryCommonFunctions = &myMock
 
 	// Act
@@ -197,121 +197,6 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 
 	// Act
 	result := CCC_C04_TR01_T03()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(t *testing.T) {
-	// Arrange
-	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		diagSettings: []*armmonitor.DiagnosticSettingsResource{
-			{
-				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
-				Properties: &armmonitor.DiagnosticSettings{
-					WorkspaceID: to.Ptr("/subscriptions/subscriptionid/resourceGroups/rg-test/providers/Microsoft.OperationalInsights/workspaces/hello-world"),
-					Logs: []*armmonitor.LogSettings{
-						{
-							CategoryGroup: to.Ptr("allLogs"),
-							Enabled:       to.Ptr(true),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Act
-	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-}
-
-func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *testing.T) {
-	// Arrange
-	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		diagSettings: []*armmonitor.DiagnosticSettingsResource{
-			{
-				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
-				Properties: &armmonitor.DiagnosticSettings{
-					WorkspaceID: to.Ptr("dummy_workspace_id"),
-					Logs: []*armmonitor.LogSettings{
-						{
-							Category: to.Ptr("StorageRead"),
-							Enabled:  to.Ptr(true),
-						},
-						{
-							Category: to.Ptr("StorageWrite"),
-							Enabled:  to.Ptr(true),
-						},
-						{
-							Category: to.Ptr("StorageDelete"),
-							Enabled:  to.Ptr(true),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Act
-	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-}
-
-func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categories(t *testing.T) {
-	// Arrange
-	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		diagSettings: []*armmonitor.DiagnosticSettingsResource{
-			{
-				Type: to.Ptr("Microsoft.Insights/diagnosticSettings"),
-				Properties: &armmonitor.DiagnosticSettings{
-					WorkspaceID: to.Ptr("dummy_workspace_id"),
-					Logs: []*armmonitor.LogSettings{
-						{
-							CategoryGroup: to.Ptr("allLogs"),
-							Enabled:       to.Ptr(false),
-						},
-						{
-							Category: to.Ptr("StorageRead"),
-							Enabled:  to.Ptr(false),
-						},
-						{
-							Category: to.Ptr("StorageWrite"),
-							Enabled:  to.Ptr(true),
-						},
-						{
-							Category: to.Ptr("StorageDelete"),
-							Enabled:  to.Ptr(true),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Act
-	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testing.T) {
-	// Arrange
-	myDiagnosticsClient := mockDiagnosticSettingsClient{
-		diagSettings: []*armmonitor.DiagnosticSettingsResource{},
-	}
-
-	// Act
-	result := raidengine.MovementResult{}
-	(&loggingFunctions{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
