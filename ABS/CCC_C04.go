@@ -1,4 +1,4 @@
-package armory
+package abs
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 // Strike and Movements for CCC_C04_TR01
 // -----
 
-func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C04_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -28,11 +28,11 @@ func (a *ABS) CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C04_TR01_T01)
+	result.ExecuteMovement(CCC_C04_TR01_T01)
 
 	if result.Movements["CCC_C04_TR01_T01"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T02)
-		raidengine.ExecuteMovement(&result, CCC_C04_TR01_T03)
+		result.ExecuteMovement(CCC_C04_TR01_T02)
+		result.ExecuteMovement(CCC_C04_TR01_T03)
 	}
 
 	StrikeResultSetter(

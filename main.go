@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/privateerproj/privateer-pack-ABS/cmd"
+	"github.com/azure/finos-azure-blob-storage-raid/cmd"
 )
 
 var (

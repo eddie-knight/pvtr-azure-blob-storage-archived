@@ -1,4 +1,4 @@
-package armory
+package abs
 
 import (
 	"context"
@@ -11,74 +11,10 @@ import (
 )
 
 // -----
-// Strike and Movements for CCC_C03_TR01
-// -----
-
-func (a *ABS) CCC_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C03_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Ensure that MFA is required for all user access to the service interface.",
-		Message:     "Strike has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C03_TR01_T01)
-
-	return
-}
-
-func CCC_C03_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "Confirms that MFA is required for all user access to the service interface",
-		Function:    utils.CallerPath(0),
-	}
-
-	result.Passed = false
-	result.Message = "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration."
-
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C03_TR02
-// -----
-
-func (a *ABS) CCC_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C03_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Ensure that MFA is required for all administrative access to the management interface.",
-		Message:     "Strike has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	raidengine.ExecuteMovement(&result, CCC_C03_TR02_T01)
-
-	return
-}
-
-func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "Confirms that MFA is required for all administrative access to the management interface",
-		Function:    utils.CallerPath(0),
-	}
-
-	result.Passed = false
-	result.Message = "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration."
-
-	return
-}
-
-// -----
 // Strike and Movements for CCC_ObjStor_C03_TR01
 // -----
 
-func (a *ABS) CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_ObjStor_C03_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -89,17 +25,17 @@ func (a *ABS) CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T01)
 	if result.Movements["CCC_ObjStor_C03_TR01_T01"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T02)
+		result.ExecuteMovement(CCC_ObjStor_C03_TR01_T02)
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T03)
+	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T03)
 	if result.Movements["CCC_ObjStor_C03_TR01_T03"].Passed {
-		raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T04)
+		result.ExecuteMovement(CCC_ObjStor_C03_TR01_T04)
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR01_T05)
+	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T05)
 
 	StrikeResultSetter("Object storage buckets cannot be deleted after creation.",
 		"Object storage buckets can be deleted after creation, see movement results for more details.",
@@ -319,7 +255,7 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_ObjStor_C03_TR02
 // -----
 
-func (a *ABS) CCC_ObjStor_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_ObjStor_C03_TR02"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -330,7 +266,7 @@ func (a *ABS) CCC_ObjStor_C03_TR02() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C03_TR02_T01)
+	result.ExecuteMovement(CCC_ObjStor_C03_TR02_T01)
 
 	StrikeResultSetter("Retention policy for object storage buckets cannot be unset.",
 		"Retention policy for object storage buckets can be unset, see movement results for more details.",

@@ -14,6 +14,16 @@ jobs:
     # https://github.com/actions/checkout
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        path: finos-azure-blob-storage-raid # This line can be removed once the SDK refactor is released
+
+    # This is required until the SDK refactor is released and can be safely removed afterwards
+    - name: Checkout Privateer SDK to use unreleased changes
+      uses: actions/checkout@v4
+      with:
+        repository: privateerproj/privateer-sdk
+        path: privateer-sdk
+        ref: feat/config-struct
 
     # https://github.com/actions/setup-go
     - name: Setup Environment
@@ -24,6 +34,7 @@ jobs:
     # https://go.dev/ref/mod#go-get
     # https://go.dev/ref/mod#go-mod-download
     - name: Install Dependencies
+      working-directory: finos-azure-blob-storage-raid # This line can be removed once the SDK refactor is released
       run: |
         go mod download
         go get -t .
@@ -33,21 +44,25 @@ jobs:
     - name: Lint
       uses: golangci/golangci-lint-action@v6
       with:
+        working-directory: finos-azure-blob-storage-raid # This line can be removed once the SDK refactor is released
         version: v1.61.0
 
     # https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies
     - name: Build
+      working-directory: finos-azure-blob-storage-raid # This line can be removed once the SDK refactor is released
       run: |
         go build -v ./...
 
     # https://pkg.go.dev/cmd/go#hdr-Test_packages
     - name: Test
+      working-directory: finos-azure-blob-storage-raid # This line can be removed once the SDK refactor is released
       run: |
         go test -v ./... -coverprofile=coverage.out -covermode=count
         go tool cover -func coverage.out
 
     # Ensure code coverage
     - name: Quality Gate - Test coverage shall be above threshold
+      working-directory: finos-azure-blob-storage-raid # This line can be removed once the SDK refactor is released
       env:
           TESTCOVERAGE_THRESHOLD: 50
       run: |
