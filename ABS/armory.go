@@ -427,39 +427,6 @@ func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C07_TR01
-// -----
-
-// CCC_C07_TR01 conforms to the Strike function type
-func CCC_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C07_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service generates real-time alerts whenever non-human entities (e.g., automated scripts or processes) attempt to enumerate resources or services.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C07",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_C07_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C07_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C07_TR01
-	return
-}
-
-// -----
 // Strike and Movements for CCC_C07_TR02
 // -----
 
