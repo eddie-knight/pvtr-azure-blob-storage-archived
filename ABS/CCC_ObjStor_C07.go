@@ -9,7 +9,7 @@ import (
 // Strike and Movements for CCC_ObjStor_C07_TR01
 // -----
 
-func (a *ABS) CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_ObjStor_C07_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -20,7 +20,7 @@ func (a *ABS) CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C07_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C07_TR01_T01)
 
 	return
 }
