@@ -1,4 +1,4 @@
-package armory
+package abs
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 // Strike and Movements for CCC_C05_TR01
 // -----
 
-func (a *ABS) CCC_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C05_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -22,7 +22,7 @@ func (a *ABS) CCC_C05_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C05_TR01_T01)
+	result.ExecuteMovement(CCC_C05_TR01_T01)
 
 	StrikeResultSetter(
 		"This service blocks access to sensitive resources and admin access from untrusted sources",
@@ -84,7 +84,7 @@ func CCC_C05_TR01_T01() (result raidengine.MovementResult) {
 // Strike and Movements for CCC_C05_TR04
 // -----
 
-func (a *ABS) CCC_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
 	strikeName = "CCC_C05_TR04"
 	result = raidengine.StrikeResult{
 		Passed:      false,
@@ -95,8 +95,8 @@ func (a *ABS) CCC_C05_TR04() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C05_TR04_T01)
-	raidengine.ExecuteMovement(&result, CCC_C05_TR04_T02)
+	result.ExecuteMovement(CCC_C05_TR04_T01)
+	result.ExecuteMovement(CCC_C05_TR04_T02)
 
 	StrikeResultSetter(
 		"This service blocks unauthorized cross-tenant access both via Shared Key access and public anonymous blob access",

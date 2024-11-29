@@ -1,4 +1,4 @@
-package armory
+package abs
 
 import (
 	"context"
@@ -16,19 +16,119 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	hclog "github.com/hashicorp/go-hclog"
-	"github.com/spf13/viper"
 
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
-// Conforms to the Armory interface type
-type ABS struct {
-	Tactics map[string][]raidengine.Strike     // Required, allows you to sort which strikes are run for each control
-	Log     hclog.Logger                       // Recommended, allows you to set the log level for each log message
-	Results map[string]raidengine.StrikeResult // Optional, allows cross referencing between strikes
-}
+var (
+	Armory = raidengine.Armory{
+		RaidName: "ABS",
+		Tactics: map[string][]raidengine.Strike{
+			"tlp_amber": {
+				CCC_C01_TR01,
+				CCC_C01_TR02,
+				CCC_C01_TR03,
+				CCC_C02_TR01,
+				CCC_C02_TR02,
+				CCC_C03_TR01,
+				CCC_C03_TR02,
+				CCC_C04_TR01,
+				CCC_C04_TR02,
+				CCC_C05_TR01,
+				CCC_C05_TR04,
+				CCC_C06_TR01,
+				CCC_C06_TR02,
+				CCC_C07_TR02,
+				CCC_C08_TR01,
+				CCC_ObjStor_C08_TR02,
+				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C03_TR01,
+				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR04,
+				CCC_ObjStor_C06_TR01,
+				CCC_ObjStor_C06_TR04,
+				CCC_ObjStor_C07_TR01,
+				CCC_ObjStor_C08_TR01,
+			},
+			"tlp_clear": {
+				CCC_C01_TR01,
+				CCC_C01_TR02,
+				CCC_C01_TR03,
+				CCC_C02_TR01,
+				CCC_C02_TR02,
+				CCC_C03_TR02,
+				CCC_C04_TR02,
+				CCC_C05_TR01,
+				CCC_C05_TR04,
+				CCC_C06_TR01,
+				CCC_C06_TR02,
+				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C03_TR01,
+				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR04,
+				CCC_ObjStor_C06_TR01,
+				CCC_ObjStor_C06_TR04,
+			},
+			"tlp_green": {
+				CCC_C01_TR01,
+				CCC_C01_TR02,
+				CCC_C01_TR03,
+				CCC_C02_TR01,
+				CCC_C02_TR02,
+				CCC_C03_TR02,
+				CCC_C04_TR02,
+				CCC_C05_TR01,
+				CCC_C05_TR04,
+				CCC_C06_TR01,
+				CCC_C06_TR02,
+				CCC_C07_TR02,
+				CCC_C08_TR01,
+				CCC_ObjStor_C08_TR02,
+				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C03_TR01,
+				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR04,
+				CCC_ObjStor_C06_TR01,
+				CCC_ObjStor_C06_TR04,
+				CCC_ObjStor_C08_TR01,
+			},
+			"tlp_red": {
+				CCC_C01_TR01,
+				CCC_C01_TR02,
+				CCC_C01_TR03,
+				CCC_C02_TR01,
+				CCC_C02_TR02,
+				CCC_C03_TR01,
+				CCC_C03_TR02,
+				CCC_C04_TR01,
+				CCC_C04_TR02,
+				CCC_C05_TR01,
+				CCC_C05_TR04,
+				CCC_C06_TR01,
+				CCC_C06_TR02,
+				CCC_C07_TR01,
+				CCC_C07_TR02,
+				CCC_C08_TR01,
+				CCC_ObjStor_C08_TR02,
+				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C03_TR01,
+				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR04,
+				CCC_ObjStor_C06_TR01,
+				CCC_ObjStor_C06_TR04,
+				CCC_ObjStor_C07_TR01,
+				CCC_ObjStor_C08_TR01,
+			},
+		},
+	}
+)
 
 var (
 	storageAccountResourceId          string
@@ -57,18 +157,9 @@ var (
 	ArmoryBlobVersioningFunctions BlobVersioningFunctions = &blobVersioningFunctions{}
 )
 
-func (a *ABS) SetLogger(loggerName string) hclog.Logger {
-	a.Log = raidengine.GetLogger(loggerName, false)
-	return a.Log
-}
-
-func (a *ABS) GetTactics() map[string][]raidengine.Strike {
-	return a.Tactics
-}
-
-func (a *ABS) Initialize() error {
+func Initialize() error {
 	// Parse resource ID
-	storageAccountResourceId = viper.GetString("raids.ABS.storageAccountResourceId")
+	storageAccountResourceId = Armory.Config.GetString("storageaccountresourceid") // TO DO: Always call config by lower case config names
 
 	if storageAccountResourceId == "" {
 		return fmt.Errorf("required variable storage account resource ID is not provided")
@@ -241,7 +332,7 @@ func StrikeResultSetter(successMessage string, failureMessage string, result *ra
 // -----
 
 // CCC_C04_TR02 conforms to the Strike function type
-func (a *ABS) CCC_C04_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C04_TR02() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_C04_TR02"
 	result = raidengine.StrikeResult{
@@ -253,7 +344,7 @@ func (a *ABS) CCC_C04_TR02() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C04_TR02_T01)
+	result.ExecuteMovement(CCC_C04_TR02_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -274,7 +365,7 @@ func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_C06_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_C06_TR01"
 	result = raidengine.StrikeResult{
@@ -286,7 +377,7 @@ func (a *ABS) CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C06_TR01_T01)
+	result.ExecuteMovement(CCC_C06_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -307,7 +398,7 @@ func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_C06_TR02 conforms to the Strike function type
-func (a *ABS) CCC_C06_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C06_TR02() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_C06_TR02"
 	result = raidengine.StrikeResult{
@@ -319,7 +410,7 @@ func (a *ABS) CCC_C06_TR02() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C06_TR02_T01)
+	result.ExecuteMovement(CCC_C06_TR02_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -340,7 +431,7 @@ func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_C07_TR01 conforms to the Strike function type
-func (a *ABS) CCC_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_C07_TR01"
 	result = raidengine.StrikeResult{
@@ -352,7 +443,7 @@ func (a *ABS) CCC_C07_TR01() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C07_TR01_T01)
+	result.ExecuteMovement(CCC_C07_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -373,7 +464,7 @@ func CCC_C07_TR01_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_C07_TR02 conforms to the Strike function type
-func (a *ABS) CCC_C07_TR02() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C07_TR02() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_C07_TR02"
 	result = raidengine.StrikeResult{
@@ -385,7 +476,7 @@ func (a *ABS) CCC_C07_TR02() (strikeName string, result raidengine.StrikeResult)
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_C07_TR02_T01)
+	result.ExecuteMovement(CCC_C07_TR02_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -406,7 +497,7 @@ func CCC_C07_TR02_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_ObjStor_C01_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_ObjStor_C01_TR01"
 	result = raidengine.StrikeResult{
@@ -418,7 +509,7 @@ func (a *ABS) CCC_ObjStor_C01_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C01_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C01_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -439,7 +530,7 @@ func CCC_ObjStor_C01_TR01_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_ObjStor_C02_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C02_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C02_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_ObjStor_C02_TR01"
 	result = raidengine.StrikeResult{
@@ -451,7 +542,7 @@ func (a *ABS) CCC_ObjStor_C02_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C02_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C02_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -472,7 +563,7 @@ func CCC_ObjStor_C02_TR01_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_ObjStor_C05_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_ObjStor_C05_TR01"
 	result = raidengine.StrikeResult{
@@ -484,7 +575,7 @@ func (a *ABS) CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C05_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C05_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -505,7 +596,7 @@ func CCC_ObjStor_C05_TR01_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_ObjStor_C05_TR04 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_ObjStor_C05_TR04"
 	result = raidengine.StrikeResult{
@@ -517,7 +608,7 @@ func (a *ABS) CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C05_TR04_T01)
+	result.ExecuteMovement(CCC_ObjStor_C05_TR04_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -538,7 +629,7 @@ func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_ObjStor_C07_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_ObjStor_C07_TR01"
 	result = raidengine.StrikeResult{
@@ -550,7 +641,7 @@ func (a *ABS) CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C07_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C07_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
@@ -571,7 +662,7 @@ func CCC_ObjStor_C07_TR01_T01() (result raidengine.MovementResult) {
 // -----
 
 // CCC_ObjStor_C08_TR01 conforms to the Strike function type
-func (a *ABS) CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
 	// set default return values
 	strikeName = "CCC_ObjStor_C08_TR01"
 	result = raidengine.StrikeResult{
@@ -583,7 +674,7 @@ func (a *ABS) CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.Strik
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	raidengine.ExecuteMovement(&result, CCC_ObjStor_C08_TR01_T01)
+	result.ExecuteMovement(CCC_ObjStor_C08_TR01_T01)
 	// TODO: Additional movement calls go here
 
 	return
