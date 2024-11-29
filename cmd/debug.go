@@ -18,20 +18,20 @@ var (
 			err := Vessel.StockArmory(&abs.Armory)
 
 			if err != nil {
-				log.Print(err.Error()) // TO DO: Not printing error as expected
+				log.Default().Print(err.Error())
 				return
 			}
 
 			// Initialize armory
 			if err := abs.Initialize(); err != nil {
-				log.Printf("Failed to initialize armory: %v", err)
+				log.Default().Printf("Failed to initialize armory: %v", err)
 				return
 			}
 
 			err = Vessel.Mobilize()
 
 			if err != nil {
-				log.Print(err.Error())
+				log.Default().Print(err.Error())
 				return
 			}
 		},
