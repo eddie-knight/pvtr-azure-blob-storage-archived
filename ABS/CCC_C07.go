@@ -35,36 +35,15 @@ func CCC_C07_TR01_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	securityPricingsClient, err := armsecurity.NewPricingsClient(cred, nil)
+	defenderForStorageResponse, err := defenderForStorageClient.Get(context.Background(), storageAccountResourceId, armsecurity.SettingNameCurrent, &armsecurity.DefenderForStorageClientGetOptions{})
 
 	if err != nil {
+		result.Message = "Error getting Defender for Storage settings: " + err.Error()
 		result.Passed = false
-		result.Message = "Error creating SecurityPricingsClient: " + err.Error()
 		return
 	}
 
-	securityPricingConfigurations, err := securityPricingsClient.List(context.Background(), "subscriptions/"+resourceId.subscriptionId, nil)
-
-	var defenderIncludesStorageAccounts = false
-
-	for _, securityPricingConfiguration := range securityPricingConfigurations.PricingList.Value {
-		if *securityPricingConfiguration.Name == "StorageAccounts" {
-			defenderIncludesStorageAccounts = true
-			break
-		}
-	}
-
-	if !defenderIncludesStorageAccounts {
-		result.Passed = false
-		result.Message = "Microsoft Defender for Cloud plan does not include Storage Accounts."
-		return
-	}
-
-	atpClient, err := armsecurity.NewAdvancedThreatProtectionClient(cred, nil)
-
-	atpSettings, err := atpClient.Get(context.Background(), storageAccountResourceId, nil)
-
-	if *atpSettings.Properties.IsEnabled {
+	if *defenderForStorageResponse.Properties.IsEnabled {
 		result.Passed = true
 		result.Message = "Microsoft Defender for Cloud is enabled and alerting is enabled for the Storage Account."
 	} else {

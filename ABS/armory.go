@@ -15,6 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
 	"github.com/privateerproj/privateer-sdk/raidengine"
@@ -149,6 +150,7 @@ var (
 	blobServicesClient        *armstorage.BlobServicesClient
 	blobServiceProperties     *armstorage.BlobServiceProperties
 	blobContainersClient      blobContainersClientInterface
+	defenderForStorageClient  defenderForStorageClientInterface
 
 	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
 	ArmoryAzureUtils              AzureUtils              = &azureUtils{}
@@ -197,7 +199,13 @@ func Initialize() error {
 	storageAccountPropertiesTimestamp = time.Now()
 
 	if err != nil {
-		return fmt.Errorf("failed to get storage account resource: %v", err)
+		// If the GetProperties fails, this may be due to geo-replication stats not being available,
+		//  instead try to get the storage account without the expand parameter
+		storageAccountResponse, err = armstorageClient.GetProperties(ctx, resourceId.resourceGroupName, resourceId.storageAccountName, nil)
+
+		if err != nil {
+			return fmt.Errorf("failed to get storage account resource: %v", err)
+		}
 	}
 
 	storageAccountResource = storageAccountResponse.Account
@@ -240,6 +248,12 @@ func Initialize() error {
 
 	if err != nil {
 		log.Fatalf("Failed to create blob containers client with error: %v", err)
+	}
+
+	defenderForStorageClient, err = armsecurity.NewDefenderForStorageClient(cred, nil)
+
+	if err != nil {
+		log.Fatalf("Error creating Defender for Storage client: %v", err)
 	}
 
 	return nil
