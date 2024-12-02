@@ -16,7 +16,7 @@ var (
 // At minimum, this should call raidengine.Run()
 // Adding raidengine.SetupCloseHandler(cleanupFunc) will allow you to append custom cleanup behavior
 func (r *Raid) Start() error {
-	err := Vessel.StockArmory(&abs.Armory)
+	err := Vessel.StockArmory(&abs.Armory, []string{"storageAccountResourceId"})
 
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (r *Raid) Start() error {
 		return err
 	}
 
-	err = Vessel.Mobilize()
+	err = Vessel.Mobilize(&abs.Armory, []string{"storageAccountResourceId"})
 
 	return err
 }

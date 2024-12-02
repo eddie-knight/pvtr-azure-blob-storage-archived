@@ -15,7 +15,7 @@ var (
 		Use:   "debug",
 		Short: "Run the Raid in debug mode",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := Vessel.StockArmory(&abs.Armory)
+			err := Vessel.StockArmory(&abs.Armory, []string{"storageAccountResourceId"})
 
 			if err != nil {
 				log.Default().Print(err.Error())
@@ -28,7 +28,7 @@ var (
 				return
 			}
 
-			err = Vessel.Mobilize()
+			err = Vessel.Mobilize(&abs.Armory, []string{"storageAccountResourceId"})
 
 			if err != nil {
 				log.Default().Print(err.Error())
