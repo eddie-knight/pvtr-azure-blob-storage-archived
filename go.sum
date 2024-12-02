@@ -721,6 +721,8 @@ github.com/privateerproj/privateer-sdk v0.0.10 h1:0BGhk+FuFoHmlZpcqWgNLlfrJOzCBK
 github.com/privateerproj/privateer-sdk v0.0.10/go.mod h1:wLc/yv9UDFXR9kZ0ioXpCOdWhm4hTSK3VqMEziJqMo4=
 github.com/privateerproj/privateer-sdk v0.0.11 h1:Oo+gbk1GOfElOJuSnGNtPcMaUZ09qoC4dgil5H6ss6k=
 github.com/privateerproj/privateer-sdk v0.0.11/go.mod h1:wLc/yv9UDFXR9kZ0ioXpCOdWhm4hTSK3VqMEziJqMo4=
+github.com/privateerproj/privateer-sdk v0.0.15 h1:cjnDkZ48om7GGYSTz70R6aKrduog/NZoXpl1mN51TiA=
+github.com/privateerproj/privateer-sdk v0.0.15/go.mod h1:wLc/yv9UDFXR9kZ0ioXpCOdWhm4hTSK3VqMEziJqMo4=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v1.0.0/go.mod h1:db9x61etRT2tGnBNRi70OPL5FsnadC4Ky3P0J6CfImo=
 github.com/prometheus/client_golang v1.4.0/go.mod h1:e9GMxYsXl05ICDXkRhurwBS4Q3OK1iX/F2sw+iXX5zU=
