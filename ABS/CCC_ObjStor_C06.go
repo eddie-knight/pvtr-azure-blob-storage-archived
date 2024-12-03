@@ -28,7 +28,7 @@ func CCC_ObjStor_C06_TR01() (strikeName string, result raidengine.StrikeResult) 
 
 	result.ExecuteMovement(CCC_ObjStor_C06_TR01_T01)
 	if result.Movements["CCC_ObjStor_C06_TR01_T01"].Passed {
-		result.ExecuteMovement(CCC_ObjStor_C06_TR01_T02)
+		result.ExecuteInvasiveMovement(CCC_ObjStor_C06_TR01_T02)
 	}
 
 	return

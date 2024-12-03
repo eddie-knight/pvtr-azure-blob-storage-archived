@@ -91,12 +91,12 @@ func CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.StrikeResult) 
 
 	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T01)
 	if result.Movements["CCC_ObjStor_C03_TR01_T01"].Passed {
-		result.ExecuteMovement(CCC_ObjStor_C03_TR01_T02)
+		result.ExecuteInvasiveMovement(CCC_ObjStor_C03_TR01_T02)
 	}
 
 	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T03)
 	if result.Movements["CCC_ObjStor_C03_TR01_T03"].Passed {
-		result.ExecuteMovement(CCC_ObjStor_C03_TR01_T04)
+		result.ExecuteInvasiveMovement(CCC_ObjStor_C03_TR01_T04)
 	}
 
 	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T05)
