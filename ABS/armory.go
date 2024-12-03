@@ -516,7 +516,7 @@ func CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.StrikeResult) 
 	strikeName = "CCC_ObjStor_C05_TR01"
 	result = raidengine.StrikeResult{
 		Passed:      false,
-		Description: "All objects stored in the object storage system automatically receive a default retention policy that prevents premature deletion or  modification.",
+		Description: "All objects stored in the object storage system automatically receive a default retention policy that prevents premature deletion or modification.",
 		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C05",
@@ -536,71 +536,5 @@ func CCC_ObjStor_C05_TR01_T01() (result raidengine.MovementResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C05_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_ObjStor_C05_TR04
-// -----
-
-// CCC_ObjStor_C05_TR04 conforms to the Strike function type
-func CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C05_TR04"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Attempts to delete or modify objects that are subject to an active retention policy are prevented.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_ObjStor_C05_TR04_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C05_TR04
-	return
-}
-
-// -----
-// Strike and Movements for CCC_ObjStor_C08_TR01
-// -----
-
-// CCC_ObjStor_C08_TR01 conforms to the Strike function type
-func CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C08_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "Object replication to destinations outside of the defined trust perimeter is automatically blocked, preventing replication to untrusted resources.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.08",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_ObjStor_C08_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C08_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C08_TR01
 	return
 }

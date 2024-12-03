@@ -1,8 +1,10 @@
 package abs
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -135,6 +137,67 @@ func CCC_C05_TR04_T02() (result raidengine.MovementResult) {
 	} else {
 		result.Passed = true
 		result.Message = "Shared Key access is disabled for the storage account."
+	}
+
+	return
+}
+
+// -----
+// Strike and Movements for CCC_ObjStor_C05_TR04
+// -----
+
+func CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
+	strikeName = "CCC_ObjStor_C05_TR04"
+	result = raidengine.StrikeResult{
+		Passed:      false,
+		Description: "Attempts to delete or modify objects that are subject to an active retention policy are prevented.",
+		Message:     "Strike has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C05",
+		Movements:   make(map[string]raidengine.MovementResult),
+	}
+
+	result.ExecuteInvasiveMovement(CCC_ObjStor_C05_TR04_T01)
+
+	return
+}
+
+func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "Confirms that deleting objects subject to a retention policy is prevented.",
+		Function:    utils.CallerPath(0),
+	}
+
+	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
+	containerName := "privateer-test-container-" + randomString
+	blobName := "privateer-test-blob-" + randomString
+	blobUri := fmt.Sprintf("%s%s/%s", storageAccountUri, containerName, blobName)
+	blobContent := "Privateer test blob content"
+
+	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
+
+	if newBlockBlobClientFailedError != nil {
+		result.Passed = false
+		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		return
+	}
+
+	blobBlockClient, createContainerSucceeded := ArmoryAzureUtils.CreateContainerWithBlobContent(&result, blobBlockClient, containerName, blobName, blobContent)
+
+	if createContainerSucceeded {
+
+		_, blobDeleteFailedError := blobBlockClient.Delete(context.Background(), nil)
+
+		if blobDeleteFailedError == nil {
+			result.Passed = false
+			result.Message = "Object deletion is not prevented for objects subject to a retention policy."
+		} else if blobDeleteFailedError.(*azcore.ResponseError).ErrorCode == "BlobImmutableDueToPolicy" {
+			result.Passed = true
+			result.Message = "Object deletion is prevented for objects subject to a retention policy."
+		} else {
+			result.Passed = false
+			result.Message = fmt.Sprintf("Failed to delete blob with error unrelated to immutability: %v", blobDeleteFailedError)
+		}
 	}
 
 	return
