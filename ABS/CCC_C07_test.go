@@ -23,21 +23,6 @@ func (mock *mockDefenderForStorageClient) Get(context.Context, string, armsecuri
 	}, mock.Error
 }
 
-func Test_CCC_ObjStor_C07_TR01_T01_succeeds(t *testing.T) {
-	// Arrange
-	myMock := azureUtilsMock{
-		confirmLoggingToLogAnalyticsIsConfiguredResult: true,
-	}
-
-	ArmoryAzureUtils = &myMock
-
-	// Act
-	result := CCC_ObjStor_C07_TR01_T01()
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-}
-
 func Test_CCC_C07_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := mockDefenderForStorageClient{
@@ -84,4 +69,51 @@ func Test_CCC_C07_TR01_T01_fails_when_disabled(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_C07_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := mockDefenderForStorageClient{
+		Enabled: true,
+		Error:   nil,
+	}
+
+	defenderForStorageClient = &myMock
+
+	// Act
+	result := CCC_C07_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_CCC_C07_TR02_T01_fails_when_disabled(t *testing.T) {
+	// Arrange
+	myMock := mockDefenderForStorageClient{
+		Enabled: false,
+		Error:   nil,
+	}
+
+	defenderForStorageClient = &myMock
+
+	// Act
+	result := CCC_C07_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_ObjStor_C07_TR01_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := azureUtilsMock{
+		confirmLoggingToLogAnalyticsIsConfiguredResult: true,
+	}
+
+	ArmoryAzureUtils = &myMock
+
+	// Act
+	result := CCC_ObjStor_C07_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
 }
