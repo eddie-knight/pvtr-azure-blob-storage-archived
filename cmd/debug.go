@@ -28,7 +28,7 @@ var (
 				return
 			}
 
-			err = Vessel.Mobilize(&abs.Armory, []string{"storageAccountResourceId"})
+			err = Vessel.Mobilize(&abs.Armory, nil)
 
 			if err != nil {
 				log.Default().Print(err.Error())

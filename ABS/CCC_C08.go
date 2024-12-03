@@ -160,9 +160,10 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	if storageAccountResource.Properties.GeoReplicationStats.LastSyncTime == nil {
+	if storageAccountResource.Properties.GeoReplicationStats == nil ||
+		storageAccountResource.Properties.GeoReplicationStats.LastSyncTime == nil {
 		result.Passed = false
-		result.Message = "Last sync time is not available."
+		result.Message = "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous movement for details on replication configuration."
 		return
 
 	} else {

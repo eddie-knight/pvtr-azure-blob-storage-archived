@@ -27,7 +27,7 @@ func (r *Raid) Start() error {
 		return err
 	}
 
-	err = Vessel.Mobilize(&abs.Armory, []string{"storageAccountResourceId"})
+	err = Vessel.Mobilize(&abs.Armory, nil)
 
 	return err
 }
