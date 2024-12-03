@@ -245,3 +245,11 @@ func Test_CCC_ObjStor_C08_TR02_T01_fails_last_sync_30mins_ago(t *testing.T) {
 	assert.Equal(t, false, result.Passed)
 	assert.Contains(t, result.Message, "not within 15")
 }
+
+func Test_CCC_ObjStor_C08_TR01_T01_succeeds(t *testing.T) {
+	// Act
+	result := CCC_ObjStor_C08_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
