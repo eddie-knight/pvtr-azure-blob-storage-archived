@@ -3,6 +3,7 @@ package abs
 import (
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/stretchr/testify/assert"
 )
@@ -137,4 +138,99 @@ func Test_CCC_C05_TR04_T02_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_succeeds(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: &azcore.ResponseError{
+				ErrorCode: "BlobImmutableDueToPolicy",
+			},
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_block_blob_client_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		getBlobBlockClientError: assert.AnError,
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Failed to create block blob client")
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_container_create_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: &azcore.ResponseError{
+				ErrorCode: "BlobImmutableDueToPolicy",
+			},
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Failed to create blob container")
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_succeeds(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: nil,
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Object deletion is not prevented")
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_fails_wrong_error(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: &azcore.ResponseError{
+				ErrorCode: "AnotherErrorCode",
+			},
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Failed to delete blob with error unrelated to immutability")
 }

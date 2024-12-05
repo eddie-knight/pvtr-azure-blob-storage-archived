@@ -185,6 +185,38 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 	}
 }
 
+// -----
+// Strike and Movements for CCC_ObjStor_C08_TR01
+// -----
+
+func CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
+	strikeName = "CCC_ObjStor_C08_TR01"
+	result = raidengine.StrikeResult{
+		Passed:      false,
+		Description: "Object replication to destinations outside of the defined trust perimeter is automatically blocked, preventing replication to untrusted resources.",
+		Message:     "Strike has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.08",
+		Movements:   make(map[string]raidengine.MovementResult),
+	}
+
+	result.ExecuteMovement(CCC_ObjStor_C08_TR01_T01)
+
+	return
+}
+
+func CCC_ObjStor_C08_TR01_T01() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "Checks that object replication outside of the defined trust perimeter is blocked.",
+		Function:    utils.CallerPath(0),
+	}
+
+	result.Passed = true
+	result.Message = "Object replication outside of the network access enabled on the Storage Account is always blocked on Azure Storage Accounts. See the results of CCC_C05_TR01 for more details on the configured network access."
+
+	return
+}
+
 // --------------------------------------
 // Utility functions to support movements
 // --------------------------------------
