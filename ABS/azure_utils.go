@@ -2,6 +2,8 @@ package abs
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
@@ -24,6 +27,7 @@ import (
 
 type AzureUtils interface {
 	GetToken(result *raidengine.MovementResult) string
+	GetCurrentPrincipalID(result *raidengine.MovementResult) string
 	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
 	GetBlobClient(blobUri string) (BlobClientInterface, error)
 	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
@@ -51,6 +55,31 @@ func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
 
 	log.Default().Printf("Using existing access token")
 	return token.Token
+}
+
+func (*azureUtils) GetCurrentPrincipalID(result *raidengine.MovementResult) string {
+
+	token := ArmoryAzureUtils.GetToken(result)
+
+	parts := strings.Split(token, ".")
+	if len(parts) < 2 {
+		result.Message = "Invalid token format"
+		return ""
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		result.Message = fmt.Sprintf("Failed to decode token: %v", err)
+		return ""
+	}
+
+	var claims map[string]interface{}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		result.Message = fmt.Sprintf("Failed to unmarshal claims: %v", err)
+		return ""
+	}
+
+	return claims["oid"].(string)
 }
 
 func (*azureUtils) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
@@ -182,6 +211,11 @@ type logAnalyticsWorkspace struct {
 // Azure Client Interfaces
 // -----------------------
 
+type accountsClientInterface interface {
+	RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, regenerateKey armstorage.AccountRegenerateKeyParameters, options *armstorage.AccountsClientRegenerateKeyOptions) (armstorage.AccountsClientRegenerateKeyResponse, error)
+	GetProperties(ctx context.Context, resourceGroupName string, accountName string, options *armstorage.AccountsClientGetPropertiesOptions) (armstorage.AccountsClientGetPropertiesResponse, error)
+}
+
 type DiagnosticSettingsClientInterface interface {
 	NewListPager(resourceURI string, options *armmonitor.DiagnosticSettingsClientListOptions) *runtime.Pager[armmonitor.DiagnosticSettingsClientListResponse]
 }
@@ -208,4 +242,9 @@ type blobContainersClientInterface interface {
 
 type defenderForStorageClientInterface interface {
 	Get(context.Context, string, armsecurity.SettingName, *armsecurity.DefenderForStorageClientGetOptions) (armsecurity.DefenderForStorageClientGetResponse, error)
+}
+
+type roleAssignmentsClientInterface interface {
+	Create(ctx context.Context, scope string, roleAssignmentName string, parameters armauthorization.RoleAssignmentCreateParameters, options *armauthorization.RoleAssignmentsClientCreateOptions) (armauthorization.RoleAssignmentsClientCreateResponse, error)
+	Delete(ctx context.Context, scope string, roleAssignmentName string, options *armauthorization.RoleAssignmentsClientDeleteOptions) (armauthorization.RoleAssignmentsClientDeleteResponse, error)
 }

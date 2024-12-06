@@ -7,8 +7,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/google/uuid"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -68,8 +73,7 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, token, &result, nil, nil)
 
 	if response.StatusCode != http.StatusOK {
-		result.Passed = false
-		result.Message = "Could not successfully authenticate with storage account"
+		SetResultFailure(&result, "Could not successfully authenticate with storage account")
 		return
 	}
 
@@ -86,12 +90,130 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, "", &result, nil, nil)
 
 	if response.StatusCode != http.StatusUnauthorized {
-		result.Passed = false
-		result.Message = "Could not unsuccessfully authenticate with storage account"
+		SetResultFailure(&result, "Could not unsuccessfully authenticate with storage account")
 		return
 	}
 
 	ArmoryLoggingFunctions.ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
+	return
+}
+
+// -----
+// Strike and Movements for CCC_C04_TR02
+// -----
+
+func CCC_C04_TR02() (strikeName string, result raidengine.StrikeResult) {
+	strikeName = "CCC_C04_TR02"
+	result = raidengine.StrikeResult{
+		Passed:      false,
+		Description: "The service logs all changes to configuration, including administrative actions and modifications to user roles or privileges.",
+		Message:     "Strike has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C04",
+		Movements:   make(map[string]raidengine.MovementResult),
+	}
+
+	result.ExecuteInvasiveMovement(CCC_C04_TR02_T01)
+	result.ExecuteInvasiveMovement(CCC_C04_TR02_T02)
+
+	StrikeResultSetter(
+		"All changes to configuration are logged",
+		"Not all changed to configuration are logged, see movement results for more details",
+		&result)
+
+	return
+}
+
+func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "This movement tests that a storage key rotation is logged",
+		Function:    utils.CallerPath(0),
+	}
+
+	var respFromCtx *http.Response
+	ctx := runtime.WithCaptureResponse(context.Background(), &respFromCtx)
+	activityTime := time.Now().UTC()
+
+	// Rotate the secondary storage access key
+	// https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/regenerate-key
+	_, err := armstorageClient.RegenerateKey(
+		ctx,
+		resourceId.resourceGroupName,
+		*storageAccountResource.Name,
+		armstorage.AccountRegenerateKeyParameters{KeyName: to.Ptr("key2")},
+		nil)
+
+	if err != nil {
+		SetResultFailure(&result, fmt.Sprintf("Could not regenerate key: %v", err))
+		return
+	}
+
+	// Ensure the rotation is logged
+	ArmoryLoggingFunctions.ConfirmAdminActivityIsLogged(
+		respFromCtx,
+		activityTime,
+		activityLogsClient,
+		&result)
+
+	return
+}
+
+func CCC_C04_TR02_T02() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "This movement tests that a modification to user privileges is logged",
+		Function:    utils.CallerPath(0),
+	}
+
+	var err error
+	var respFromCtx *http.Response
+	ctx := runtime.WithCaptureResponse(context.Background(), &respFromCtx)
+	activityTime := time.Now().UTC()
+
+	// https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-rest
+	roleAssignmentName := uuid.New().String()
+	roleDefinitionId := "/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7" // Reader
+	principalId := ArmoryAzureUtils.GetCurrentPrincipalID(&result)
+
+	if principalId == "" {
+		return
+	}
+
+	_, err = roleAssignmentsClient.Create(
+		ctx,
+		storageAccountResourceId,
+		roleAssignmentName,
+		armauthorization.RoleAssignmentCreateParameters{
+			Properties: &armauthorization.RoleAssignmentProperties{
+				PrincipalID:      to.Ptr(principalId),
+				RoleDefinitionID: to.Ptr(roleDefinitionId),
+			},
+		},
+		nil)
+
+	if err != nil {
+		SetResultFailure(&result, fmt.Sprintf("Could not assign permission: %v", err))
+		return
+	}
+
+	// Check to see if the add was logged
+	ArmoryLoggingFunctions.ConfirmAdminActivityIsLogged(
+		respFromCtx,
+		activityTime,
+		activityLogsClient,
+		&result)
+
+	// Remove the X role
+	_, err = roleAssignmentsClient.Delete(
+		ctx,
+		storageAccountResourceId,
+		roleAssignmentName,
+		&armauthorization.RoleAssignmentsClientDeleteOptions{},
+	)
+
+	if err != nil {
+		SetResultFailure(&result, fmt.Sprintf("Could not revoke permission: %v", err))
+	}
+
 	return
 }
 
@@ -101,6 +223,7 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 
 type LoggingFunctions interface {
 	ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult)
+	ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *raidengine.MovementResult)
 }
 
 type loggingFunctions struct{}
@@ -137,7 +260,6 @@ func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, re
 	for i := 0; i < retries; i++ {
 
 		time.Sleep(loggingVariables.pollingDelay)
-
 		timeWaitedSoFar := loggingVariables.minimumIngestionTime + (loggingVariables.pollingDelay * time.Duration(i))
 
 		logsResult, err := logsClient.QueryResource(
@@ -150,14 +272,12 @@ func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, re
 			nil)
 
 		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to query logs: %v", err)
+			SetResultFailure(result, fmt.Sprintf("Failed to query logs: %v", err))
 			return
 		}
 
 		if logsResult.Error != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Error when querying logs: %v", logsResult.Error)
+			SetResultFailure(result, fmt.Sprintf("Error when querying logs: %v", logsResult.Error.Code))
 			return
 		}
 
@@ -171,6 +291,54 @@ func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, re
 		log.Default().Printf("Log result not found after %v", timeWaitedSoFar)
 	}
 
-	result.Passed = false
-	result.Message = fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL)
+	SetResultFailure(result, fmt.Sprintf("%d response from %v was not logged", response.StatusCode, response.Request.URL))
+}
+
+type ActivityLogsClientInterface interface {
+	NewListPager(filter string, options *armmonitor.ActivityLogsClientListOptions) *runtime.Pager[armmonitor.ActivityLogsClientListResponse]
+}
+
+func (*loggingFunctions) ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *raidengine.MovementResult) {
+
+	// https://learn.microsoft.com/en-us/rest/api/monitor/activity-logs/list?view=rest-monitor-2015-04-01&tabs=HTTP#uri-parameters
+	// As per documentation only filter by one *thing*, correlationId is the only one that makes sense in this case
+	filter := fmt.Sprintf(
+		"eventTimestamp ge '%s' and correlationId eq '%s'",
+		activityTimestamp.Add(-2*time.Minute).Format(time.RFC3339),
+		response.Header.Get("X-Ms-Correlation-Request-Id"))
+
+	// Wait until we hit the minimum ingestion time for logs (usually 2 minutes)
+	log.Default().Printf("Waiting %v for logs to be ingested", loggingVariables.minimumIngestionTime)
+	time.Sleep(loggingVariables.minimumIngestionTime - loggingVariables.pollingDelay)
+
+	// Determine how many times we should retry until we hit the maximum
+	retries := int((loggingVariables.maximumIngestionTime.Seconds() - loggingVariables.minimumIngestionTime.Seconds()) / loggingVariables.pollingDelay.Seconds())
+
+	for i := 0; i < retries; i++ {
+
+		time.Sleep(loggingVariables.pollingDelay)
+		timeWaitedSoFar := loggingVariables.minimumIngestionTime + (loggingVariables.pollingDelay * time.Duration(i))
+
+		pager := activityLogsClient.NewListPager(filter, nil)
+
+		for pager.More() {
+			page, err := pager.NextPage(context.Background())
+
+			if err != nil {
+				SetResultFailure(result, fmt.Sprintf("Failed to query activity logs: %v", err))
+				return
+			}
+
+			if len(page.Value) > 0 {
+				log.Default().Printf("Activity log result found after %v seconds", timeWaitedSoFar)
+				result.Passed = true
+				result.Message = fmt.Sprintf("%v on %v was logged", *page.Value[0].OperationName.LocalizedValue, *page.Value[0].ResourceID)
+				return
+			}
+		}
+
+		log.Default().Printf("Activity log result not found after %v", timeWaitedSoFar)
+	}
+
+	SetResultFailure(result, "Admin activity on resources was not logged")
 }
