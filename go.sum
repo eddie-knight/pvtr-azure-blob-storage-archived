@@ -396,6 +396,8 @@ github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery v1.1.0 h1:l+LIDHsZkFBiipIK
 github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery v1.1.0/go.mod h1:BjVVBLUiZ/qR2a4PAhjs8uGXNfStD0tSxgxCMfcVRT8=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor v0.11.0 h1:Ds0KRF8ggpEGg4Vo42oX1cIt/IfOhHWJBikksZbVxeg=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor v0.11.0/go.mod h1:jj6P8ybImR+5topJ+eH6fgcemSFBmU6/6bFF8KkwuDI=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy v0.9.0 h1:YA31g14FJRqNW6nsG/L1OTr4K238uR1yB9QS/rfpLUQ=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy v0.9.0/go.mod h1:oV/CiaEI6/PiHdtOBhAov1Gdk9dt32WsFpj+3NSL8SI=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0 h1:Dd+RhdJn0OTtVGaeDLZpcumkIVCtA/3/Fo42+eoYvVM=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0/go.mod h1:5kakwfW5CjC9KK+Q4wjXAg+ShuIm2mBMua0ZFj2C8PE=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity v0.14.0 h1:JfjIyBJvEvQNP/9MEUo1/6eoiPkiag2OZImw32xakcc=

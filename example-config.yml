@@ -10,3 +10,4 @@ services:
       # - tlp_clear
     vars:
       storageAccountResourceId: 
+      allowedRegions: [  ]

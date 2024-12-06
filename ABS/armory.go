@@ -99,33 +99,33 @@ var (
 				CCC_ObjStor_C08_TR01,
 			},
 			"tlp_red": {
-				CCC_C01_TR01,
-				CCC_C01_TR02,
-				CCC_C01_TR03,
-				CCC_C02_TR01,
-				CCC_C02_TR02,
-				CCC_C03_TR01,
-				CCC_C03_TR02,
-				CCC_C04_TR01,
-				CCC_C04_TR02,
-				CCC_C05_TR01,
-				CCC_C05_TR04,
+				// CCC_C01_TR01,
+				// CCC_C01_TR02,
+				// CCC_C01_TR03,
+				// CCC_C02_TR01,
+				// CCC_C02_TR02,
+				// CCC_C03_TR01,
+				// CCC_C03_TR02,
+				// CCC_C04_TR01,
+				// CCC_C04_TR02,
+				// CCC_C05_TR01,
+				// CCC_C05_TR04,
 				CCC_C06_TR01,
-				CCC_C06_TR02,
-				CCC_C07_TR01,
-				CCC_C07_TR02,
-				CCC_C08_TR01,
-				CCC_ObjStor_C08_TR02,
-				CCC_ObjStor_C01_TR01,
-				CCC_ObjStor_C02_TR01,
-				CCC_ObjStor_C03_TR01,
-				CCC_ObjStor_C03_TR02,
-				CCC_ObjStor_C05_TR01,
-				CCC_ObjStor_C05_TR04,
-				CCC_ObjStor_C06_TR01,
-				CCC_ObjStor_C06_TR04,
-				CCC_ObjStor_C07_TR01,
-				CCC_ObjStor_C08_TR01,
+				// CCC_C06_TR02,
+				// CCC_C07_TR01,
+				// CCC_C07_TR02,
+				// CCC_C08_TR01,
+				// CCC_ObjStor_C08_TR02,
+				// CCC_ObjStor_C01_TR01,
+				// CCC_ObjStor_C02_TR01,
+				// CCC_ObjStor_C03_TR01,
+				// CCC_ObjStor_C03_TR02,
+				// CCC_ObjStor_C05_TR01,
+				// CCC_ObjStor_C05_TR04,
+				// CCC_ObjStor_C06_TR01,
+				// CCC_ObjStor_C06_TR04,
+				// CCC_ObjStor_C07_TR01,
+				// CCC_ObjStor_C08_TR01,
 			},
 		},
 	}
@@ -151,6 +151,7 @@ var (
 	blobServiceProperties     *armstorage.BlobServiceProperties
 	blobContainersClient      blobContainersClientInterface
 	defenderForStorageClient  defenderForStorageClientInterface
+	allowedRegions            []string
 
 	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
 	ArmoryAzureUtils              AzureUtils              = &azureUtils{}
@@ -254,6 +255,13 @@ func Initialize() error {
 
 	if err != nil {
 		log.Fatalf("Error creating Defender for Storage client: %v", err)
+	}
+
+	allowedRegionsInterface, _ := Armory.Config.GetVar("allowedregions")
+	allowedRegionsSlice := allowedRegionsInterface.([]interface{})
+	allowedRegions = make([]string, len(allowedRegionsSlice))
+	for i, v := range allowedRegionsSlice {
+		allowedRegions[i] = v.(string)
 	}
 
 	return nil
@@ -371,72 +379,6 @@ func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_C04_TR02
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C06_TR01
-// -----
-
-// CCC_C06_TR01 conforms to the Strike function type
-func CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C06_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service prevents deployment in restricted regions or cloud availability zones, blocking any provisioning attempts in designated areas.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_C06_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C06_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C06_TR02
-// -----
-
-// CCC_C06_TR02 conforms to the Strike function type
-func CCC_C06_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C06_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service ensures that replication of data, backups, and disaster recovery operations do not occur in restricted regions or availability zones.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_C06_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C06_TR02
 	return
 }
 
