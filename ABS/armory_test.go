@@ -129,14 +129,17 @@ func (mock *blobServicePropertiesMock) SetBlobServiceProperties() *armstorage.Bl
 	return to.Ptr(blobServiceProperties)
 }
 
-func CreatePager[T any](listItems []T) *runtime.Pager[T] {
+func CreatePager[T any](listItems []T, err error) *runtime.Pager[T] {
 	return runtime.NewPager(runtime.PagingHandler[T]{
 		More: func(page T) bool {
-			return len(listItems) > 0
+			return len(listItems) > 0 || err != nil
 		},
 		Fetcher: func(ctx context.Context, page *T) (T, error) {
+			var emptyValue T
+			if err != nil {
+				return emptyValue, err
+			}
 			if len(listItems) == 0 {
-				var emptyValue T
 				return emptyValue, fmt.Errorf("No more pages")
 			}
 			myPage := listItems[0]

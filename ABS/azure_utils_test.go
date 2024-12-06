@@ -20,6 +20,7 @@ import (
 type azureUtilsMock struct {
 	azureUtils
 	tokenResult                                    string
+	getPrincipalIdResult                           string
 	getBlobBlockClientError                        error
 	blobBlockClient                                BlockBlobClientInterface
 	blobClient                                     BlobClientInterface
@@ -28,11 +29,22 @@ type azureUtilsMock struct {
 }
 
 func (mock *azureUtilsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
-	result.Passed = mock.confirmLoggingToLogAnalyticsIsConfiguredResult
+	if !mock.confirmLoggingToLogAnalyticsIsConfiguredResult {
+		SetResultFailure(result, "Mocked ConfirmLoggingToLogAnalyticsIsConfigured Error")
+	} else {
+		result.Passed = true
+	}
 }
 
 func (mock *azureUtilsMock) GetToken(result *raidengine.MovementResult) string {
 	return mock.tokenResult
+}
+
+func (mock *azureUtilsMock) GetCurrentPrincipalID(result *raidengine.MovementResult) string {
+	if mock.getPrincipalIdResult == "" {
+		SetResultFailure(result, "Mocked GetCurrentPrincipalID Error")
+	}
+	return mock.getPrincipalIdResult
 }
 
 func (mock *azureUtilsMock) GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error) {
@@ -70,7 +82,7 @@ func (mock *blobContainersClientMock) NewListPager(resourceGroupName string, acc
 		},
 	}
 
-	return CreatePager(containersPages)
+	return CreatePager(containersPages, nil)
 }
 
 type mockBlockBlobClient struct {
@@ -107,7 +119,7 @@ func (mock *mockBlobClient) NewListBlobsFlatPager(containerName string, options 
 		},
 	}
 
-	return CreatePager([]azblob.ListBlobsFlatResponse{blobFlatListResponse})
+	return CreatePager([]azblob.ListBlobsFlatResponse{blobFlatListResponse}, nil)
 }
 
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(t *testing.T) {

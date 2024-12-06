@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
@@ -143,7 +144,7 @@ var (
 		resourceGroupName  string
 		storageAccountName string
 	}
-	armstorageClient          *armstorage.AccountsClient
+	armstorageClient          accountsClientInterface
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
 	diagnosticsSettingsClient *armmonitor.DiagnosticSettingsClient
@@ -151,6 +152,8 @@ var (
 	blobServiceProperties     *armstorage.BlobServiceProperties
 	blobContainersClient      blobContainersClientInterface
 	defenderForStorageClient  defenderForStorageClientInterface
+	activityLogsClient        *armmonitor.ActivityLogsClient
+	roleAssignmentsClient     roleAssignmentsClientInterface
 	allowedRegions            []string
 
 	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
@@ -227,6 +230,7 @@ func Initialize() error {
 	}
 
 	diagnosticsSettingsClient = armMonitorClientFactory.NewDiagnosticSettingsClient()
+	activityLogsClient = armMonitorClientFactory.NewActivityLogsClient()
 
 	// Get a blob services client
 	blobServicesClient, err = armstorage.NewBlobServicesClient(resourceId.subscriptionId, cred, nil)
@@ -255,6 +259,12 @@ func Initialize() error {
 
 	if err != nil {
 		log.Fatalf("Error creating Defender for Storage client: %v", err)
+	}
+
+	// Get a client factory for azure authorization
+	roleAssignmentsClient, err = armauthorization.NewRoleAssignmentsClient(resourceId.subscriptionId, cred, nil)
+	if err != nil {
+		log.Fatalf("Failed to create Azure role assignments client: %v", err)
 	}
 
 	allowedRegionsInterface, _ := Armory.Config.GetVar("allowedregions")
@@ -333,6 +343,16 @@ func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *ra
 	return response
 }
 
+func SetResultFailure(result *raidengine.MovementResult, message string) {
+	result.Passed = false
+
+	if len(result.Message) > 0 {
+		result.Message = fmt.Sprintf("%s, %s", result.Message, message)
+	} else {
+		result.Message = message
+	}
+}
+
 func StrikeResultSetter(successMessage string, failureMessage string, result *raidengine.StrikeResult) {
 
 	// If any movement fails, set strike result to failed
@@ -347,39 +367,6 @@ func StrikeResultSetter(successMessage string, failureMessage string, result *ra
 	// If no movements failed, set strike result to passed
 	result.Passed = true
 	result.Message = successMessage
-}
-
-// -----
-// Strike and Movements for CCC_C04_TR02
-// -----
-
-// CCC_C04_TR02 conforms to the Strike function type
-func CCC_C04_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C04_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service logs all changes to configuration, including administrative actions and modifications to user roles or privileges.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C04",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_C04_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C04_TR02
-	return
 }
 
 // -----

@@ -9,8 +9,11 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,11 +21,25 @@ import (
 type loggingFunctionsMock struct {
 	commonFunctionsMock
 	azureUtilsMock
-	confirmHTTPResponseIsLoggedResult bool
+	confirmHTTPResponseIsLoggedResult  bool
+	confirmAdminActivityIsLoggedResult bool
 }
 
 func (mock *loggingFunctionsMock) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {
-	result.Passed = mock.confirmHTTPResponseIsLoggedResult
+	if !mock.confirmHTTPResponseIsLoggedResult {
+		SetResultFailure(result, "Mocked ConfirmHTTPResponseIsLogged Error")
+	} else {
+		result.Passed = true
+	}
+
+}
+
+func (mock *loggingFunctionsMock) ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *raidengine.MovementResult) {
+	if !mock.confirmAdminActivityIsLoggedResult {
+		SetResultFailure(result, "Mocked ConfirmAdminActivityIsLogged Error")
+	} else {
+		result.Passed = true
+	}
 }
 
 type mockLogClient struct {
@@ -45,7 +62,41 @@ func (mock *mockDiagnosticSettingsClient) NewListPager(resourceURI string, optio
 		},
 	}
 
-	return CreatePager([]armmonitor.DiagnosticSettingsClientListResponse{page})
+	return CreatePager([]armmonitor.DiagnosticSettingsClientListResponse{page}, nil)
+}
+
+type mockAccountsClient struct {
+	err error
+}
+
+func (mock *mockAccountsClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, regenerateKey armstorage.AccountRegenerateKeyParameters, options *armstorage.AccountsClientRegenerateKeyOptions) (armstorage.AccountsClientRegenerateKeyResponse, error) {
+	return armstorage.AccountsClientRegenerateKeyResponse{}, mock.err
+}
+
+func (mock *mockAccountsClient) GetProperties(ctx context.Context, resourceGroupName string, accountName string, options *armstorage.AccountsClientGetPropertiesOptions) (armstorage.AccountsClientGetPropertiesResponse, error) {
+	return armstorage.AccountsClientGetPropertiesResponse{}, nil
+}
+
+type mockRoleAssignmentsClient struct {
+	createRoleErr error
+	deleteRoleErr error
+}
+
+func (mock *mockRoleAssignmentsClient) Create(ctx context.Context, scope string, roleAssignmentName string, parameters armauthorization.RoleAssignmentCreateParameters, options *armauthorization.RoleAssignmentsClientCreateOptions) (armauthorization.RoleAssignmentsClientCreateResponse, error) {
+	return armauthorization.RoleAssignmentsClientCreateResponse{}, mock.createRoleErr
+}
+
+func (mock *mockRoleAssignmentsClient) Delete(ctx context.Context, scope string, roleAssignmentName string, options *armauthorization.RoleAssignmentsClientDeleteOptions) (armauthorization.RoleAssignmentsClientDeleteResponse, error) {
+	return armauthorization.RoleAssignmentsClientDeleteResponse{}, mock.deleteRoleErr
+}
+
+type mockActivityLogClient struct {
+	pages []armmonitor.ActivityLogsClientListResponse
+	err   error
+}
+
+func (mock *mockActivityLogClient) NewListPager(filter string, options *armmonitor.ActivityLogsClientListOptions) *runtime.Pager[armmonitor.ActivityLogsClientListResponse] {
+	return CreatePager(mock.pages, mock.err)
 }
 
 func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
@@ -64,6 +115,7 @@ func Test_CCC_C04_TR01_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
 }
 
 func Test_CCC_C04_TR01_T01_fails_if_confirmLoggingToLogAnalyticsIsConfigured_fails(t *testing.T) {
@@ -82,6 +134,7 @@ func Test_CCC_C04_TR01_T01_fails_if_confirmLoggingToLogAnalyticsIsConfigured_fai
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked ConfirmLoggingToLogAnalyticsIsConfigured Error", result.Message)
 }
 
 func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
@@ -105,6 +158,7 @@ func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
 }
 
 func Test_CCC_C04_TR01_T02_fails_if_httpResponse_is_bad(t *testing.T) {
@@ -121,6 +175,7 @@ func Test_CCC_C04_TR01_T02_fails_if_httpResponse_is_bad(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Could not successfully authenticate with storage account", result.Message)
 }
 
 func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
@@ -144,6 +199,7 @@ func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked ConfirmHTTPResponseIsLogged Error", result.Message)
 }
 
 func Test_CCC_C04_TR01_T03_succeeds(t *testing.T) {
@@ -161,13 +217,14 @@ func Test_CCC_C04_TR01_T03_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
 }
 
 func Test_CCC_C04_TR01_T03_fails_if_httpResponse_is_bad(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		commonFunctionsMock: commonFunctionsMock{
-			httpResponse: &http.Response{StatusCode: http.StatusUnauthorized}}}
+			httpResponse: &http.Response{StatusCode: http.StatusOK}}}
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
@@ -177,6 +234,7 @@ func Test_CCC_C04_TR01_T03_fails_if_httpResponse_is_bad(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Could not unsuccessfully authenticate with storage account", result.Message)
 }
 
 func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
@@ -184,7 +242,7 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: false,
 		commonFunctionsMock: commonFunctionsMock{
-			httpResponse: &http.Response{StatusCode: http.StatusOK},
+			httpResponse: &http.Response{StatusCode: http.StatusUnauthorized},
 		},
 		azureUtilsMock: azureUtilsMock{
 			tokenResult: "mocked_token",
@@ -200,6 +258,192 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked ConfirmHTTPResponseIsLogged Error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: true}
+
+	armstorageClient = &mockAccountsClient{}
+	storageAccountResource = armstorage.Account{Name: to.Ptr("test")}
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
+}
+
+func Test_CCC_C04_TR02_T01_fails_if_regenerateKey_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{}
+
+	armstorageClient = &mockAccountsClient{err: fmt.Errorf("Test error")}
+	storageAccountResource = armstorage.Account{Name: to.Ptr("test")}
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Could not regenerate key: Test error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: false}
+
+	armstorageClient = &mockAccountsClient{}
+	storageAccountResource = armstorage.Account{Name: to.Ptr("test")}
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: true,
+		azureUtilsMock: azureUtilsMock{
+			getPrincipalIdResult: "dummy_principal_id",
+		},
+	}
+
+	roleAssignmentsClient = &mockRoleAssignmentsClient{}
+	ArmoryAzureUtils = &myMock
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_getPrincipalId_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: true,
+		azureUtilsMock: azureUtilsMock{
+			getPrincipalIdResult: "",
+		},
+	}
+
+	roleAssignmentsClient = &mockRoleAssignmentsClient{}
+	ArmoryAzureUtils = &myMock
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked GetCurrentPrincipalID Error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_roleAssignment_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: true,
+		azureUtilsMock: azureUtilsMock{
+			getPrincipalIdResult: "dummy_principal_id",
+		},
+	}
+
+	roleAssignmentsClient = &mockRoleAssignmentsClient{createRoleErr: fmt.Errorf("Test error")}
+	ArmoryAzureUtils = &myMock
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Could not assign permission: Test error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: false,
+		azureUtilsMock: azureUtilsMock{
+			getPrincipalIdResult: "dummy_principal_id",
+		},
+	}
+
+	roleAssignmentsClient = &mockRoleAssignmentsClient{}
+	ArmoryAzureUtils = &myMock
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_roleRemoval_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: true,
+		azureUtilsMock: azureUtilsMock{
+			getPrincipalIdResult: "dummy_principal_id",
+		},
+	}
+
+	roleAssignmentsClient = &mockRoleAssignmentsClient{deleteRoleErr: fmt.Errorf("Test error")}
+	ArmoryAzureUtils = &myMock
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Could not revoke permission: Test error", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval_fails(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmAdminActivityIsLoggedResult: false,
+		azureUtilsMock: azureUtilsMock{
+			getPrincipalIdResult: "dummy_principal_id",
+		},
+	}
+
+	roleAssignmentsClient = &mockRoleAssignmentsClient{deleteRoleErr: fmt.Errorf("Delete error")}
+	ArmoryAzureUtils = &myMock
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error, Could not revoke permission: Delete error", result.Message)
 }
 
 func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
@@ -221,9 +465,9 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 		Request:    &http.Request{URL: &url.URL{Host: "test.com"}},
 		Header:     http.Header{"x-ms-request-id": []string{"TestRequestId"}}}
 
-	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Second)
-	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Second)
-	loggingVariables.pollingDelay = time.Duration(1 * time.Second)
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
@@ -234,6 +478,7 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "200 response from test.com was logged", result.Message)
 }
 
 func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
@@ -248,8 +493,8 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
 		StatusCode: http.StatusOK,
 		Header:     http.Header{"x-ms-request-id": []string{"TestRequestId"}}}
 
-	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Second)
-	loggingVariables.pollingDelay = time.Duration(1 * time.Second)
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
@@ -260,6 +505,7 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to query logs: Test error", result.Message)
 	assert.Contains(t, result.Message, "Failed to query logs")
 }
 
@@ -273,8 +519,8 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_log_analytics_error(t *testing.T)
 		},
 	}
 
-	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Second)
-	loggingVariables.pollingDelay = time.Duration(1 * time.Second)
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	httpResponse := &http.Response{
 		StatusCode: http.StatusOK,
@@ -289,6 +535,7 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_log_analytics_error(t *testing.T)
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Error when querying logs: TestCode", result.Message)
 	assert.Contains(t, result.Message, "Error when querying logs")
 }
 
@@ -307,9 +554,9 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_timeout(t *testing.T) {
 		Request:    &http.Request{URL: &url.URL{Host: "test.com"}},
 		Header:     http.Header{"x-ms-request-id": []string{"TestRequestId"}}}
 
-	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Second)
-	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Second)
-	loggingVariables.pollingDelay = time.Duration(1 * time.Second)
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock
@@ -320,5 +567,89 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_timeout(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "200 response from //test.com was not logged", result.Message)
 	assert.Contains(t, result.Message, "was not logged")
+}
+
+func Test_ConfirmAdminActivityIsLogged_success(t *testing.T) {
+	// Arrange
+	myActivityLogClient := mockActivityLogClient{
+		pages: []armmonitor.ActivityLogsClientListResponse{
+			{
+				EventDataCollection: armmonitor.EventDataCollection{
+					Value: []*armmonitor.EventData{
+						{
+							OperationName: &armmonitor.LocalizableString{LocalizedValue: to.Ptr("TestOperationName")},
+							ResourceID:    to.Ptr("TestResourceId"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	httpResponse := &http.Response{
+		Header: http.Header{"X-Ms-Correlation-Request-Id": []string{"TestRequestId"}}}
+
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&loggingFunctions{}).ConfirmAdminActivityIsLogged(httpResponse, time.Now(), &myActivityLogClient, &result)
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "TestOperationName on TestResourceId was logged", result.Message)
+}
+
+func Test_ConfirmAdminActivityIsLogged_fails_if_pager_error(t *testing.T) {
+	// Arrange
+	myActivityLogClient := mockActivityLogClient{
+		err: fmt.Errorf("Test error"),
+	}
+
+	httpResponse := &http.Response{
+		Header: http.Header{"X-Ms-Correlation-Request-Id": []string{"TestRequestId"}}}
+
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&loggingFunctions{}).ConfirmAdminActivityIsLogged(httpResponse, time.Now(), &myActivityLogClient, &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to query activity logs: Test error", result.Message)
+}
+
+func Test_ConfirmAdminActivityIsLogged_fails_if_timeout(t *testing.T) {
+	// Arrange
+	myActivityLogClient := mockActivityLogClient{
+		pages: []armmonitor.ActivityLogsClientListResponse{
+			{
+				EventDataCollection: armmonitor.EventDataCollection{
+					Value: []*armmonitor.EventData{},
+				},
+			},
+		},
+	}
+
+	httpResponse := &http.Response{
+		Header: http.Header{"X-Ms-Correlation-Request-Id": []string{"TestRequestId"}}}
+
+	loggingVariables.minimumIngestionTime = time.Duration(1 * time.Millisecond)
+	loggingVariables.maximumIngestionTime = time.Duration(2 * time.Millisecond)
+	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
+
+	// Act
+	result := raidengine.MovementResult{}
+	(&loggingFunctions{}).ConfirmAdminActivityIsLogged(httpResponse, time.Now(), &myActivityLogClient, &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Admin activity on resources was not logged", result.Message)
 }
