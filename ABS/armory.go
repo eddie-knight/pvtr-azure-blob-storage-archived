@@ -16,6 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
@@ -144,6 +145,8 @@ var (
 		resourceGroupName  string
 		storageAccountName string
 	}
+	allowedRegions []string
+
 	armstorageClient          accountsClientInterface
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
@@ -154,13 +157,15 @@ var (
 	defenderForStorageClient  defenderForStorageClientInterface
 	activityLogsClient        *armmonitor.ActivityLogsClient
 	roleAssignmentsClient     roleAssignmentsClientInterface
-	allowedRegions            []string
+	policyClient              policyClientInterface
+	storageSkusClient         storageSkuClientInterface
 
-	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
-	ArmoryAzureUtils              AzureUtils              = &azureUtils{}
-	ArmoryTlsFunctions            TlsFunctions            = &tlsFunctions{}
-	ArmoryLoggingFunctions        LoggingFunctions        = &loggingFunctions{}
-	ArmoryBlobVersioningFunctions BlobVersioningFunctions = &blobVersioningFunctions{}
+	ArmoryCommonFunctions            CommonFunctions            = &commonFunctions{}
+	ArmoryAzureUtils                 AzureUtils                 = &azureUtils{}
+	ArmoryTlsFunctions               TlsFunctions               = &tlsFunctions{}
+	ArmoryLoggingFunctions           LoggingFunctions           = &loggingFunctions{}
+	ArmoryBlobVersioningFunctions    BlobVersioningFunctions    = &blobVersioningFunctions{}
+	ArmoryRestrictedRegionsFunctions RestrictedRegionsFunctions = &restrictedRegionsFunctions{}
 )
 
 func Initialize() error {
@@ -215,6 +220,13 @@ func Initialize() error {
 	storageAccountResource = storageAccountResponse.Account
 	storageAccountUri = *storageAccountResource.Properties.PrimaryEndpoints.Blob
 
+	// Get allowed regions from config
+	allowedRegionsInterface, _ := Armory.Config.GetVar("allowedregions")
+
+	for _, v := range allowedRegionsInterface.([]interface{}) {
+		allowedRegions = append(allowedRegions, v.(string))
+	}
+
 	// Get a logs client
 	logsClient, err = azquery.NewLogsClient(cred, nil)
 
@@ -267,11 +279,19 @@ func Initialize() error {
 		log.Fatalf("Failed to create Azure role assignments client: %v", err)
 	}
 
-	allowedRegionsInterface, _ := Armory.Config.GetVar("allowedregions")
-	allowedRegionsSlice := allowedRegionsInterface.([]interface{})
-	allowedRegions = make([]string, len(allowedRegionsSlice))
-	for i, v := range allowedRegionsSlice {
-		allowedRegions[i] = v.(string)
+	// Get a client for Azure Policy
+	armPolicyClientFactory, err := armpolicy.NewClientFactory(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get Azure Policy client: %v", err)
+	}
+
+	policyClient = armPolicyClientFactory.NewAssignmentsClient()
+
+	storageSkusClient, err = armstorage.NewSKUsClient(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get storage SKUs client: %v", err)
 	}
 
 	return nil

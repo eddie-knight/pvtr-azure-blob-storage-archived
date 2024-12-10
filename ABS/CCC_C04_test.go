@@ -65,18 +65,6 @@ func (mock *mockDiagnosticSettingsClient) NewListPager(resourceURI string, optio
 	return CreatePager([]armmonitor.DiagnosticSettingsClientListResponse{page}, nil)
 }
 
-type mockAccountsClient struct {
-	err error
-}
-
-func (mock *mockAccountsClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, regenerateKey armstorage.AccountRegenerateKeyParameters, options *armstorage.AccountsClientRegenerateKeyOptions) (armstorage.AccountsClientRegenerateKeyResponse, error) {
-	return armstorage.AccountsClientRegenerateKeyResponse{}, mock.err
-}
-
-func (mock *mockAccountsClient) GetProperties(ctx context.Context, resourceGroupName string, accountName string, options *armstorage.AccountsClientGetPropertiesOptions) (armstorage.AccountsClientGetPropertiesResponse, error) {
-	return armstorage.AccountsClientGetPropertiesResponse{}, nil
-}
-
 type mockRoleAssignmentsClient struct {
 	createRoleErr error
 	deleteRoleErr error
@@ -283,7 +271,7 @@ func Test_CCC_C04_TR02_T01_fails_if_regenerateKey_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{}
 
-	armstorageClient = &mockAccountsClient{err: fmt.Errorf("Test error")}
+	armstorageClient = &mockAccountsClient{regenerateKeyError: fmt.Errorf("Test error")}
 	storageAccountResource = armstorage.Account{Name: to.Ptr("test")}
 	ArmoryLoggingFunctions = &myMock
 	ArmoryCommonFunctions = &myMock

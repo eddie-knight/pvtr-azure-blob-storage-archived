@@ -2,8 +2,9 @@ package abs
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -28,12 +29,12 @@ func CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
 		Movements:   make(map[string]raidengine.MovementResult),
 	}
 
-	result.ExecuteMovement(CCC_C06_TR01_T02)
+	result.ExecuteMovement(CCC_C06_TR01_T01)
+	if result.Movements["CCC_C06_TR01_T01"].Passed {
+		result.ExecuteMovement(CCC_C06_TR01_T02) // TO DO: Mark as invasive
+	}
 
-	// result.ExecuteMovement(CCC_C06_TR01_T01)
-	// if result.Movements["CCC_C06_TR01_T01"].Passed {
-	// 	result.ExecuteMovement(CCC_C06_TR01_T02) // TO DO: Mark as invasive
-	// }
+	StrikeResultSetter("This service successfully prevents deployment in restricted regions.", "This service does not prevent deployment in restricted regions, see movement results for more details.", &result)
 
 	return
 }
@@ -44,23 +45,46 @@ func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	// // Get Azure Policy Client
-	// armPolicyClientFactory, err := armpolicy.NewClientFactory(resourceId.subscriptionId, cred, nil)
-	// armPolicyClient := armPolicyClientFactory.NewAssignmentsClient()
+	// Get Azure Policies assigned to the resource
+	policiesPager := policyClient.NewListForResourcePager(resourceId.resourceGroupName, "Microsoft.Storage", "", "storageAccounts", resourceId.storageAccountName, nil)
 
-	// // Get Azure Policies applied to resource
-	// policiesPager := armPolicyClient.NewListForResourcePager(resourceId.resourceGroupName, "Microsoft.Storage", "", "storageAccounts", resourceId.storageAccountName, nil)
+	// Check if the built-in Azure Policy "Allowed locations" is assigned to the resource
+	for policiesPager.More() {
+		page, err := policiesPager.NextPage(context.Background())
 
-	// // Check policies for restricted regions or availability zones
-	// for policiesPager.Next() {
-	// 	assignments := policiesPager.Values()
-	// 	for _, assignment := range assignments {
-	// 		policyDefinitionId := assignment.Properties.PolicyDefinitionID
-	// 	}
-	// }
+		if err != nil {
+			SetResultFailure(&result, "Could not get next page of policies: "+err.Error())
+			return
+		}
 
-	// Check for ID of the allowed regions out of the box Azure Policy
+		for _, assignment := range page.Value {
+			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c") {
+				result.Message = "Azure Policy is in place that prevents deployment in some regions."
 
+				// Check if any restricted regions are allowed by Policy
+				var extraAllowedRegions []string
+
+				for _, v := range assignment.Properties.Parameters["listOfAllowedLocations"].Value.([]interface{}) {
+					if !slices.Contains(allowedRegions, v.(string)) {
+						extraAllowedRegions = append(extraAllowedRegions, v.(string))
+					}
+				}
+
+				if len(extraAllowedRegions) == 0 {
+					result.Passed = true
+					result.Message = fmt.Sprintf("%s The only regions allowed by Policy are the provided allowed regions: %v.", result.Message, allowedRegions)
+					return
+				} else {
+					result.Passed = false
+					result.Message = fmt.Sprintf("%s There are other regions allowed Policy in addition to the provided allowed regions, the additional regions are: %v", result.Message, extraAllowedRegions)
+					return
+				}
+			}
+		}
+	}
+
+	result.Passed = false
+	result.Message = "Built-in Azure Policy Allowed locations is not assigned to the resource, there could be a custom policy preventing deployment in restricted regions but this has not been validated."
 	return
 }
 
@@ -70,85 +94,46 @@ func CCC_C06_TR01_T02() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	restrictedRegions := GetRestrictedRegions(&result)
+	restrictedRegions := ArmoryRestrictedRegionsFunctions.GetRestrictedRegions(&result)
 
 	if restrictedRegions == nil {
 		return
 	}
 
-	for region, _ := range restrictedRegions {
-		accountName := ArmoryCommonFunctions.GenerateRandomString(20)
-		parameters := armstorage.AccountCreateParameters{
-			SKU: &armstorage.SKU{
-				Name: to.Ptr(armstorage.SKUNameStandardLRS),
-			},
-			Kind:     to.Ptr(armstorage.KindStorageV2),
-			Location: to.Ptr(restrictedRegions[region]),
-		}
+	// Test creating storage account in restricted regions
+	for region := range restrictedRegions {
+		accountName, parameters := ArmoryRestrictedRegionsFunctions.NewAccountParameters(restrictedRegions[region])
 
-		_, createError := armstorageClient.BeginCreate(
-			context.Background(),
-			resourceId.resourceGroupName,
-			accountName,
-			parameters,
-			nil,
-		)
+		_, createError := armstorageClient.BeginCreate(context.Background(), resourceId.resourceGroupName, accountName, parameters, nil)
 
 		if createError == nil {
-			result.Passed = false
-			result.Message = "Successfully created Storage Account in restricted region: " + restrictedRegions[region]
+			SetResultFailure(&result, "Successfully created Storage Account in restricted region "+restrictedRegions[region])
 
-			_, deleteError := armstorageClient.Delete(
-				context.Background(),
-				resourceId.resourceGroupName,
-				accountName,
-				nil,
-			)
+			_, deleteError := armstorageClient.Delete(context.Background(), resourceId.resourceGroupName, accountName, nil)
 
 			if deleteError != nil {
-				result.Message += "; Failed to delete Storage Account with error: " + deleteError.Error()
+				SetResultFailure(&result, "Failed to delete Storage Account with error: "+deleteError.Error())
 			}
 
 			return
 		}
-
-		log.Default().Printf("Error creating Storage Account in region %s: %v", restrictedRegions[region], createError.(*azcore.ResponseError).ErrorCode)
 	}
 
-	// Try allowed region to check perms
-	accountName := ArmoryCommonFunctions.GenerateRandomString(20)
-	parameters := armstorage.AccountCreateParameters{
-		SKU: &armstorage.SKU{
-			Name: to.Ptr(armstorage.SKUNameStandardLRS),
-		},
-		Kind:     to.Ptr(armstorage.KindStorageV2),
-		Location: to.Ptr(allowedRegions[0]),
-	}
+	// Test creating storage account in allowed region
+	accountName, parameters := ArmoryRestrictedRegionsFunctions.NewAccountParameters(allowedRegions[0])
 
-	_, createError := armstorageClient.BeginCreate(
-		context.Background(),
-		resourceId.resourceGroupName,
-		accountName,
-		parameters,
-		nil,
-	)
+	_, createError := armstorageClient.BeginCreate(context.Background(), resourceId.resourceGroupName, accountName, parameters, nil)
 
 	if createError != nil {
 		result.Passed = false
-		result.Message = "Failed to create Storage Account in allowed region: " + allowedRegions[0] + " with error: " + createError.Error() + ". This likely means that the user does not have the necessary permissions to create resources in this region and failure to deploy in restricted regions, may be due to permissions rather than controls to prevent deployment to restricted regions."
+		result.Message = "Failed to create Storage Account in allowed region " + allowedRegions[0] + ". Indicating there is another reason deployments to restricted regions are failing (e.g. incorrect permissions) other than regional restrictions. Error code: " + createError.(*azcore.ResponseError).ErrorCode + "."
 		return
 	}
 
-	_, deleteError := armstorageClient.Delete(
-		context.Background(),
-		resourceId.resourceGroupName,
-		accountName,
-		nil,
-	)
+	_, deleteError := armstorageClient.Delete(context.Background(), resourceId.resourceGroupName, accountName, nil)
 
 	if deleteError != nil {
-		result.Passed = false
-		result.Message = result.Message + " Failed to delete Storage Account with error: " + deleteError.Error()
+		SetResultFailure(&result, "Failed to delete Storage Account with error: "+deleteError.(*azcore.ResponseError).ErrorCode)
 		return
 	}
 
@@ -203,15 +188,14 @@ func CCC_C06_TR02_T02() (result raidengine.MovementResult) {
 // Utility functions to support movements
 // --------------------------------------
 
-func GetRestrictedRegions(result *raidengine.MovementResult) []string {
-	storageSkusClient, err := armstorage.NewSKUsClient(resourceId.subscriptionId, cred, nil)
+type RestrictedRegionsFunctions interface {
+	GetRestrictedRegions(result *raidengine.MovementResult) []string
+	NewAccountParameters(region string) (accountName string, parameters armstorage.AccountCreateParameters)
+}
 
-	if err != nil {
-		result.Passed = false
-		result.Message = "Could not get storage SKUs client: " + err.Error()
-		return nil
-	}
+type restrictedRegionsFunctions struct{}
 
+func (*restrictedRegionsFunctions) GetRestrictedRegions(result *raidengine.MovementResult) []string {
 	storageSkusPager := storageSkusClient.NewListPager(nil)
 
 	var restrictedRegions []string
@@ -221,8 +205,7 @@ func GetRestrictedRegions(result *raidengine.MovementResult) []string {
 		page, err := storageSkusPager.NextPage(context.Background())
 
 		if err != nil {
-			result.Passed = false
-			result.Message = "Could not get next page of storage SKUs, in order to list available regions with error: " + err.Error()
+			SetResultFailure(result, "Could not get next page of storage SKUs, in order to list available regions with error: "+err.Error())
 			return nil
 		}
 
@@ -236,4 +219,17 @@ func GetRestrictedRegions(result *raidengine.MovementResult) []string {
 	}
 
 	return restrictedRegions
+}
+
+func (*restrictedRegionsFunctions) NewAccountParameters(region string) (accountName string, parameters armstorage.AccountCreateParameters) {
+	accountName = ArmoryCommonFunctions.GenerateRandomString(20)
+	parameters = armstorage.AccountCreateParameters{
+		SKU: &armstorage.SKU{
+			Name: to.Ptr(armstorage.SKUNameStandardLRS),
+		},
+		Kind:     to.Ptr(armstorage.KindStorageV2),
+		Location: to.Ptr(region),
+	}
+
+	return
 }
