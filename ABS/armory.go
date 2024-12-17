@@ -16,7 +16,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/recoveryservices/armrecoveryservices"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
@@ -112,8 +114,8 @@ var (
 				// CCC_C04_TR02,
 				// CCC_C05_TR01,
 				// CCC_C05_TR04,
-				CCC_C06_TR01,
-				// CCC_C06_TR02,
+				// CCC_C06_TR01,
+				CCC_C06_TR02,
 				// CCC_C07_TR01,
 				// CCC_C07_TR02,
 				// CCC_C08_TR01,
@@ -159,6 +161,8 @@ var (
 	roleAssignmentsClient     roleAssignmentsClientInterface
 	policyClient              policyClientInterface
 	storageSkusClient         storageSkuClientInterface
+	subscriptionsClient       *armsubscriptions.Client
+	vaultsClient              *armrecoveryservices.VaultsClient
 
 	ArmoryCommonFunctions            CommonFunctions            = &commonFunctions{}
 	ArmoryAzureUtils                 AzureUtils                 = &azureUtils{}
@@ -293,6 +297,22 @@ func Initialize() error {
 	if err != nil {
 		log.Fatalf("Could not get storage SKUs client: %v", err)
 	}
+
+	subscriptionClientFactory, err := armsubscriptions.NewClientFactory(cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get subscriptions client factory: %v", err)
+	}
+
+	subscriptionsClient = subscriptionClientFactory.NewClient()
+
+	recoveryServicesClientFactory, err := armrecoveryservices.NewClientFactory(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get recovery services client factory: %v", err)
+	}
+
+	vaultsClient = recoveryServicesClientFactory.NewVaultsClient()
 
 	return nil
 }
