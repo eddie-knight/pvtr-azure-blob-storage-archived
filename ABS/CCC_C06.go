@@ -178,6 +178,7 @@ func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
 
 		if err != nil {
 			SetResultFailure(&result, "Could not get next page of locations: "+err.Error())
+			return
 		}
 
 		for _, location := range page.Value {

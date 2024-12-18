@@ -1,12 +1,16 @@
 package abs
 
 import (
+	"context"
+	"strings"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/recoveryservices/armrecoveryservices"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,6 +60,79 @@ func (mock *mockSkusClient) NewListPager(options *armstorage.SKUsClientListOptio
 	}
 
 	return CreatePager([]armstorage.SKUsClientListResponse{skuClientListResponse}, mock.pagerError)
+}
+
+type mockSubscriptionsClient struct {
+	pagerError error
+}
+
+func (mock *mockSubscriptionsClient) NewListLocationsPager(subscriptionID string, options *armsubscriptions.ClientListLocationsOptions) *runtime.Pager[armsubscriptions.ClientListLocationsResponse] {
+
+	subscriptionsClientListLocationsResponse := armsubscriptions.ClientListLocationsResponse{
+		LocationListResult: armsubscriptions.LocationListResult{
+			Value: []*armsubscriptions.Location{
+				{
+					Name: to.Ptr("westus"),
+					Metadata: &armsubscriptions.LocationMetadata{
+						PairedRegion: []*armsubscriptions.PairedRegion{
+							{
+								Name: to.Ptr("eastus"),
+							},
+						},
+					},
+				},
+				{
+					Name: to.Ptr("eastus"),
+					Metadata: &armsubscriptions.LocationMetadata{
+						PairedRegion: []*armsubscriptions.PairedRegion{
+							{
+								Name: to.Ptr("westus"),
+							},
+						},
+					},
+				},
+				{
+					Name: to.Ptr("uksouth"),
+					Metadata: &armsubscriptions.LocationMetadata{
+						PairedRegion: []*armsubscriptions.PairedRegion{
+							{
+								Name: to.Ptr("ukwest"),
+							},
+						},
+					},
+				},
+				{
+					Name: to.Ptr("ukwest"),
+					Metadata: &armsubscriptions.LocationMetadata{
+						PairedRegion: []*armsubscriptions.PairedRegion{
+							{
+								Name: to.Ptr("uksouth"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return CreatePager([]armsubscriptions.ClientListLocationsResponse{subscriptionsClientListLocationsResponse}, mock.pagerError)
+}
+
+type mockVaultsClient struct {
+	deleteError error
+}
+
+func (mock *mockVaultsClient) BeginCreateOrUpdate(ctx context.Context, resourceGroupName string, vaultName string, vault armrecoveryservices.Vault, options *armrecoveryservices.VaultsClientBeginCreateOrUpdateOptions) (*runtime.Poller[armrecoveryservices.VaultsClientCreateOrUpdateResponse], error) {
+
+	if strings.Contains(*vault.Location, "restrictedRegion") {
+		return nil, &azcore.ResponseError{ErrorCode: "AnError"}
+	} else {
+		return nil, nil
+	}
+}
+
+func (mock *mockVaultsClient) Delete(ctx context.Context, resourceGroupName string, vaultName string, options *armrecoveryservices.VaultsClientDeleteOptions) (armrecoveryservices.VaultsClientDeleteResponse, error) {
+	return armrecoveryservices.VaultsClientDeleteResponse{}, mock.deleteError
 }
 
 func Test_CCC_C06_TR01_T01_succeeds(t *testing.T) {
@@ -241,4 +318,157 @@ func Test_CCC_C06_TR01_T02_fails_when_allowedRegion_delete_fails(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Contains(t, result.Message, "Failed to delete Storage Account with error")
+}
+
+func Test_CCC_C06_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"uksouth", "ukwest"}
+	subscriptionsClient = &mockSubscriptionsClient{
+		pagerError: nil,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_CCC_C06_TR02_T01_fails_on_pager_error(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"uksouth", "ukwest"}
+	subscriptionsClient = &mockSubscriptionsClient{
+		pagerError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Could not get next page of locations")
+}
+
+func Test_CCC_C06_TR02_T01_fails_when_paired_region_not_allowed(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"uksouth"}
+	subscriptionsClient = &mockSubscriptionsClient{
+		pagerError: nil,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "not an allowed region so any geo-replication to this region would replicated to a restricted region")
+}
+
+func Test_CCC_C06_TR02_T02_succeeds(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"allowedRegion"}
+	storageSkusClient = &mockSkusClient{
+		locations: []*string{to.Ptr("allowedRegion"), to.Ptr("restrictedRegion")},
+	}
+	vaultsClient = &mockVaultsClient{
+		deleteError: nil,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
+func Test_CCC_C06_TR02_T02_fails_when_pager_errors(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"allowedRegion"}
+	storageSkusClient = &mockSkusClient{
+		pagerError: assert.AnError,
+		locations:  []*string{to.Ptr("allowedRegion"), to.Ptr("restrictedRegion")},
+	}
+	vaultsClient = &mockVaultsClient{
+		deleteError: nil,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Could not get next page of storage SKUs")
+}
+
+func Test_CCC_C06_TR02_T02_fails_when_restrictedRegion_succeeds(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"allowedRegion"}
+	storageSkusClient = &mockSkusClient{
+		locations: []*string{to.Ptr("allowedRegion"), to.Ptr("allowedRegion2")},
+	}
+	vaultsClient = &mockVaultsClient{
+		deleteError: nil,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Successfully created Backup Vault in restricted region allowedRegion2")
+}
+
+func Test_CCC_C06_TR02_T02_fails_when_restrictedRegion_succeeds_and_delete_fails(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"allowedRegion"}
+	storageSkusClient = &mockSkusClient{
+		locations: []*string{to.Ptr("allowedRegion"), to.Ptr("allowedRegion2")},
+	}
+	vaultsClient = &mockVaultsClient{
+		deleteError: &azcore.ResponseError{ErrorCode: "AnError"},
+	}
+
+	// Act
+	result := CCC_C06_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Successfully created Backup Vault in restricted region allowedRegion2")
+	assert.Contains(t, result.Message, "Failed to delete Backup Vault with error")
+}
+
+func Test_CCC_C06_TR02_T02_fails_when_allowedRegion_fails(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"restrictedRegion"}
+	storageSkusClient = &mockSkusClient{
+		locations: []*string{to.Ptr("restrictedRegion"), to.Ptr("restrictedRegion2")},
+	}
+	vaultsClient = &mockVaultsClient{
+		deleteError: nil,
+	}
+
+	// Act
+	result := CCC_C06_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Failed to create Backup Vault in allowed region")
+}
+
+func Test_CCC_C06_TR02_T02_fails_when_allowedRegion_delete_fails(t *testing.T) {
+	// Arrange
+	allowedRegions = []string{"allowedRegion"}
+	storageSkusClient = &mockSkusClient{
+		locations: []*string{to.Ptr("restrictedRegion"), to.Ptr("allowedRegion")},
+	}
+	vaultsClient = &mockVaultsClient{
+		deleteError: &azcore.ResponseError{ErrorCode: "AnError"},
+	}
+
+	// Act
+	result := CCC_C06_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Failed to delete Backup Vault with error")
 }

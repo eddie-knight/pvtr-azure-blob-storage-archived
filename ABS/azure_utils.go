@@ -16,7 +16,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/recoveryservices/armrecoveryservices"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
@@ -258,4 +260,13 @@ type policyClientInterface interface {
 
 type storageSkuClientInterface interface {
 	NewListPager(options *armstorage.SKUsClientListOptions) *runtime.Pager[armstorage.SKUsClientListResponse]
+}
+
+type subscriptionsClientInterface interface {
+	NewListLocationsPager(subscriptionID string, options *armsubscriptions.ClientListLocationsOptions) *runtime.Pager[armsubscriptions.ClientListLocationsResponse]
+}
+
+type vaultsClientInterface interface {
+	BeginCreateOrUpdate(ctx context.Context, resourceGroupName string, vaultName string, vault armrecoveryservices.Vault, options *armrecoveryservices.VaultsClientBeginCreateOrUpdateOptions) (*runtime.Poller[armrecoveryservices.VaultsClientCreateOrUpdateResponse], error)
+	Delete(ctx context.Context, resourceGroupName string, vaultName string, options *armrecoveryservices.VaultsClientDeleteOptions) (armrecoveryservices.VaultsClientDeleteResponse, error)
 }

@@ -103,33 +103,33 @@ var (
 				CCC_ObjStor_C08_TR01,
 			},
 			"tlp_red": {
-				// CCC_C01_TR01,
-				// CCC_C01_TR02,
-				// CCC_C01_TR03,
-				// CCC_C02_TR01,
-				// CCC_C02_TR02,
-				// CCC_C03_TR01,
-				// CCC_C03_TR02,
-				// CCC_C04_TR01,
-				// CCC_C04_TR02,
-				// CCC_C05_TR01,
-				// CCC_C05_TR04,
-				// CCC_C06_TR01,
+				CCC_C01_TR01,
+				CCC_C01_TR02,
+				CCC_C01_TR03,
+				CCC_C02_TR01,
+				CCC_C02_TR02,
+				CCC_C03_TR01,
+				CCC_C03_TR02,
+				CCC_C04_TR01,
+				CCC_C04_TR02,
+				CCC_C05_TR01,
+				CCC_C05_TR04,
+				CCC_C06_TR01,
 				CCC_C06_TR02,
-				// CCC_C07_TR01,
-				// CCC_C07_TR02,
-				// CCC_C08_TR01,
-				// CCC_ObjStor_C08_TR02,
-				// CCC_ObjStor_C01_TR01,
-				// CCC_ObjStor_C02_TR01,
-				// CCC_ObjStor_C03_TR01,
-				// CCC_ObjStor_C03_TR02,
-				// CCC_ObjStor_C05_TR01,
-				// CCC_ObjStor_C05_TR04,
-				// CCC_ObjStor_C06_TR01,
-				// CCC_ObjStor_C06_TR04,
-				// CCC_ObjStor_C07_TR01,
-				// CCC_ObjStor_C08_TR01,
+				CCC_C07_TR01,
+				CCC_C07_TR02,
+				CCC_C08_TR01,
+				CCC_ObjStor_C08_TR02,
+				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C03_TR01,
+				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR04,
+				CCC_ObjStor_C06_TR01,
+				CCC_ObjStor_C06_TR04,
+				CCC_ObjStor_C07_TR01,
+				CCC_ObjStor_C08_TR01,
 			},
 		},
 	}
@@ -161,8 +161,8 @@ var (
 	roleAssignmentsClient     roleAssignmentsClientInterface
 	policyClient              policyClientInterface
 	storageSkusClient         storageSkuClientInterface
-	subscriptionsClient       *armsubscriptions.Client
-	vaultsClient              *armrecoveryservices.VaultsClient
+	subscriptionsClient       subscriptionsClientInterface
+	vaultsClient              vaultsClientInterface
 
 	ArmoryCommonFunctions            CommonFunctions            = &commonFunctions{}
 	ArmoryAzureUtils                 AzureUtils                 = &azureUtils{}
