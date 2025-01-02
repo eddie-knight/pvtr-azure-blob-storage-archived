@@ -60,6 +60,7 @@ func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
 		}
 
 		for _, assignment := range page.Value {
+                        // Check that the default policy is assigned (https://github.com/Azure/azure-policy/blob/master/built-in-policies/policyDefinitions/General/AllowedLocations_Deny.json)
 			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c") {
 				result.Message = "Azure Policy is in place that prevents deployment in some regions."
 
