@@ -78,16 +78,14 @@ func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
 					result.Message = fmt.Sprintf("%s The only regions allowed by Policy are the provided allowed regions: %v.", result.Message, allowedRegions)
 					return
 				} else {
-					result.Passed = false
-					result.Message = fmt.Sprintf("%s There are other regions allowed Policy in addition to the provided allowed regions, the additional regions are: %v", result.Message, extraAllowedRegions)
+					SetResultFailure(&result, fmt.Sprintf("%s There are other regions allowed Policy in addition to the provided allowed regions, the additional regions are: %v", result.Message, extraAllowedRegions))
 					return
 				}
 			}
 		}
 	}
 
-	result.Passed = false
-	result.Message = "Built-in Azure Policy Allowed locations is not assigned to the resource, there could be a custom policy preventing deployment in restricted regions but this has not been validated."
+	SetResultFailure(&result, "Built-in Azure Policy Allowed locations is not assigned to the resource, there could be a custom policy or policy set preventing deployment in restricted regions but this has not been validated.")
 	return
 }
 
