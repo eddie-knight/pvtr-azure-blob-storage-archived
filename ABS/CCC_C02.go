@@ -50,8 +50,7 @@ func CCC_C02_TR01_T01() (result raidengine.MovementResult) {
 
 	} else {
 		// We should never hit this as encryption at rest cannot be disabled on Azure Storage Accounts.
-		result.Passed = false
-		result.Description = "Encryption is not enabled on the Azure Storage Account."
+		SetResultFailure(&result, "Encryption is not enabled on the Azure Storage Account.")
 	}
 
 	return
@@ -96,8 +95,7 @@ func CCC_C02_TR02_T01() (result raidengine.MovementResult) {
 		result.Message = fmt.Sprintf("Encryption uses customer-managed keys and can be audited in the Azure Key Vault: %s.", *storageAccountResource.Properties.Encryption.KeyVaultProperties.KeyVaultURI)
 		result.Passed = true
 	} else {
-		result.Message = "Encryption status is not available for audit."
-		result.Passed = false
+		SetResultFailure(&result, "Encryption status is not available for audit.")
 	}
 
 	return

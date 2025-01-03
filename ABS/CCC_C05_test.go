@@ -20,7 +20,7 @@ func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_disabled(t *testi
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Contains(t, result.Message, "disabled")
+	assert.Equal(t, "Public network access is disabled for the storage account.", result.Message)
 }
 
 func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_enabled_and_default_action_deny(t *testing.T) {
@@ -36,7 +36,7 @@ func Test_CCC_C05_TR01_T01_succeeds_with_public_network_access_enabled_and_defau
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Contains(t, result.Message, "default action is set to deny")
+	assert.Equal(t, "Public network access is enabled for the storage account, but the default action is set to deny for sources outside of the allowlist IPs (see result value).", result.Message)
 }
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_enabled_and_default_action_not_deny(t *testing.T) {
@@ -52,7 +52,7 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_enabled_and_default_
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "default action is not set to deny")
+	assert.Equal(t, "Public network access is enabled for the storage account and the default action is not set to deny for sources outside of the allowlist.", result.Message)
 }
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_secured_by_perimeter(t *testing.T) {
@@ -67,7 +67,7 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_secured_by_perimeter
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Network Security Perimeter")
+	assert.Equal(t, "Public network access to the storage account is secured by Network Security Perimeter, this raid does not support assessment of network access via Network Security Perimeter.", result.Message)
 }
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *testing.T) {
@@ -82,6 +82,7 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *te
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Public network access status of Unknown unclear.", result.Message)
 }
 
 func Test_CCC_C05_TR04_T01_succeeds(t *testing.T) {
@@ -96,6 +97,7 @@ func Test_CCC_C05_TR04_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Public anonymous blob access is disabled for the storage account.", result.Message)
 }
 
 func Test_CCC_C05_TR04_T01_fails(t *testing.T) {
@@ -110,6 +112,7 @@ func Test_CCC_C05_TR04_T01_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Public anonymous blob access is enabled for the storage account.", result.Message)
 }
 
 func Test_CCC_C05_TR04_T02_succeeds(t *testing.T) {
@@ -124,6 +127,7 @@ func Test_CCC_C05_TR04_T02_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Shared Key access is disabled for the storage account.", result.Message)
 }
 
 func Test_CCC_C05_TR04_T02_fails(t *testing.T) {
@@ -138,6 +142,7 @@ func Test_CCC_C05_TR04_T02_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
 }
 
 func Test_CCC_ObjStor_C05_TR04_T01_succeeds(t *testing.T) {
@@ -157,6 +162,7 @@ func Test_CCC_ObjStor_C05_TR04_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Object deletion is prevented for objects subject to a retention policy.", result.Message)
 }
 
 func Test_CCC_ObjStor_C05_TR04_T01_fails_block_blob_client_fails(t *testing.T) {
@@ -172,7 +178,7 @@ func Test_CCC_ObjStor_C05_TR04_T01_fails_block_blob_client_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to create block blob client")
+	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C05_TR04_T01_fails_container_create_fails(t *testing.T) {
@@ -194,7 +200,7 @@ func Test_CCC_ObjStor_C05_TR04_T01_fails_container_create_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to create blob container")
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_succeeds(t *testing.T) {
@@ -212,7 +218,7 @@ func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Object deletion is not prevented")
+	assert.Equal(t, "Object deletion is not prevented for objects subject to a retention policy.", result.Message)
 }
 
 func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_fails_wrong_error(t *testing.T) {
@@ -232,5 +238,5 @@ func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_fails_wrong_error(t *testing.T) 
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete blob with error unrelated to immutability")
+	assert.Equal(t, "Failed to delete blob with error unrelated to immutability: Missing RawResponse\n--------------------------------------------------------------------------------\nERROR CODE: AnotherErrorCode\n--------------------------------------------------------------------------------\n", result.Message)
 }

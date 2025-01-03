@@ -19,14 +19,26 @@ type tlsFunctionsMock struct {
 
 func (mock *tlsFunctionsMock) CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
 	result.Passed = mock.checkTlsVersionResult
+	result.Message = "TLS Mock is being used"
 }
 
 func (mock *tlsFunctionsMock) ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
-	result.Passed = mock.confirmHttpRequestFailsResult
+	if mock.confirmHttpRequestFailsResult {
+		result.Passed = true
+		result.Message = "Mocked HTTP requests are not supported"
+	} else {
+		SetResultFailure(result, "Mocked HTTP requests are supported")
+	}
 }
 
 func (mock *tlsFunctionsMock) ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int) {
-	result.Passed = mock.confirmOutdatedProtocolRequestsFailResult
+
+	if mock.confirmOutdatedProtocolRequestsFailResult {
+		result.Passed = true
+		result.Message = "Insecure TLS version Mocked not supported"
+	} else {
+		SetResultFailure(result, "Insecure TLS version Mocked is supported")
+	}
 }
 
 func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
@@ -44,6 +56,7 @@ func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "TLS Mock is being used", result.Message)
 }
 
 func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
@@ -61,6 +74,7 @@ func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "TLS Mock is being used", result.Message)
 }
 
 func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
@@ -78,6 +92,7 @@ func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked GetToken Error", result.Message)
 }
 
 func Test_CCC_C01_TR02_T01_succeeds(t *testing.T) {
@@ -94,6 +109,7 @@ func Test_CCC_C01_TR02_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Mocked HTTP requests are not supported", result.Message)
 }
 
 func Test_CCC_C01_TR02_T01_fails_if_confirmHttpRequestFails_fails(t *testing.T) {
@@ -110,6 +126,7 @@ func Test_CCC_C01_TR02_T01_fails_if_confirmHttpRequestFails_fails(t *testing.T) 
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked HTTP requests are supported", result.Message)
 }
 
 func Test_CCC_C01_TR03_T01_succeeds(t *testing.T) {
@@ -126,6 +143,7 @@ func Test_CCC_C01_TR03_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Insecure TLS version Mocked not supported", result.Message)
 }
 
 func Test_CCC_C01_TR03_T01_fails_if_confirmOutdatedProtocolRequestsFail_fails(t *testing.T) {
@@ -142,6 +160,7 @@ func Test_CCC_C01_TR03_T01_fails_if_confirmOutdatedProtocolRequestsFail_fails(t 
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Insecure TLS version Mocked is supported", result.Message)
 }
 
 func Test_CCC_C01_TR03_T02_succeeds(t *testing.T) {
@@ -158,6 +177,7 @@ func Test_CCC_C01_TR03_T02_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Insecure TLS version Mocked not supported", result.Message)
 }
 
 func Test_CCC_C01_TR03_T02_fails_if_confirmOutdatedProtocolRequestsFail_fails(t *testing.T) {
@@ -174,6 +194,7 @@ func Test_CCC_C01_TR03_T02_fails_if_confirmOutdatedProtocolRequestsFail_fails(t 
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Insecure TLS version Mocked is supported", result.Message)
 }
 
 func Test_CheckTLSVersion_succeeds(t *testing.T) {
@@ -190,6 +211,7 @@ func Test_CheckTLSVersion_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "TLS 1.2 is being used", result.Message)
 }
 
 func Test_CheckTLSVersion_fails_for_bad_tls_version(t *testing.T) {
@@ -206,6 +228,7 @@ func Test_CheckTLSVersion_fails_for_bad_tls_version(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "TLS 1.0 is being used", result.Message)
 }
 
 func Test_ConfirmHTTPRequestFails_succeeds(t *testing.T) {
@@ -222,6 +245,7 @@ func Test_ConfirmHTTPRequestFails_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "HTTP requests are not supported", result.Message)
 }
 
 func Test_ConfirmHTTPRequestFails_fails_for_bad_status(t *testing.T) {
@@ -238,6 +262,7 @@ func Test_ConfirmHTTPRequestFails_fails_for_bad_status(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "HTTP requests are supported", result.Message)
 }
 
 func Test_ConfirmHTTPRequestFails_fails_for_bad_statusCode(t *testing.T) {
@@ -254,6 +279,7 @@ func Test_ConfirmHTTPRequestFails_fails_for_bad_statusCode(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "HTTP requests are supported", result.Message)
 }
 
 func Test_ConfirmOutdatedProtocolRequestsFail_succeeds(t *testing.T) {
@@ -270,6 +296,7 @@ func Test_ConfirmOutdatedProtocolRequestsFail_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Insecure TLS version TLS 1.2 not supported", result.Message)
 }
 
 func Test_ConfirmOutdatedProtocolRequestFails_fails_for_nil_response(t *testing.T) {
@@ -286,6 +313,7 @@ func Test_ConfirmOutdatedProtocolRequestFails_fails_for_nil_response(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Mocked MakeGETRequest Error", result.Message)
 }
 
 func Test_ConfirmOutdatedProtocolRequestFails_fails_for_bad_status(t *testing.T) {
@@ -302,6 +330,7 @@ func Test_ConfirmOutdatedProtocolRequestFails_fails_for_bad_status(t *testing.T)
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Insecure TLS version TLS 1.2 is supported", result.Message)
 }
 
 func Test_ConfirmOutdatedProtocolRequestFails_fails_for_bad_statusCode(t *testing.T) {
@@ -318,4 +347,5 @@ func Test_ConfirmOutdatedProtocolRequestFails_fails_for_bad_statusCode(t *testin
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Insecure TLS version TLS 1.2 is supported", result.Message)
 }

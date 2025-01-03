@@ -61,16 +61,14 @@ func CCC_ObjStor_C06_TR01_T02() (result raidengine.MovementResult) {
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
 	if newBlockBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError))
 		return
 	}
 
 	azblobClient, newBlobClientFailedError := ArmoryAzureUtils.GetBlobClient(storageAccountUri)
 
 	if newBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError))
 		return
 	}
 
@@ -136,16 +134,14 @@ func CCC_ObjStor_C06_TR04_T02() (result raidengine.MovementResult) {
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
 	if newBlockBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError))
 		return
 	}
 
 	azblobClient, newBlobClientFailedError := ArmoryAzureUtils.GetBlobClient(storageAccountUri)
 
 	if newBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError))
 		return
 	}
 
@@ -175,16 +171,14 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
 	if newBlockBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError))
 		return
 	}
 
 	azblobClient, newBlobClientFailedError := ArmoryAzureUtils.GetBlobClient(storageAccountUri)
 
 	if newBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create blob client with error: %v", newBlobClientFailedError))
 		return
 	}
 
@@ -204,8 +198,7 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 			for blobVersionsPager.More() {
 				page, err := blobVersionsPager.NextPage(context.Background())
 				if err != nil {
-					result.Passed = false
-					result.Message = fmt.Sprintf("Failed to list blob versions with error: %v", err)
+					SetResultFailure(&result, fmt.Sprintf("Failed to list blob versions with error: %v", err))
 					return
 				}
 
@@ -221,13 +214,11 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 				result.Passed = true
 				result.Message = "Previous version is accessible when a blob is deleted."
 			} else {
-				result.Passed = false
-				result.Message = "Previous version is not accessible when a blob is deleted."
+				SetResultFailure(&result, "Previous version is not accessible when a blob is deleted.")
 			}
 
 		} else {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to delete blob with error: %v", deleteBlobFailedError)
+			SetResultFailure(&result, fmt.Sprintf("Failed to delete blob with error: %v", deleteBlobFailedError))
 		}
 	}
 
@@ -249,14 +240,12 @@ type blobVersioningFunctions struct{}
 
 func (*blobVersioningFunctions) CheckVersioningIsEnabled(result *raidengine.MovementResult) {
 	if blobServiceProperties.BlobServiceProperties.IsVersioningEnabled == nil {
-		result.Passed = false
-		result.Message = "Versioning is not enabled for Storage Account Blobs."
+		SetResultFailure(result, "Versioning is not enabled for Storage Account Blobs.")
 	} else if *blobServiceProperties.BlobServiceProperties.IsVersioningEnabled {
 		result.Passed = true
 		result.Message = "Versioning is enabled for Storage Account Blobs."
 	} else {
-		result.Passed = false
-		result.Message = "Versioning is not enabled for Storage Account Blobs."
+		SetResultFailure(result, "Versioning is not enabled for Storage Account Blobs.")
 	}
 }
 
@@ -274,8 +263,7 @@ func (*blobVersioningFunctions) UpdateContentAndCheckVersionAvailable(result *ra
 		for blobVersionsPager.More() {
 			page, err := blobVersionsPager.NextPage(context.Background())
 			if err != nil {
-				result.Passed = false
-				result.Message = fmt.Sprintf("Failed to list blob versions with error: %v", err)
+				SetResultFailure(result, fmt.Sprintf("Failed to list blob versions with error: %v", err))
 				return
 			}
 
@@ -291,8 +279,7 @@ func (*blobVersioningFunctions) UpdateContentAndCheckVersionAvailable(result *ra
 		}
 
 		if versions < 2 {
-			result.Passed = false
-			result.Message = "Previous versions are not accessible when a blob is updated."
+			SetResultFailure(result, "Previous versions are not accessible when a blob is updated.")
 			return
 		} else {
 			result.Passed = true
@@ -300,8 +287,7 @@ func (*blobVersioningFunctions) UpdateContentAndCheckVersionAvailable(result *ra
 			return
 		}
 	} else {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to update blob with error: %v", updateBlobFailedError)
+		SetResultFailure(result, fmt.Sprintf("Failed to update blob with error: %v", updateBlobFailedError))
 		return
 	}
 }

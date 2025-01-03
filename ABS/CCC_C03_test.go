@@ -22,6 +22,7 @@ func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, myMock.softDeleteContainerRetentionDays, result.Value.(RetentionPolicy).Days)
+	assert.Equal(t, "Soft delete is enabled for Storage Account Containers and permanent delete of soft deleted items is not allowed.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T01_fails_with_soft_delete_disabled(t *testing.T) {
@@ -53,7 +54,7 @@ func Test_CCC_ObjStor_C03_TR01_T01_fails_with_permanent_delete_enabled(t *testin
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "but permanent delete of soft deleted items is allowed")
+	assert.Equal(t, "Soft delete is enabled for Storage Account Containers, but permanent delete of soft deleted items is allowed.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
@@ -76,6 +77,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Soft delete is working as expected for Storage Account Containers.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T) {
@@ -94,6 +96,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_no_deleted_containers(t *testing.T
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Soft delete is not working as expected for Storage Account Containers.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.T) {
@@ -107,7 +110,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_create_container_error(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to create")
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T02_fails_with_delete_container_error(t *testing.T) {
@@ -121,7 +124,7 @@ func Test_CCC_ObjStor_C03_TR01_T02_fails_with_delete_container_error(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
+	assert.Equal(t, "Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T03_succeeds(t *testing.T) {
@@ -140,6 +143,7 @@ func Test_CCC_ObjStor_C03_TR01_T03_succeeds(t *testing.T) {
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, myMock.softDeleteBlobRetentionDays, result.Value.(RetentionPolicy).Days)
+	assert.Equal(t, "Soft delete is enabled for Storage Account Blobs and permanent delete of soft deleted items is not allowed.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T03_fails_with_soft_delete_disabled(t *testing.T) {
@@ -173,7 +177,7 @@ func Test_CCC_ObjStor_C03_TR01_T03_fails_with_permanent_delete_enabled(t *testin
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "but permanent delete of soft deleted items is allowed")
+	assert.Equal(t, "Soft delete is enabled for Storage Account Blobs, but permanent delete of soft deleted items is allowed.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T04_succeeds(t *testing.T) {
@@ -189,6 +193,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Deleted blob successfully restored.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_get_block_client_fails(t *testing.T) {
@@ -205,6 +210,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_get_block_client_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_upload_blob_fails(t *testing.T) {
@@ -222,6 +228,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_upload_blob_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to upload blob with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_delete_blob_fails(t *testing.T) {
@@ -239,6 +246,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_delete_blob_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to delete blob with error: assert.AnError general error for testing. ", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_undelete_blob_fails(t *testing.T) {
@@ -256,6 +264,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_undelete_blob_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to undelete blob with error: assert.AnError general error for testing. ", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
@@ -273,8 +282,7 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Deleted blob successfully restored")
+	assert.Equal(t, "Deleted blob successfully restored. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T05_succeeds_with_immutability_enabled(t *testing.T) {
@@ -292,6 +300,7 @@ func Test_CCC_ObjStor_C03_TR01_T05_succeeds_with_immutability_enabled(t *testing
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, myMock.immutabilityPolicyDays, result.Value.(RetentionPolicy).Days)
+	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, and an immutability policy is set.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_empty(t *testing.T) {
@@ -306,6 +315,7 @@ func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_empty(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is not enabled for Storage Account.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_disabled_populated(t *testing.T) {
@@ -321,6 +331,7 @@ func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_disabled_populated(t 
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_succeeds_with_immutability_locked(t *testing.T) {
@@ -336,6 +347,7 @@ func Test_CCC_ObjStor_C03_TR02_T01_succeeds_with_immutability_locked(t *testing.
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Immutability policy is locked for the storage account.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_unlocked(t *testing.T) {
@@ -352,6 +364,7 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_unlocked(t *testing.T
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Unlocked", result.Value.(ImmutabilityPolicyState).State)
+	assert.Equal(t, "Immutability policy is not locked", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_disabled(t *testing.T) {
@@ -367,6 +380,7 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_disabled(t *testing.T
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability policy is not locked", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_fails_when_immutability_nil(t *testing.T) {
@@ -379,6 +393,7 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_when_immutability_nil(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is not enabled for Storage Account.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_fails_with_no_immutability_policy(t *testing.T) {
@@ -394,4 +409,5 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_with_no_immutability_policy(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability policy is not locked", result.Message)
 }

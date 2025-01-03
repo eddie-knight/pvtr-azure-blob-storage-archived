@@ -37,6 +37,9 @@ func (mock *azureUtilsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAcco
 }
 
 func (mock *azureUtilsMock) GetToken(result *raidengine.MovementResult) string {
+	if mock.tokenResult == "" {
+		SetResultFailure(result, "Mocked GetToken Error")
+	}
 	return mock.tokenResult
 }
 
@@ -147,6 +150,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Storage account is configured to emit to log analytics workspace.", result.Message)
 }
 
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *testing.T) {
@@ -182,6 +186,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *t
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Storage account is configured to emit to log analytics workspace.", result.Message)
 }
 
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categories(t *testing.T) {
@@ -221,6 +226,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categ
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Storage account is not configured to emit to log analytics workspace destination.", result.Message)
 }
 
 func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testing.T) {
@@ -235,4 +241,5 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testin
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Storage account is not configured to emit to log analytics workspace destination.", result.Message)
 }

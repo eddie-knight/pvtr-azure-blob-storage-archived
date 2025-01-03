@@ -20,7 +20,7 @@ func Test_CCC_C02_TR01_T01_succeeds_with_microsoft_managed_keys(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Contains(t, result.Message, "Microsoft-managed keys")
+	assert.Equal(t, "Encryption with Microsoft-managed keys is enabled on the Azure Storage Account.", result.Message)
 }
 
 func Test_CCC_C02_TR01_T01_succeeds_with_customer_managed_keys(t *testing.T) {
@@ -37,7 +37,7 @@ func Test_CCC_C02_TR01_T01_succeeds_with_customer_managed_keys(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Contains(t, result.Message, "customer-managed keys")
+	assert.Equal(t, "Encryption with customer-managed keys is enabled on the Azure Storage Account.", result.Message)
 }
 
 func Test_CCC_C02_TR01_T01_fails_if_encryption_disabled(t *testing.T) {
@@ -54,6 +54,7 @@ func Test_CCC_C02_TR01_T01_fails_if_encryption_disabled(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Encryption is not enabled on the Azure Storage Account.", result.Message)
 }
 
 func Test_CCC_C02_TR02_T01_succeeds_with_microsoft_managed_keys(t *testing.T) {
@@ -70,7 +71,7 @@ func Test_CCC_C02_TR02_T01_succeeds_with_microsoft_managed_keys(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Contains(t, result.Message, "Microsoft-managed keys")
+	assert.Equal(t, "Encryption uses Microsoft-managed keys and can be audited directly on the Azure Storage Account.", result.Message)
 }
 
 func Test_CCC_C02_TR02_T01_succeeds_with_customer_managed_keys(t *testing.T) {
@@ -88,8 +89,7 @@ func Test_CCC_C02_TR02_T01_succeeds_with_customer_managed_keys(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Contains(t, result.Message, "customer-managed keys")
-	assert.Contains(t, result.Message, "https://example-vault.vault.azure.net/")
+	assert.Equal(t, "Encryption uses customer-managed keys and can be audited in the Azure Key Vault: https://example-vault.vault.azure.net/.", result.Message)
 }
 
 func Test_CCC_C02_TR02_T01_fails_if_key_source_unknown(t *testing.T) {
@@ -106,4 +106,5 @@ func Test_CCC_C02_TR02_T01_fails_if_key_source_unknown(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Encryption status is not available for audit.", result.Message)
 }

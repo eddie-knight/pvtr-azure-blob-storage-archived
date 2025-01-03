@@ -21,6 +21,7 @@ func Test_CCC_ObjStor_C06_TR01_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Versioning is enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T01_fails_versioning_disabled(t *testing.T) {
@@ -35,6 +36,7 @@ func Test_CCC_ObjStor_C06_TR01_T01_fails_versioning_disabled(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Versioning is not enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_succeeds(t *testing.T) {
@@ -66,6 +68,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Previous versions are accessible when a blob is updated.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_create_container_fails(t *testing.T) {
@@ -79,6 +82,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_create_container_fails(t *testing
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_block_client_fails(t *testing.T) {
@@ -92,6 +96,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_block_client_fails(t *testing
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_blob_client_fails(t *testing.T) {
@@ -106,6 +111,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_get_blob_client_fails(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob client with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_upload_fails(t *testing.T) {
@@ -125,6 +131,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_upload_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_no_previous_version(t *testing.T) {
@@ -149,6 +156,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_no_previous_version(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_succeeds_but_delete_container_fails(t *testing.T) {
@@ -180,8 +188,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_succeeds_but_delete_container_fails(t *
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Previous versions are accessible")
+	assert.Equal(t, "Previous versions are accessible when a blob is updated. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_and_delete_container_fails(t *testing.T) {
@@ -210,8 +217,7 @@ func Test_CCC_ObjStor_C06_TR01_T02_fails_fails_and_delete_container_fails(t *tes
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Previous versions are not accessible")
+	assert.Equal(t, "Previous versions are not accessible when a blob is updated. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T01_succeeds(t *testing.T) {
@@ -226,6 +232,7 @@ func Test_CCC_ObjStor_C06_TR04_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Versioning is enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T01_fails_versioning_disabled(t *testing.T) {
@@ -240,6 +247,7 @@ func Test_CCC_ObjStor_C06_TR04_T01_fails_versioning_disabled(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Versioning is not enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T02_succeeds(t *testing.T) {
@@ -269,6 +277,7 @@ func Test_CCC_ObjStor_C06_TR04_T02_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Previous versions are accessible when a blob is updated.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_succeeds(t *testing.T) {
@@ -295,6 +304,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Previous version is accessible when a blob is deleted.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_create_container_fails(t *testing.T) {
@@ -308,6 +318,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_create_container_fails(t *testing
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_block_client_fails(t *testing.T) {
@@ -323,6 +334,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_block_client_fails(t *testing
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_blob_client_fails(t *testing.T) {
@@ -339,6 +351,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_get_blob_client_fails(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob client with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_upload_fails(t *testing.T) {
@@ -363,6 +376,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_upload_fails(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to upload blob with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_no_previous_version(t *testing.T) {
@@ -389,6 +403,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_no_previous_version(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Previous version is not accessible when a blob is deleted.", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_succeeds_but_delete_container_fails(t *testing.T) {
@@ -419,8 +434,7 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_succeeds_but_delete_container_fails(t *
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Previous version is accessible")
+	assert.Equal(t, "Previous version is accessible when a blob is deleted. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_and_delete_container_fails(t *testing.T) {
@@ -449,6 +463,5 @@ func Test_CCC_ObjStor_C06_TR04_T03_fails_fails_and_delete_container_fails(t *tes
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Contains(t, result.Message, "Failed to delete")
-	assert.Contains(t, result.Message, "Previous version is not accessible")
+	assert.Equal(t, "Previous version is not accessible when a blob is deleted. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }

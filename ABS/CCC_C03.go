@@ -36,9 +36,7 @@ func CCC_C03_TR01_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	result.Passed = false
-	result.Message = "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration."
-
+	SetResultFailure(&result, "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
 	return
 }
 
@@ -68,9 +66,7 @@ func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	result.Passed = false
-	result.Message = "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration."
-
+	SetResultFailure(&result, "MFA should be configured as required for all administrative access to the management interface. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
 	return
 }
 
@@ -122,15 +118,13 @@ func CCC_ObjStor_C03_TR01_T01() (result raidengine.MovementResult) {
 		result.Value = retentionPolicy
 
 		if *blobServiceProperties.BlobServiceProperties.DeleteRetentionPolicy.AllowPermanentDelete {
-			result.Passed = false
-			result.Message = "Soft delete is enabled for Storage Account Containers, but permanent delete of soft deleted items is allowed."
+			SetResultFailure(&result, "Soft delete is enabled for Storage Account Containers, but permanent delete of soft deleted items is allowed.")
 		} else {
 			result.Passed = true
 			result.Message = "Soft delete is enabled for Storage Account Containers and permanent delete of soft deleted items is not allowed."
 		}
 	} else {
-		result.Passed = false
-		result.Message = "Soft delete is not enabled for Storage Account Containers."
+		SetResultFailure(&result, "Soft delete is not enabled for Storage Account Containers.")
 	}
 	return
 }
@@ -154,8 +148,7 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 	)
 
 	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create blob container with error: %v", err))
 		return
 	}
 
@@ -167,8 +160,7 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 	)
 
 	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to delete blob container with error: %v", err)
+		SetResultFailure(&result, fmt.Sprintf("Failed to delete blob container with error: %v", err))
 		return
 	}
 
@@ -182,8 +174,7 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 	for containersPager.More() {
 		page, err := containersPager.NextPage(context.Background())
 		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to list blob containers with error: %v", err)
+			SetResultFailure(&result, fmt.Sprintf("Failed to list blob containers with error: %v", err))
 			return
 		}
 
@@ -195,6 +186,8 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 			}
 		}
 	}
+
+	SetResultFailure(&result, "Soft delete is not working as expected for Storage Account Containers.")
 
 	return
 }
@@ -213,15 +206,13 @@ func CCC_ObjStor_C03_TR01_T03() (result raidengine.MovementResult) {
 		result.Value = retentionPolicy
 
 		if *blobServiceProperties.BlobServiceProperties.DeleteRetentionPolicy.AllowPermanentDelete {
-			result.Passed = false
-			result.Message = "Soft delete is enabled for Storage Account Blobs, but permanent delete of soft deleted items is allowed."
+			SetResultFailure(&result, "Soft delete is enabled for Storage Account Blobs, but permanent delete of soft deleted items is allowed.")
 		} else {
 			result.Passed = true
 			result.Message = "Soft delete is enabled for Storage Account Blobs and permanent delete of soft deleted items is not allowed."
 		}
 	} else {
-		result.Passed = false
-		result.Message = "Soft delete is not enabled for Storage Account Blobs."
+		SetResultFailure(&result, "Soft delete is not enabled for Storage Account Blobs.")
 	}
 
 	return
@@ -242,8 +233,7 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
 	if newBlockBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError))
 		return
 	}
 
@@ -259,12 +249,10 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 				result.Passed = true
 				result.Message = "Deleted blob successfully restored."
 			} else {
-				result.Passed = false
-				result.Message = fmt.Sprintf("Failed to undelete blob with error: %v. ", blobUndeleteFailedError)
+				SetResultFailure(&result, fmt.Sprintf("Failed to undelete blob with error: %v. ", blobUndeleteFailedError))
 			}
 		} else {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to delete blob with error: %v. ", blobDeleteFailedError)
+			SetResultFailure(&result, fmt.Sprintf("Failed to delete blob with error: %v. ", blobDeleteFailedError))
 		}
 	}
 
@@ -280,8 +268,7 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 	}
 
 	if storageAccountResource.Properties.ImmutableStorageWithVersioning == nil {
-		result.Passed = false
-		result.Message = "Immutability is not enabled for Storage Account."
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account.")
 		return
 	}
 
@@ -298,13 +285,11 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 			result.Passed = true
 			result.Message = "Immutability is enabled for Storage Account Blobs, and an immutability policy is set."
 		} else {
-			result.Passed = false
-			result.Message = "Immutability is enabled for Storage Account Blobs, but no immutability policy is set"
+			SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but no immutability policy is set.")
 		}
 
 	} else {
-		result.Passed = false
-		result.Message = "Immutability is not enabled for Storage Account Blobs."
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account Blobs.")
 	}
 
 	return
@@ -346,14 +331,12 @@ func CCC_ObjStor_C03_TR02_T01() (result raidengine.MovementResult) {
 	}
 
 	if storageAccountResource.Properties.ImmutableStorageWithVersioning == nil {
-		result.Passed = false
-		result.Message = "Immutability is not enabled for Storage Account."
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account.")
 		return
 	}
 
 	if storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy == nil {
-		result.Passed = false
-		result.Message = "Immutability policy is not set for the storage account."
+		SetResultFailure(&result, "Immutability policy is not set for the storage account.")
 		return
 	}
 
@@ -367,8 +350,7 @@ func CCC_ObjStor_C03_TR02_T01() (result raidengine.MovementResult) {
 		}
 
 		result.Value = immutabilityPolicyState
-		result.Passed = false
-		result.Message = "Immutability policy is not locked"
+		SetResultFailure(&result, "Immutability policy is not locked")
 	}
 
 	return

@@ -66,17 +66,14 @@ func CCC_C05_TR01_T01() (result raidengine.MovementResult) {
 			result.Message = "Public network access is enabled for the storage account, but the default action is set to deny for sources outside of the allowlist IPs (see result value)."
 
 		} else {
-			result.Passed = false
-			result.Message = "Public network access is enabled for the storage account and the default action is not set to deny for sources outside of the allowlist."
+			SetResultFailure(&result, "Public network access is enabled for the storage account and the default action is not set to deny for sources outside of the allowlist.")
 		}
 
 	} else if *storageAccountResource.Properties.PublicNetworkAccess == "SecuredByPerimeter" {
 		// This isn't publicly available yet so we shouldn't hit this condition with customers
-		result.Passed = false
-		result.Message = "Public network access to the storage account is secured by Network Security Perimeter, this raid does not support assessment of network access via Network Security Perimeter."
+		SetResultFailure(&result, "Public network access to the storage account is secured by Network Security Perimeter, this raid does not support assessment of network access via Network Security Perimeter.")
 	} else {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Public network access status of %s unclear.", *storageAccountResource.Properties.PublicNetworkAccess)
+		SetResultFailure(&result, fmt.Sprintf("Public network access status of %s unclear.", *storageAccountResource.Properties.PublicNetworkAccess))
 	}
 
 	return
@@ -115,8 +112,7 @@ func CCC_C05_TR04_T01() (result raidengine.MovementResult) {
 	}
 
 	if *storageAccountResource.Properties.AllowBlobPublicAccess {
-		result.Passed = false
-		result.Message = "Public anonymous blob access is enabled for the storage account."
+		SetResultFailure(&result, "Public anonymous blob access is enabled for the storage account.")
 	} else {
 		result.Passed = true
 		result.Message = "Public anonymous blob access is disabled for the storage account."
@@ -132,8 +128,7 @@ func CCC_C05_TR04_T02() (result raidengine.MovementResult) {
 	}
 
 	if *storageAccountResource.Properties.AllowSharedKeyAccess {
-		result.Passed = false
-		result.Message = "Shared Key access is enabled for the storage account."
+		SetResultFailure(&result, "Shared Key access is enabled for the storage account.")
 	} else {
 		result.Passed = true
 		result.Message = "Shared Key access is disabled for the storage account."
@@ -177,8 +172,7 @@ func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
 	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
 
 	if newBlockBlobClientFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError)
+		SetResultFailure(&result, fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError))
 		return
 	}
 
@@ -189,14 +183,12 @@ func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
 		_, blobDeleteFailedError := blobBlockClient.Delete(context.Background(), nil)
 
 		if blobDeleteFailedError == nil {
-			result.Passed = false
-			result.Message = "Object deletion is not prevented for objects subject to a retention policy."
+			SetResultFailure(&result, "Object deletion is not prevented for objects subject to a retention policy.")
 		} else if blobDeleteFailedError.(*azcore.ResponseError).ErrorCode == "BlobImmutableDueToPolicy" {
 			result.Passed = true
 			result.Message = "Object deletion is prevented for objects subject to a retention policy."
 		} else {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Failed to delete blob with error unrelated to immutability: %v", blobDeleteFailedError)
+			SetResultFailure(&result, fmt.Sprintf("Failed to delete blob with error unrelated to immutability: %v", blobDeleteFailedError))
 		}
 	}
 

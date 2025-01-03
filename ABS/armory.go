@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -311,8 +312,7 @@ func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *ra
 	// Create a new GET request
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		result.Passed = false
-		result.Message = err.Error()
+		SetResultFailure(result, "Request creation failed with error:"+err.Error())
 		return nil
 	}
 
@@ -326,8 +326,7 @@ func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *ra
 	// Make the GET request
 	response, err := client.Do(req)
 	if err != nil {
-		result.Passed = false
-		result.Message = err.Error()
+		SetResultFailure(result, "Request unexpectedly failed with error:"+err.Error())
 		return response
 	}
 	defer response.Body.Close()
@@ -339,7 +338,7 @@ func SetResultFailure(result *raidengine.MovementResult, message string) {
 	result.Passed = false
 
 	if len(result.Message) > 0 {
-		result.Message = fmt.Sprintf("%s, %s", result.Message, message)
+		result.Message = fmt.Sprintf("%s. %s", strings.TrimRight(result.Message, "."), message)
 	} else {
 		result.Message = message
 	}

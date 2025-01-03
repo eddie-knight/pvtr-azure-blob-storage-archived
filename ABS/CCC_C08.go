@@ -63,11 +63,9 @@ func CCC_C08_TR01_T01() (result raidengine.MovementResult) {
 		result.Passed = true
 		result.Message = "Data is replicated across multiple regions."
 	} else if strings.Contains(string(*storageAccountResource.SKU.Name), "LRS") {
-		result.Passed = false
-		result.Message = "Data is not replicated across multiple availability zones or regions."
+		SetResultFailure(&result, "Data is not replicated across multiple availability zones or regions.")
 	} else {
-		result.Passed = false
-		result.Message = "Data replication type is unknown."
+		SetResultFailure(&result, "Data replication type is unknown.")
 	}
 
 	return
@@ -80,16 +78,14 @@ func CCC_C08_TR01_T02() (result raidengine.MovementResult) {
 	}
 
 	if storageAccountResource.Properties.StatusOfSecondary == nil {
-		result.Passed = false
-		result.Message = "Secondary location is not enabled."
+		SetResultFailure(&result, "Secondary location is not enabled.")
 		return
 	} else if *storageAccountResource.Properties.StatusOfSecondary == armstorage.AccountStatusAvailable {
 		result.Passed = true
 		result.Message = "Secondary location is enabled and available."
 		return
 	} else {
-		result.Passed = false
-		result.Message = "Secondary location is enabled but not available."
+		SetResultFailure(&result, "Secondary location is enabled but not available.")
 		return
 	}
 }
@@ -109,24 +105,20 @@ func CCC_C08_TR01_T03() (result raidengine.MovementResult) {
 	secondaryEndpoint := storageAccountResource.Properties.SecondaryEndpoints.Blob
 
 	if secondaryEndpoint == nil {
-		result.Passed = false
-		result.Message = "Secondary endpoint is not available."
+		SetResultFailure(&result, "Secondary endpoint is not available.")
 		return
 	}
 
 	response := ArmoryCommonFunctions.MakeGETRequest(*secondaryEndpoint, token, &result, nil, nil)
 
 	if response == nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Request to storage account secondary location failed with error: %v", result.Message)
 		return
 	} else if response.StatusCode == 200 {
 		result.Passed = true
 		result.Message = "Storage account can be accessed via the secondary blob URI in the backup region."
 		return
 	} else {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Storage account cannot be accessed via the secondary blob URI in the backup region. Status message: %s", response.Status)
+		SetResultFailure(&result, fmt.Sprintf("Storage account cannot be accessed via the secondary blob URI in the backup region. Status message: %s", response.Status))
 		return
 	}
 }
@@ -162,8 +154,7 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 
 	if storageAccountResource.Properties.GeoReplicationStats == nil ||
 		storageAccountResource.Properties.GeoReplicationStats.LastSyncTime == nil {
-		result.Passed = false
-		result.Message = "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous movement for details on replication configuration."
+		SetResultFailure(&result, "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous movement for details on replication configuration.")
 		return
 
 	} else {
@@ -178,8 +169,7 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 			result.Message = "Last sync time is within 15 minutes."
 			return
 		} else {
-			result.Passed = false
-			result.Message = "Last sync time is not within 15 minutes."
+			SetResultFailure(&result, "Last sync time is not within 15 minutes.")
 			return
 		}
 	}

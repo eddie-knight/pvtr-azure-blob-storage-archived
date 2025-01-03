@@ -170,18 +170,14 @@ func (*tlsFunctions) CheckTLSVersion(endpoint string, token string, result *raid
 			result.Message = "TLS 1.2 is being used"
 			result.Passed = true
 		case 0x0302:
-			result.Message = "TLS 1.1 is being used"
-			result.Passed = false
+			SetResultFailure(result, "TLS 1.1 is being used")
 		case 0x0301:
-			result.Message = "TLS 1.0 is being used"
-			result.Passed = false
+			SetResultFailure(result, "TLS 1.0 is being used")
 		default:
-			result.Message = "error: Unknown TLS version"
-			result.Passed = false
+			SetResultFailure(result, "error: Unknown TLS version")
 		}
 	} else {
-		result.Message = "error: No TLS information found in response"
-		result.Passed = false
+		SetResultFailure(result, "error: No TLS information found in response")
 	}
 }
 
@@ -193,8 +189,7 @@ func (*tlsFunctions) ConfirmHTTPRequestFails(endpoint string, result *raidengine
 		result.Passed = true
 		result.Message = "HTTP requests are not supported"
 	} else {
-		result.Passed = false
-		result.Message = "HTTP requests are supported"
+		SetResultFailure(result, "HTTP requests are supported")
 	}
 }
 
@@ -202,16 +197,12 @@ func (*tlsFunctions) ConfirmOutdatedProtocolRequestsFail(endpoint string, result
 
 	response := ArmoryCommonFunctions.MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
 
-	if response == nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Request unexpectedly failed with error: %x", result.Message)
-	} else {
+	if response != nil {
 		if response.StatusCode == http.StatusBadRequest && strings.Contains(response.Status, "TLS version") {
 			result.Passed = true
 			result.Message = fmt.Sprintf("Insecure TLS version %s not supported", tls.VersionName(uint16(tlsVersion)))
 		} else {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Insecure TLS version %s is supported", tls.VersionName(uint16(tlsVersion)))
+			SetResultFailure(result, fmt.Sprintf("Insecure TLS version %s is supported", tls.VersionName(uint16(tlsVersion))))
 		}
 	}
 }

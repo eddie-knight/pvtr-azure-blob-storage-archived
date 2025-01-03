@@ -443,7 +443,7 @@ func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error, Could not revoke permission: Delete error", result.Message)
+	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error. Could not revoke permission: Delete error", result.Message)
 }
 
 func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
@@ -506,7 +506,6 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Failed to query logs: Test error", result.Message)
-	assert.Contains(t, result.Message, "Failed to query logs")
 }
 
 func Test_ConfirmHTTPResponseIsLogged_fails_if_log_analytics_error(t *testing.T) {
@@ -536,7 +535,6 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_log_analytics_error(t *testing.T)
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Error when querying logs: TestCode", result.Message)
-	assert.Contains(t, result.Message, "Error when querying logs")
 }
 
 func Test_ConfirmHTTPResponseIsLogged_fails_if_timeout(t *testing.T) {
@@ -568,7 +566,6 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_timeout(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "200 response from //test.com was not logged", result.Message)
-	assert.Contains(t, result.Message, "was not logged")
 }
 
 func Test_ConfirmAdminActivityIsLogged_success(t *testing.T) {

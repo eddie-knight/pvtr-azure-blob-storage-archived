@@ -102,16 +102,14 @@ func (*azureUtils) CreateContainerWithBlobContent(result *raidengine.MovementRes
 	)
 
 	if err != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to create blob container with error: %v", err)
+		SetResultFailure(result, fmt.Sprintf("Failed to create blob container with error: %v", err))
 		return nil, false
 	}
 
 	_, uploadBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(blobContent), nil)
 
 	if uploadBlobFailedError != nil {
-		result.Passed = false
-		result.Message = fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError)
+		SetResultFailure(result, fmt.Sprintf("Failed to upload blob with error: %v", uploadBlobFailedError))
 		return nil, false
 	}
 
@@ -127,9 +125,7 @@ func (*azureUtils) DeleteTestContainer(result *raidengine.MovementResult, contai
 	)
 
 	if deleteContainerFailedError != nil {
-		result.Passed = false
-		// Append error message to existing message so that we don't lose the error message from the previous step
-		result.Message += fmt.Sprintf(" Failed to delete blob container with error: %v", deleteContainerFailedError)
+		SetResultFailure(result, fmt.Sprintf("Failed to delete blob container with error: %v", deleteContainerFailedError))
 		return
 	}
 }
@@ -141,8 +137,7 @@ func (*azureUtils) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, d
 		page, err := pager.NextPage(context.Background())
 
 		if err != nil {
-			result.Passed = false
-			result.Message = fmt.Sprintf("Could not find diagnostic setting: %v", err)
+			SetResultFailure(result, fmt.Sprintf("Could not find diagnostic setting: %v", err))
 			return
 		}
 
@@ -198,8 +193,7 @@ func (*azureUtils) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, d
 		}
 	}
 
-	result.Passed = false
-	result.Message = "Storage account is not configured to emit to log analytics workspace destination."
+	SetResultFailure(result, "Storage account is not configured to emit to log analytics workspace destination.")
 }
 
 type logAnalyticsWorkspace struct {

@@ -23,6 +23,9 @@ func (mock *commonFunctionsMock) GenerateRandomString(length int) string {
 }
 
 func (mock *commonFunctionsMock) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+	if mock.httpResponse == nil {
+		SetResultFailure(result, "Mocked MakeGETRequest Error")
+	}
 	return mock.httpResponse
 }
 
