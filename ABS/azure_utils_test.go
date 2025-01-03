@@ -3,8 +3,10 @@ package abs
 import (
 	"context"
 	"io"
+	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
@@ -56,6 +58,31 @@ func (mock *azureUtilsMock) GetBlockBlobClient(blobUri string) (BlockBlobClientI
 
 func (mock *azureUtilsMock) GetBlobClient(storageAccountUri string) (BlobClientInterface, error) {
 	return mock.blobClient, mock.getBlobClientError
+}
+
+type mockAccountsClient struct {
+	regenerateKeyError error
+	deleteError        error
+}
+
+func (mock *mockAccountsClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, regenerateKey armstorage.AccountRegenerateKeyParameters, options *armstorage.AccountsClientRegenerateKeyOptions) (armstorage.AccountsClientRegenerateKeyResponse, error) {
+	return armstorage.AccountsClientRegenerateKeyResponse{}, mock.regenerateKeyError
+}
+
+func (mock *mockAccountsClient) GetProperties(ctx context.Context, resourceGroupName string, accountName string, options *armstorage.AccountsClientGetPropertiesOptions) (armstorage.AccountsClientGetPropertiesResponse, error) {
+	return armstorage.AccountsClientGetPropertiesResponse{}, nil
+}
+
+func (mock *mockAccountsClient) BeginCreate(ctx context.Context, resourceGroupName string, accountName string, parameters armstorage.AccountCreateParameters, options *armstorage.AccountsClientBeginCreateOptions) (*runtime.Poller[armstorage.AccountsClientCreateResponse], error) {
+	if strings.Contains(*parameters.Location, "restrictedRegion") {
+		return nil, &azcore.ResponseError{ErrorCode: "AnError"}
+	} else {
+		return nil, nil
+	}
+}
+
+func (mock *mockAccountsClient) Delete(ctx context.Context, resourceGroupName string, accountName string, options *armstorage.AccountsClientDeleteOptions) (armstorage.AccountsClientDeleteResponse, error) {
+	return armstorage.AccountsClientDeleteResponse{}, mock.deleteError
 }
 
 type blobContainersClientMock struct {

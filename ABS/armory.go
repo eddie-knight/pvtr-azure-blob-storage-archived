@@ -17,6 +17,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/recoveryservices/armrecoveryservices"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
@@ -145,6 +148,8 @@ var (
 		resourceGroupName  string
 		storageAccountName string
 	}
+	allowedRegions []string
+
 	armstorageClient          accountsClientInterface
 	logsClient                *azquery.LogsClient
 	armMonitorClientFactory   *armmonitor.ClientFactory
@@ -155,12 +160,17 @@ var (
 	defenderForStorageClient  defenderForStorageClientInterface
 	activityLogsClient        *armmonitor.ActivityLogsClient
 	roleAssignmentsClient     roleAssignmentsClientInterface
+	policyClient              policyClientInterface
+	storageSkusClient         storageSkuClientInterface
+	subscriptionsClient       subscriptionsClientInterface
+	vaultsClient              vaultsClientInterface
 
-	ArmoryCommonFunctions         CommonFunctions         = &commonFunctions{}
-	ArmoryAzureUtils              AzureUtils              = &azureUtils{}
-	ArmoryTlsFunctions            TlsFunctions            = &tlsFunctions{}
-	ArmoryLoggingFunctions        LoggingFunctions        = &loggingFunctions{}
-	ArmoryBlobVersioningFunctions BlobVersioningFunctions = &blobVersioningFunctions{}
+	ArmoryCommonFunctions            CommonFunctions            = &commonFunctions{}
+	ArmoryAzureUtils                 AzureUtils                 = &azureUtils{}
+	ArmoryTlsFunctions               TlsFunctions               = &tlsFunctions{}
+	ArmoryLoggingFunctions           LoggingFunctions           = &loggingFunctions{}
+	ArmoryBlobVersioningFunctions    BlobVersioningFunctions    = &blobVersioningFunctions{}
+	ArmoryRestrictedRegionsFunctions RestrictedRegionsFunctions = &restrictedRegionsFunctions{}
 )
 
 func Initialize() error {
@@ -215,6 +225,13 @@ func Initialize() error {
 	storageAccountResource = storageAccountResponse.Account
 	storageAccountUri = *storageAccountResource.Properties.PrimaryEndpoints.Blob
 
+	// Get allowed regions from config
+	allowedRegionsInterface, _ := Armory.Config.GetVar("allowedregions")
+
+	for _, v := range allowedRegionsInterface.([]interface{}) {
+		allowedRegions = append(allowedRegions, v.(string))
+	}
+
 	// Get a logs client
 	logsClient, err = azquery.NewLogsClient(cred, nil)
 
@@ -266,6 +283,37 @@ func Initialize() error {
 	if err != nil {
 		log.Fatalf("Failed to create Azure role assignments client: %v", err)
 	}
+
+	// Get a client for Azure Policy
+	armPolicyClientFactory, err := armpolicy.NewClientFactory(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get Azure Policy client: %v", err)
+	}
+
+	policyClient = armPolicyClientFactory.NewAssignmentsClient()
+
+	storageSkusClient, err = armstorage.NewSKUsClient(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get storage SKUs client: %v", err)
+	}
+
+	subscriptionClientFactory, err := armsubscriptions.NewClientFactory(cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get subscriptions client factory: %v", err)
+	}
+
+	subscriptionsClient = subscriptionClientFactory.NewClient()
+
+	recoveryServicesClientFactory, err := armrecoveryservices.NewClientFactory(resourceId.subscriptionId, cred, nil)
+
+	if err != nil {
+		log.Fatalf("Could not get recovery services client factory: %v", err)
+	}
+
+	vaultsClient = recoveryServicesClientFactory.NewVaultsClient()
 
 	return nil
 }
@@ -358,72 +406,6 @@ func StrikeResultSetter(successMessage string, failureMessage string, result *ra
 	// If no movements failed, set strike result to passed
 	result.Passed = true
 	result.Message = successMessage
-}
-
-// -----
-// Strike and Movements for CCC_C06_TR01
-// -----
-
-// CCC_C06_TR01 conforms to the Strike function type
-func CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C06_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service prevents deployment in restricted regions or cloud availability zones, blocking any provisioning attempts in designated areas.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_C06_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C06_TR01
-	return
-}
-
-// -----
-// Strike and Movements for CCC_C06_TR02
-// -----
-
-// CCC_C06_TR02 conforms to the Strike function type
-func CCC_C06_TR02() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_C06_TR02"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "The service ensures that replication of data, backups, and disaster recovery operations do not occur in restricted regions or availability zones.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_C06_TR02_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_C06_TR02
-	return
 }
 
 // -----
