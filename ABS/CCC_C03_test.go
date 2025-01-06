@@ -299,7 +299,7 @@ func Test_CCC_ObjStor_C03_TR01_T05_succeeds_with_immutability_enabled(t *testing
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, myMock.immutabilityPolicyDays, result.Value.(RetentionPolicy).Days)
+	assert.Equal(t, myMock.immutabilityPolicyDays, *result.Value.(ImmutabilityConfiguration).PolicyRetentionPeriodInDays)
 	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, and an immutability policy is set.", result.Message)
 }
 
@@ -315,7 +315,7 @@ func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_empty(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability is not enabled for Storage Account.", result.Message)
+	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_disabled_populated(t *testing.T) {
@@ -337,8 +337,9 @@ func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_disabled_populated(t 
 func Test_CCC_ObjStor_C03_TR02_T01_succeeds_with_immutability_locked(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
-		immutabilityPopulated:   true,
-		immutabilityPolicyState: "Locked",
+		immutabilityPopulated:     true,
+		immutabilityPolicyEnabled: true,
+		immutabilityPolicyState:   "Locked",
 	}
 	storageAccountResource = myMock.SetStorageAccount()
 
@@ -353,8 +354,9 @@ func Test_CCC_ObjStor_C03_TR02_T01_succeeds_with_immutability_locked(t *testing.
 func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_unlocked(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
-		immutabilityPopulated:   true,
-		immutabilityPolicyState: "Unlocked",
+		immutabilityPopulated:     true,
+		immutabilityPolicyEnabled: true,
+		immutabilityPolicyState:   "Unlocked",
 	}
 	storageAccountResource = myMock.SetStorageAccount()
 
@@ -363,8 +365,8 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_unlocked(t *testing.T
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Unlocked", result.Value.(ImmutabilityPolicyState).State)
-	assert.Equal(t, "Immutability policy is not locked", result.Message)
+	assert.Equal(t, armstorage.AccountImmutabilityPolicyStateUnlocked, *result.Value.(ImmutabilityConfiguration).PolicyState)
+	assert.Equal(t, "Immutability policy is not locked.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_disabled(t *testing.T) {
@@ -380,7 +382,7 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_with_immutability_disabled(t *testing.T
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability policy is not locked", result.Message)
+	assert.Equal(t, "Immutability is not enabled for Storage Account.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_fails_when_immutability_nil(t *testing.T) {
@@ -409,5 +411,5 @@ func Test_CCC_ObjStor_C03_TR02_T01_fails_with_no_immutability_policy(t *testing.
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability policy is not locked", result.Message)
+	assert.Equal(t, "Immutability policy is not locked.", result.Message)
 }

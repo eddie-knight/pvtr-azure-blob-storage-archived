@@ -473,36 +473,3 @@ func CCC_ObjStor_C02_TR01_T01() (result raidengine.MovementResult) {
 	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C02_TR01
 	return
 }
-
-// -----
-// Strike and Movements for CCC_ObjStor_C05_TR01
-// -----
-
-// CCC_ObjStor_C05_TR01 conforms to the Strike function type
-func CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
-	// set default return values
-	strikeName = "CCC_ObjStor_C05_TR01"
-	result = raidengine.StrikeResult{
-		Passed:      false,
-		Description: "All objects stored in the object storage system automatically receive a default retention policy that prevents premature deletion or modification.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
-	}
-
-	result.ExecuteMovement(CCC_ObjStor_C05_TR01_T01)
-	// TODO: Additional movement calls go here
-
-	return
-}
-
-func CCC_ObjStor_C05_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
-		Function:    utils.CallerPath(0),
-	}
-
-	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C05_TR01
-	return
-}

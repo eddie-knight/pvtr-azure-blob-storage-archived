@@ -145,6 +145,55 @@ func Test_CCC_C05_TR04_T02_fails(t *testing.T) {
 	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
 }
 
+func Test_CCC_ObjStor_C05_TR01_T01_success(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPolicyEnabled: true,
+		immutabilityPopulated:     true,
+		immutabilityPolicyState:   "Locked",
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C05_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, and an immutability policy is set.", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR01_T01_fails_when_immutability_disabled(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPolicyEnabled: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C05_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is not enabled for Storage Account.", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR01_T01_fails_when_policy_disabled(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPolicyEnabled: true,
+		immutabilityPopulated:     true,
+		immutabilityPolicyState:   "Disabled",
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C05_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.", result.Message)
+}
+
 func Test_CCC_ObjStor_C05_TR04_T01_succeeds(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{

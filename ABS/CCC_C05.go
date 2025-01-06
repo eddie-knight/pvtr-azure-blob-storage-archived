@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/privateerproj/privateer-sdk/raidengine"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -134,6 +135,58 @@ func CCC_C05_TR04_T02() (result raidengine.MovementResult) {
 		result.Message = "Shared Key access is disabled for the storage account."
 	}
 
+	return
+}
+
+// -----
+// Strike and Movements for CCC_ObjStor_C05_TR01
+// -----
+
+// CCC_ObjStor_C05_TR01 conforms to the Strike function type
+func CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
+	// set default return values
+	strikeName = "CCC_ObjStor_C05_TR01"
+	result = raidengine.StrikeResult{
+		Passed:      false,
+		Description: "All objects stored in the object storage system automatically receive a default retention policy that prevents premature deletion or modification.",
+		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C05",
+		Movements:   make(map[string]raidengine.MovementResult),
+	}
+
+	result.ExecuteMovement(CCC_ObjStor_C05_TR01_T01)
+	// TODO: Additional movement calls go here
+
+	return
+}
+
+func CCC_ObjStor_C05_TR01_T01() (result raidengine.MovementResult) {
+	result = raidengine.MovementResult{
+		Description: "Confirms that immutability is enabled on the storage account for all blob storage.",
+		Function:    utils.CallerPath(0),
+	}
+
+	immutabilityConfiguration := ArmoryAzureUtils.GetImmutabilityConfiguration()
+	result.Value = immutabilityConfiguration
+
+	if !immutabilityConfiguration.Enabled {
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account.")
+		return
+	}
+
+	if immutabilityConfiguration.PolicyState == nil {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but no immutability policy is set.")
+		return
+	}
+
+	if *immutabilityConfiguration.PolicyState == armstorage.AccountImmutabilityPolicyStateDisabled {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.")
+		return
+	}
+
+	result.Passed = true
+	result.Message = "Immutability is enabled for Storage Account Blobs, and an immutability policy is set."
 	return
 }
 

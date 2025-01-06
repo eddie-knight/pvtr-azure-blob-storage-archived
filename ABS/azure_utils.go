@@ -36,6 +36,7 @@ type AzureUtils interface {
 	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
 	DeleteTestContainer(result *raidengine.MovementResult, containerName string)
 	ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult)
+	GetImmutabilityConfiguration() ImmutabilityConfiguration
 }
 
 type azureUtils struct{}
@@ -197,6 +198,32 @@ func (*azureUtils) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, d
 	}
 
 	SetResultFailure(result, "Storage account is not configured to emit to log analytics workspace destination.")
+}
+
+func (*azureUtils) GetImmutabilityConfiguration() ImmutabilityConfiguration {
+	if storageAccountResource.Properties.ImmutableStorageWithVersioning == nil {
+		return ImmutabilityConfiguration{Enabled: false}
+	}
+
+	if !*storageAccountResource.Properties.ImmutableStorageWithVersioning.Enabled {
+		return ImmutabilityConfiguration{Enabled: false}
+	}
+
+	if storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy == nil {
+		return ImmutabilityConfiguration{Enabled: true}
+	}
+
+	return ImmutabilityConfiguration{
+		Enabled:                     true,
+		PolicyState:                 storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy.State,
+		PolicyRetentionPeriodInDays: storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy.ImmutabilityPeriodSinceCreationInDays,
+	}
+}
+
+type ImmutabilityConfiguration struct {
+	Enabled                     bool
+	PolicyState                 *armstorage.AccountImmutabilityPolicyState
+	PolicyRetentionPeriodInDays *int32
 }
 
 type logAnalyticsWorkspace struct {

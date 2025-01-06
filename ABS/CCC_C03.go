@@ -267,31 +267,26 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	if storageAccountResource.Properties.ImmutableStorageWithVersioning == nil {
-		SetResultFailure(&result, "Immutability is not enabled for Storage Account.")
+	immutabilityConfiguration := ArmoryAzureUtils.GetImmutabilityConfiguration()
+	result.Value = immutabilityConfiguration
+
+	if !immutabilityConfiguration.Enabled {
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account Blobs.")
 		return
 	}
 
-	if *storageAccountResource.Properties.ImmutableStorageWithVersioning.Enabled {
-
-		if storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy != nil {
-
-			immutabilityPolicy := RetentionPolicy{
-				Name: "Immutability Policy Retention Period in Days",
-				Days: *storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy.ImmutabilityPeriodSinceCreationInDays,
-			}
-
-			result.Value = immutabilityPolicy
-			result.Passed = true
-			result.Message = "Immutability is enabled for Storage Account Blobs, and an immutability policy is set."
-		} else {
-			SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but no immutability policy is set.")
-		}
-
-	} else {
-		SetResultFailure(&result, "Immutability is not enabled for Storage Account Blobs.")
+	if immutabilityConfiguration.PolicyState == nil {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but no immutability policy is set.")
+		return
 	}
 
+	if *immutabilityConfiguration.PolicyState == armstorage.AccountImmutabilityPolicyStateDisabled {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.")
+		return
+	}
+
+	result.Passed = true
+	result.Message = "Immutability is enabled for Storage Account Blobs, and an immutability policy is set."
 	return
 }
 
@@ -330,29 +325,26 @@ func CCC_ObjStor_C03_TR02_T01() (result raidengine.MovementResult) {
 		Function:    utils.CallerPath(0),
 	}
 
-	if storageAccountResource.Properties.ImmutableStorageWithVersioning == nil {
+	immutabilityConfiguration := ArmoryAzureUtils.GetImmutabilityConfiguration()
+	result.Value = immutabilityConfiguration
+
+	if !immutabilityConfiguration.Enabled {
 		SetResultFailure(&result, "Immutability is not enabled for Storage Account.")
 		return
 	}
 
-	if storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy == nil {
+	if immutabilityConfiguration.PolicyState == nil {
 		SetResultFailure(&result, "Immutability policy is not set for the storage account.")
 		return
 	}
 
-	if *storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy.State == "Locked" {
-		result.Passed = true
-		result.Message = "Immutability policy is locked for the storage account."
-	} else {
-		immutabilityPolicyState := ImmutabilityPolicyState{
-			Name:  "Immutability Policy State",
-			State: string(*storageAccountResource.Properties.ImmutableStorageWithVersioning.ImmutabilityPolicy.State),
-		}
-
-		result.Value = immutabilityPolicyState
-		SetResultFailure(&result, "Immutability policy is not locked")
+	if *immutabilityConfiguration.PolicyState != armstorage.AccountImmutabilityPolicyStateLocked {
+		SetResultFailure(&result, "Immutability policy is not locked.")
+		return
 	}
 
+	result.Passed = true
+	result.Message = "Immutability policy is locked for the storage account."
 	return
 }
 
