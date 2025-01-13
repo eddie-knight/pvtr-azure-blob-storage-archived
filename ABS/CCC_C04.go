@@ -14,43 +14,43 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/google/uuid"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -----
-// Strike and Movements for CCC_C04_TR01
+// TestSet and Tests for CCC_C04_TR01
 // -----
 
-func CCC_C04_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C04_TR01"
-	result = raidengine.StrikeResult{
+func CCC_C04_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C04_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service logs all access attempts, including successful and failed login attempts.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C04",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C04_TR01_T01)
+	result.ExecuteTest(CCC_C04_TR01_T01)
 
-	if result.Movements["CCC_C04_TR01_T01"].Passed {
-		result.ExecuteMovement(CCC_C04_TR01_T02)
-		result.ExecuteMovement(CCC_C04_TR01_T03)
+	if result.Tests["CCC_C04_TR01_T01"].Passed {
+		result.ExecuteTest(CCC_C04_TR01_T02)
+		result.ExecuteTest(CCC_C04_TR01_T03)
 	}
 
-	StrikeResultSetter(
+	TestSetResultSetter(
 		"All access attempts are logged",
-		"Not all access attempts are logged, see movement results for more details",
+		"Not all access attempts are logged, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that logging of access attempts is configured for the storage account",
+func CCC_C04_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that logging of access attempts is configured for the storage account",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -63,9 +63,9 @@ func CCC_C04_TR01_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that a successful login attempt is logged",
+func CCC_C04_TR01_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that a successful login attempt is logged",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -81,9 +81,9 @@ func CCC_C04_TR01_T02() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that a failed login attempt is logged",
+func CCC_C04_TR01_T03() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that a failed login attempt is logged",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -99,34 +99,34 @@ func CCC_C04_TR01_T03() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C04_TR02
+// TestSet and Tests for CCC_C04_TR02
 // -----
 
-func CCC_C04_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C04_TR02"
-	result = raidengine.StrikeResult{
+func CCC_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C04_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service logs all changes to configuration, including administrative actions and modifications to user roles or privileges.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C04",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteInvasiveMovement(CCC_C04_TR02_T01)
-	result.ExecuteInvasiveMovement(CCC_C04_TR02_T02)
+	result.ExecuteInvasiveTest(CCC_C04_TR02_T01)
+	result.ExecuteInvasiveTest(CCC_C04_TR02_T02)
 
-	StrikeResultSetter(
+	TestSetResultSetter(
 		"All changes to configuration are logged",
-		"Not all changed to configuration are logged, see movement results for more details",
+		"Not all changed to configuration are logged, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that a storage key rotation is logged",
+func CCC_C04_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that a storage key rotation is logged",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -158,9 +158,9 @@ func CCC_C04_TR02_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C04_TR02_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement tests that a modification to user privileges is logged",
+func CCC_C04_TR02_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that a modification to user privileges is logged",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -218,12 +218,12 @@ func CCC_C04_TR02_T02() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
 type LoggingFunctions interface {
-	ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult)
-	ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *raidengine.MovementResult)
+	ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *pluginkit.TestResult)
+	ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *pluginkit.TestResult)
 }
 
 type loggingFunctions struct{}
@@ -240,7 +240,7 @@ var loggingVariables = logPollingVariables{
 	pollingDelay:         time.Duration(10 * time.Second),
 }
 
-func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {
+func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *pluginkit.TestResult) {
 	// Create a kusto query to find our request/response in the logs
 	kustoQuery := fmt.Sprintf(
 		"StorageBlobLogs | where StatusCode == %d and CorrelationId == '%s'",
@@ -298,7 +298,7 @@ type ActivityLogsClientInterface interface {
 	NewListPager(filter string, options *armmonitor.ActivityLogsClientListOptions) *runtime.Pager[armmonitor.ActivityLogsClientListResponse]
 }
 
-func (*loggingFunctions) ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *raidengine.MovementResult) {
+func (*loggingFunctions) ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *pluginkit.TestResult) {
 
 	// https://learn.microsoft.com/en-us/rest/api/monitor/activity-logs/list?view=rest-monitor-2015-04-01&tabs=HTTP#uri-parameters
 	// As per documentation only filter by one *thing*, correlationId is the only one that makes sense in this case

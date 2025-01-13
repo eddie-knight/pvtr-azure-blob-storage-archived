@@ -6,37 +6,37 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -----
-// Strike and Movements for CCC_C05_TR01
+// TestSet and Tests for CCC_C05_TR01
 // -----
 
-func CCC_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C05_TR01"
-	result = raidengine.StrikeResult{
+func CCC_C05_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C05_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service blocks access to sensitive resources and admin access from untrusted sources, including unauthorized IP addresses, domains, or networks that are not included in a pre-approved allowlist.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C05_TR01_T01)
+	result.ExecuteTest(CCC_C05_TR01_T01)
 
-	StrikeResultSetter(
+	TestSetResultSetter(
 		"This service blocks access to sensitive resources and admin access from untrusted sources",
-		"This service does not block access to sensitive resources and admin access from untrusted sources, see movement results for more details",
+		"This service does not block access to sensitive resources and admin access from untrusted sources, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C05_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C05_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms data plane access is restricted to specific IP addresses, domains, or networks.",
 		Function:    utils.CallerPath(0),
 	}
@@ -72,7 +72,7 @@ func CCC_C05_TR01_T01() (result raidengine.MovementResult) {
 
 	} else if *storageAccountResource.Properties.PublicNetworkAccess == "SecuredByPerimeter" {
 		// This isn't publicly available yet so we shouldn't hit this condition with customers
-		SetResultFailure(&result, "Public network access to the storage account is secured by Network Security Perimeter, this raid does not support assessment of network access via Network Security Perimeter.")
+		SetResultFailure(&result, "Public network access to the storage account is secured by Network Security Perimeter, this plugin does not support assessment of network access via Network Security Perimeter.")
 	} else {
 		SetResultFailure(&result, fmt.Sprintf("Public network access status of %s unclear.", *storageAccountResource.Properties.PublicNetworkAccess))
 	}
@@ -81,33 +81,33 @@ func CCC_C05_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C05_TR04
+// TestSet and Tests for CCC_C05_TR04
 // -----
 
-func CCC_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C05_TR04"
-	result = raidengine.StrikeResult{
+func CCC_C05_TR04() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C05_TR04"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service prevents unauthorized cross-tenant access, ensuring that only allowlisted services from other tenants can access resources.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C05_TR04_T01)
-	result.ExecuteMovement(CCC_C05_TR04_T02)
+	result.ExecuteTest(CCC_C05_TR04_T01)
+	result.ExecuteTest(CCC_C05_TR04_T02)
 
-	StrikeResultSetter(
+	TestSetResultSetter(
 		"This service blocks unauthorized cross-tenant access both via Shared Key access and public anonymous blob access",
-		"This service does not block unauthorized cross-tenant access via both Shared Key access and public anonymous blob access, see movement results for more details",
+		"This service does not block unauthorized cross-tenant access via both Shared Key access and public anonymous blob access, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C05_TR04_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C05_TR04_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that public anonymous blob access is disabled in configuration.",
 		Function:    utils.CallerPath(0),
 	}
@@ -122,8 +122,8 @@ func CCC_C05_TR04_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C05_TR04_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C05_TR04_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that Shared Key access is disabled in configuration.",
 		Function:    utils.CallerPath(0),
 	}
@@ -139,30 +139,30 @@ func CCC_C05_TR04_T02() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C05_TR01
+// TestSet and Tests for CCC_ObjStor_C05_TR01
 // -----
 
-// CCC_ObjStor_C05_TR01 conforms to the Strike function type
-func CCC_ObjStor_C05_TR01() (strikeName string, result raidengine.StrikeResult) {
+// CCC_ObjStor_C05_TR01 conforms to the TestSet function type
+func CCC_ObjStor_C05_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	// set default return values
-	strikeName = "CCC_ObjStor_C05_TR01"
-	result = raidengine.StrikeResult{
+	testSetName = "CCC_ObjStor_C05_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "All objects stored in the object storage system automatically receive a default retention policy that prevents premature deletion or modification.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
+		Message:     "TestSet has not yet started.", // This message will be overwritten by subsequent tests
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C05_TR01_T01)
-	// TODO: Additional movement calls go here
+	result.ExecuteTest(CCC_ObjStor_C05_TR01_T01)
+	// TODO: Additional test calls go here
 
 	return
 }
 
-func CCC_ObjStor_C05_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C05_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that immutability is enabled on the storage account for all blob storage.",
 		Function:    utils.CallerPath(0),
 	}
@@ -191,27 +191,27 @@ func CCC_ObjStor_C05_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C05_TR04
+// TestSet and Tests for CCC_ObjStor_C05_TR04
 // -----
 
-func CCC_ObjStor_C05_TR04() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C05_TR04"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C05_TR04() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C05_TR04"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Attempts to delete or modify objects that are subject to an active retention policy are prevented.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C05",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteInvasiveMovement(CCC_ObjStor_C05_TR04_T01)
+	result.ExecuteInvasiveTest(CCC_ObjStor_C05_TR04_T01)
 
 	return
 }
 
-func CCC_ObjStor_C05_TR04_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C05_TR04_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that deleting objects subject to a retention policy is prevented.",
 		Function:    utils.CallerPath(0),
 	}

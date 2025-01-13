@@ -25,23 +25,23 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 )
 
 type AzureUtils interface {
-	GetToken(result *raidengine.MovementResult) string
-	GetCurrentPrincipalID(result *raidengine.MovementResult) string
+	GetToken(result *pluginkit.TestResult) string
+	GetCurrentPrincipalID(result *pluginkit.TestResult) string
 	GetBlockBlobClient(blobUri string) (BlockBlobClientInterface, error)
 	GetBlobClient(blobUri string) (BlobClientInterface, error)
-	CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
-	DeleteTestContainer(result *raidengine.MovementResult, containerName string)
-	ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult)
+	CreateContainerWithBlobContent(result *pluginkit.TestResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool)
+	DeleteTestContainer(result *pluginkit.TestResult, containerName string)
+	ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *pluginkit.TestResult)
 	GetImmutabilityConfiguration() ImmutabilityConfiguration
 }
 
 type azureUtils struct{}
 
-func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
+func (*azureUtils) GetToken(result *pluginkit.TestResult) string {
 	if token.Token == "" || token.ExpiresOn.Before(time.Now().Add(-5*time.Minute)) {
 
 		log.Default().Printf("Getting new access token")
@@ -61,7 +61,7 @@ func (*azureUtils) GetToken(result *raidengine.MovementResult) string {
 	return token.Token
 }
 
-func (*azureUtils) GetCurrentPrincipalID(result *raidengine.MovementResult) string {
+func (*azureUtils) GetCurrentPrincipalID(result *pluginkit.TestResult) string {
 
 	token := ArmoryAzureUtils.GetToken(result)
 
@@ -94,7 +94,7 @@ func (*azureUtils) GetBlobClient(blobUri string) (BlobClientInterface, error) {
 	return azblob.NewClient(blobUri, cred, nil)
 }
 
-func (*azureUtils) CreateContainerWithBlobContent(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool) {
+func (*azureUtils) CreateContainerWithBlobContent(result *pluginkit.TestResult, blobBlockClient BlockBlobClientInterface, containerName string, blobName string, blobContent string) (BlockBlobClientInterface, bool) {
 	_, err := blobContainersClient.Create(context.Background(),
 		resourceId.resourceGroupName,
 		resourceId.storageAccountName,
@@ -120,7 +120,7 @@ func (*azureUtils) CreateContainerWithBlobContent(result *raidengine.MovementRes
 	return blobBlockClient, true
 }
 
-func (*azureUtils) DeleteTestContainer(result *raidengine.MovementResult, containerName string) {
+func (*azureUtils) DeleteTestContainer(result *pluginkit.TestResult, containerName string) {
 	_, deleteContainerFailedError := blobContainersClient.Delete(context.Background(),
 		resourceId.resourceGroupName,
 		resourceId.storageAccountName,
@@ -134,7 +134,7 @@ func (*azureUtils) DeleteTestContainer(result *raidengine.MovementResult, contai
 	}
 }
 
-func (*azureUtils) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
+func (*azureUtils) ConfirmLoggingToLogAnalyticsIsConfigured(resourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *pluginkit.TestResult) {
 	pager := diagnosticsClient.NewListPager(resourceId, nil)
 
 	for pager.More() {

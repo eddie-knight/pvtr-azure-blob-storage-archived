@@ -3,34 +3,34 @@ package abs
 import (
 	"context"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 )
 
 // -----
-// Strike and Movements for CCC_C07_TR01
+// TestSet and Tests for CCC_C07_TR01
 // -----
 
-func CCC_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C07_TR01"
-	result = raidengine.StrikeResult{
+func CCC_C07_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C07_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service generates real-time alerts whenever non-human entities (e.g., automated scripts or processes) attempt to enumerate resources or services.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C07",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C07_TR01_T01)
+	result.ExecuteTest(CCC_C07_TR01_T01)
 
 	return
 }
 
-func CCC_C07_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C07_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that Microsoft Defender for Cloud is enabled and alerting is enabled for Azure Storage, which will scan for and alert on unusual access inspection and unusual data exploration.",
 		Function:    utils.CallerPath(0),
 	}
@@ -47,27 +47,27 @@ func CCC_C07_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C07_TR02
+// TestSet and Tests for CCC_C07_TR02
 // -----
 
-func CCC_C07_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C07_TR02"
-	result = raidengine.StrikeResult{
+func CCC_C07_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C07_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Confirm that logs are properly generated and accessible for review following non-human enumeration attempts.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C07",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C07_TR02_T01)
+	result.ExecuteTest(CCC_C07_TR02_T01)
 
 	return
 }
 
-func CCC_C07_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C07_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that security alerts around non-human enumerations attempts are being generated and are accessible for review.",
 		Function:    utils.CallerPath(0),
 	}
@@ -83,27 +83,27 @@ func CCC_C07_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C07_TR01
+// TestSet and Tests for CCC_ObjStor_C07_TR01
 // -----
 
-func CCC_ObjStor_C07_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C07_TR01"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C07_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C07_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C07",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C07_TR01_T01)
+	result.ExecuteTest(CCC_ObjStor_C07_TR01_T01)
 
 	return
 }
 
-func CCC_ObjStor_C07_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C07_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that access logs are stored in Log Analytics, outside of the Storage Account.",
 		Function:    utils.CallerPath(0),
 	}
@@ -117,10 +117,10 @@ func CCC_ObjStor_C07_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
-func ConfirmDefenderForStorageIsEnabled(result *raidengine.MovementResult) {
+func ConfirmDefenderForStorageIsEnabled(result *pluginkit.TestResult) {
 	defenderForStorageResponse, err := defenderForStorageClient.Get(context.Background(), storageAccountResourceId, armsecurity.SettingNameCurrent, &armsecurity.DefenderForStorageClientGetOptions{})
 
 	if err != nil {

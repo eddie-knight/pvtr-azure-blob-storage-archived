@@ -67,7 +67,7 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_secured_by_perimeter
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Public network access to the storage account is secured by Network Security Perimeter, this raid does not support assessment of network access via Network Security Perimeter.", result.Message)
+	assert.Equal(t, "Public network access to the storage account is secured by Network Security Perimeter, this plugin does not support assessment of network access via Network Security Perimeter.", result.Message)
 }
 
 func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *testing.T) {

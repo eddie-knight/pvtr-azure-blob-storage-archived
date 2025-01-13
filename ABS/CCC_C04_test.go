@@ -14,7 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/monitor/armmonitor"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ type loggingFunctionsMock struct {
 	confirmAdminActivityIsLoggedResult bool
 }
 
-func (mock *loggingFunctionsMock) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *raidengine.MovementResult) {
+func (mock *loggingFunctionsMock) ConfirmHTTPResponseIsLogged(response *http.Response, resourceId string, logsClient LogsClientInterface, result *pluginkit.TestResult) {
 	if !mock.confirmHTTPResponseIsLoggedResult {
 		SetResultFailure(result, "Mocked ConfirmHTTPResponseIsLogged Error")
 	} else {
@@ -34,7 +34,7 @@ func (mock *loggingFunctionsMock) ConfirmHTTPResponseIsLogged(response *http.Res
 
 }
 
-func (mock *loggingFunctionsMock) ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *raidengine.MovementResult) {
+func (mock *loggingFunctionsMock) ConfirmAdminActivityIsLogged(response *http.Response, activityTimestamp time.Time, activityLogsClient ActivityLogsClientInterface, result *pluginkit.TestResult) {
 	if !mock.confirmAdminActivityIsLoggedResult {
 		SetResultFailure(result, "Mocked ConfirmAdminActivityIsLogged Error")
 	} else {
@@ -461,7 +461,7 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmHTTPResponseIsLogged(httpResponse, "resourceId", &myLogClient, &result)
 
 	// Assert
@@ -488,7 +488,7 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmHTTPResponseIsLogged(httpResponse, "resourceId", &myLogClient, &result)
 
 	// Assert
@@ -517,7 +517,7 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_log_analytics_error(t *testing.T)
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmHTTPResponseIsLogged(httpResponse, "resourceId", &myLogClient, &result)
 
 	// Assert
@@ -548,7 +548,7 @@ func Test_ConfirmHTTPResponseIsLogged_fails_if_timeout(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmHTTPResponseIsLogged(httpResponse, "resourceId", &myLogClient, &result)
 
 	// Assert
@@ -581,7 +581,7 @@ func Test_ConfirmAdminActivityIsLogged_success(t *testing.T) {
 	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmAdminActivityIsLogged(httpResponse, time.Now(), &myActivityLogClient, &result)
 
 	// Assert
@@ -603,7 +603,7 @@ func Test_ConfirmAdminActivityIsLogged_fails_if_pager_error(t *testing.T) {
 	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmAdminActivityIsLogged(httpResponse, time.Now(), &myActivityLogClient, &result)
 
 	// Assert
@@ -631,7 +631,7 @@ func Test_ConfirmAdminActivityIsLogged_fails_if_timeout(t *testing.T) {
 	loggingVariables.pollingDelay = time.Duration(1 * time.Millisecond)
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&loggingFunctions{}).ConfirmAdminActivityIsLogged(httpResponse, time.Now(), &myActivityLogClient, &result)
 
 	// Assert

@@ -15,7 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +30,7 @@ type azureUtilsMock struct {
 	confirmLoggingToLogAnalyticsIsConfiguredResult bool
 }
 
-func (mock *azureUtilsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *raidengine.MovementResult) {
+func (mock *azureUtilsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAccountBlobResourceId string, diagnosticsClient DiagnosticSettingsClientInterface, result *pluginkit.TestResult) {
 	if !mock.confirmLoggingToLogAnalyticsIsConfiguredResult {
 		SetResultFailure(result, "Mocked ConfirmLoggingToLogAnalyticsIsConfigured Error")
 	} else {
@@ -38,14 +38,14 @@ func (mock *azureUtilsMock) ConfirmLoggingToLogAnalyticsIsConfigured(storageAcco
 	}
 }
 
-func (mock *azureUtilsMock) GetToken(result *raidengine.MovementResult) string {
+func (mock *azureUtilsMock) GetToken(result *pluginkit.TestResult) string {
 	if mock.tokenResult == "" {
 		SetResultFailure(result, "Mocked GetToken Error")
 	}
 	return mock.tokenResult
 }
 
-func (mock *azureUtilsMock) GetCurrentPrincipalID(result *raidengine.MovementResult) string {
+func (mock *azureUtilsMock) GetCurrentPrincipalID(result *pluginkit.TestResult) string {
 	if mock.getPrincipalIdResult == "" {
 		SetResultFailure(result, "Mocked GetCurrentPrincipalID Error")
 	}
@@ -172,7 +172,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_category_group(
 	}
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
@@ -208,7 +208,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_succeeds_with_categories(t *t
 	}
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
@@ -248,7 +248,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_insufficient_categ
 	}
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert
@@ -263,7 +263,7 @@ func Test_ConfirmLoggingToLogAnalyticsIsConfigured_fails_with_no_pages(t *testin
 	}
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&azureUtils{}).ConfirmLoggingToLogAnalyticsIsConfigured("resourceId", &myDiagnosticsClient, &result)
 
 	// Assert

@@ -7,35 +7,35 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -----
-// Strike and Movements for CCC_ObjStor_C06_TR01
+// TestSet and Tests for CCC_ObjStor_C06_TR01
 // -----
 
-func CCC_ObjStor_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C06_TR01"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C06_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C06_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Verify that when two objects with the same name are uploaded to the bucket, the object with the same name is not overwritten and that both objects are stored with unique identifiers.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C06_TR01_T01)
-	if result.Movements["CCC_ObjStor_C06_TR01_T01"].Passed {
-		result.ExecuteInvasiveMovement(CCC_ObjStor_C06_TR01_T02)
+	result.ExecuteTest(CCC_ObjStor_C06_TR01_T01)
+	if result.Tests["CCC_ObjStor_C06_TR01_T01"].Passed {
+		result.ExecuteInvasiveTest(CCC_ObjStor_C06_TR01_T02)
 	}
 
 	return
 }
 
-func CCC_ObjStor_C06_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C06_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that versioning for blobs is configured for the Storage Account.",
 		Function:    utils.CallerPath(0),
 	}
@@ -45,8 +45,8 @@ func CCC_ObjStor_C06_TR01_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C06_TR01_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C06_TR01_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that previous versions are accessible when a blob is overwritten.",
 		Function:    utils.CallerPath(0),
 	}
@@ -84,31 +84,31 @@ func CCC_ObjStor_C06_TR01_T02() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C06_TR04
+// TestSet and Tests for CCC_ObjStor_C06_TR04
 // -----
 
-func CCC_ObjStor_C06_TR04() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C06_TR04"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C06_TR04() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C06_TR04"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Previous versions of an object can be accessed and restored after an object is modified or deleted.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C06_TR04_T01)
-	if result.Movements["CCC_ObjStor_C06_TR04_T01"].Passed {
-		result.ExecuteMovement(CCC_ObjStor_C06_TR04_T02)
-		result.ExecuteMovement(CCC_ObjStor_C06_TR04_T03)
+	result.ExecuteTest(CCC_ObjStor_C06_TR04_T01)
+	if result.Tests["CCC_ObjStor_C06_TR04_T01"].Passed {
+		result.ExecuteTest(CCC_ObjStor_C06_TR04_T02)
+		result.ExecuteTest(CCC_ObjStor_C06_TR04_T03)
 	}
 
 	return
 }
 
-func CCC_ObjStor_C06_TR04_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C06_TR04_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that versioning for blobs is configured for the Storage Account.",
 		Function:    utils.CallerPath(0),
 	}
@@ -118,8 +118,8 @@ func CCC_ObjStor_C06_TR04_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C06_TR04_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C06_TR04_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that previous versions are accessible when a blob is updated.",
 		Function:    utils.CallerPath(0),
 	}
@@ -156,8 +156,8 @@ func CCC_ObjStor_C06_TR04_T02() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C06_TR04_T03() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that previous version is accessible when a blob is deleted.",
 		Function:    utils.CallerPath(0),
 	}
@@ -228,17 +228,17 @@ func CCC_ObjStor_C06_TR04_T03() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
 type BlobVersioningFunctions interface {
-	CheckVersioningIsEnabled(result *raidengine.MovementResult)
-	UpdateContentAndCheckVersionAvailable(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, azblobClient BlobClientInterface, containerName string, blobName string, updatedBlobContent string)
+	CheckVersioningIsEnabled(result *pluginkit.TestResult)
+	UpdateContentAndCheckVersionAvailable(result *pluginkit.TestResult, blobBlockClient BlockBlobClientInterface, azblobClient BlobClientInterface, containerName string, blobName string, updatedBlobContent string)
 }
 
 type blobVersioningFunctions struct{}
 
-func (*blobVersioningFunctions) CheckVersioningIsEnabled(result *raidengine.MovementResult) {
+func (*blobVersioningFunctions) CheckVersioningIsEnabled(result *pluginkit.TestResult) {
 	if blobServiceProperties.BlobServiceProperties.IsVersioningEnabled == nil {
 		SetResultFailure(result, "Versioning is not enabled for Storage Account Blobs.")
 	} else if *blobServiceProperties.BlobServiceProperties.IsVersioningEnabled {
@@ -249,7 +249,7 @@ func (*blobVersioningFunctions) CheckVersioningIsEnabled(result *raidengine.Move
 	}
 }
 
-func (*blobVersioningFunctions) UpdateContentAndCheckVersionAvailable(result *raidengine.MovementResult, blobBlockClient BlockBlobClientInterface, azblobClient BlobClientInterface, containerName string, blobName string, updatedBlobContent string) {
+func (*blobVersioningFunctions) UpdateContentAndCheckVersionAvailable(result *pluginkit.TestResult, blobBlockClient BlockBlobClientInterface, azblobClient BlobClientInterface, containerName string, blobName string, updatedBlobContent string) {
 
 	_, updateBlobFailedError := blobBlockClient.UploadStream(context.Background(), strings.NewReader(updatedBlobContent), nil)
 

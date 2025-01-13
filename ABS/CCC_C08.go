@@ -6,44 +6,44 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -----
-// Strike and Movements for CCC_C08_TR01
+// TestSet and Tests for CCC_C08_TR01
 // -----
 
-func CCC_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C08_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	// set default return values
-	strikeName = "CCC_C08_TR01"
-	result = raidengine.StrikeResult{
+	testSetName = "CCC_C08_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Data is replicated across multiple availability zones or regions.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C08",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C08_TR01_T01)
+	result.ExecuteTest(CCC_C08_TR01_T01)
 
-	if result.Movements["CCC_C08_TR01_T01"].Passed {
+	if result.Tests["CCC_C08_TR01_T01"].Passed {
 
-		if strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GRS") ||
-			strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GZRS") {
-			result.ExecuteMovement(CCC_C08_TR01_T02)
-		} else if strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGRS") ||
-			strings.Contains(result.Movements["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGZRS") {
-			result.ExecuteMovement(CCC_C08_TR01_T03)
+		if strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GRS") ||
+			strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GZRS") {
+			result.ExecuteTest(CCC_C08_TR01_T02)
+		} else if strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGRS") ||
+			strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGZRS") {
+			result.ExecuteTest(CCC_C08_TR01_T03)
 		}
 	}
 
 	return
 }
 
-func CCC_C08_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C08_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that data is replicated across multiple availability zones or regions.",
 		Function:    utils.CallerPath(0),
 	}
@@ -71,8 +71,8 @@ func CCC_C08_TR01_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C08_TR01_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C08_TR01_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that the secondary location for the storage account is available.",
 		Function:    utils.CallerPath(0),
 	}
@@ -90,8 +90,8 @@ func CCC_C08_TR01_T02() (result raidengine.MovementResult) {
 	}
 }
 
-func CCC_C08_TR01_T03() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C08_TR01_T03() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that the storage account can be accessed via the secondary blob URI in the backup region.",
 		Function:    utils.CallerPath(0),
 	}
@@ -124,37 +124,37 @@ func CCC_C08_TR01_T03() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C08_TR02
+// TestSet and Tests for CCC_ObjStor_C08_TR02
 // -----
 
-func CCC_ObjStor_C08_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C08_TR02"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C08_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C08_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Admin users can verify the replication status of data across multiple zones or regions, including the replication locations and data synchronization status.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C08",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C08_TR02_T01)
-	StrikeResultSetter("Replication is working as expected and data has recently synchronized across multiple regions or zones.",
-		"Replication is not working as expected or data has not recently synchronized across multiple regions or zones, see movement results for more details.",
+	result.ExecuteTest(CCC_ObjStor_C08_TR02_T01)
+	TestSetResultSetter("Replication is working as expected and data has recently synchronized across multiple regions or zones.",
+		"Replication is not working as expected or data has not recently synchronized across multiple regions or zones, see test results for more details.",
 		&result)
 
 	return
 }
 
-func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C08_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that the last sync time of data being replicated across multiple regions or zones is within 15 minutes.",
 		Function:    utils.CallerPath(0),
 	}
 
 	if storageAccountResource.Properties.GeoReplicationStats == nil ||
 		storageAccountResource.Properties.GeoReplicationStats.LastSyncTime == nil {
-		SetResultFailure(&result, "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous movement for details on replication configuration.")
+		SetResultFailure(&result, "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous test for details on replication configuration.")
 		return
 
 	} else {
@@ -176,27 +176,27 @@ func CCC_ObjStor_C08_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C08_TR01
+// TestSet and Tests for CCC_ObjStor_C08_TR01
 // -----
 
-func CCC_ObjStor_C08_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C08_TR01"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C08_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C08_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Object replication to destinations outside of the defined trust perimeter is automatically blocked, preventing replication to untrusted resources.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.08",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C08_TR01_T01)
+	result.ExecuteTest(CCC_ObjStor_C08_TR01_T01)
 
 	return
 }
 
-func CCC_ObjStor_C08_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C08_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Checks that object replication outside of the defined trust perimeter is blocked.",
 		Function:    utils.CallerPath(0),
 	}
@@ -208,7 +208,7 @@ func CCC_ObjStor_C08_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
 type SKU struct {

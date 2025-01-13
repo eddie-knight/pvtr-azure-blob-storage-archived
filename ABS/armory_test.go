@@ -10,7 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 )
 
 type commonFunctionsMock struct {
@@ -22,7 +22,7 @@ func (mock *commonFunctionsMock) GenerateRandomString(length int) string {
 	return mock.randomString
 }
 
-func (mock *commonFunctionsMock) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+func (mock *commonFunctionsMock) MakeGETRequest(endpoint string, token string, result *pluginkit.TestResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	if mock.httpResponse == nil {
 		SetResultFailure(result, "Mocked MakeGETRequest Error")
 	}

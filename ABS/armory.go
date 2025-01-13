@@ -23,14 +23,14 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/security/armsecurity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 var (
-	Armory = raidengine.Armory{
-		RaidName: "ABS",
-		Tactics: map[string][]raidengine.Strike{
+	Armory = pluginkit.Armory{
+		PluginName: "ABS",
+		TestSuites: map[string][]pluginkit.TestSet{
 			"tlp_amber": {
 				CCC_C01_TR01,
 				CCC_C01_TR02,
@@ -319,7 +319,7 @@ func Initialize() error {
 }
 
 type CommonFunctions interface {
-	MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response
+	MakeGETRequest(endpoint string, token string, result *pluginkit.TestResult, minTlsVersion *int, maxTlsVersion *int) *http.Response
 	GenerateRandomString(n int) string
 }
 
@@ -335,7 +335,7 @@ func (*commonFunctions) GenerateRandomString(n int) string {
 	return string(b)
 }
 
-func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *raidengine.MovementResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
+func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *pluginkit.TestResult, minTlsVersion *int, maxTlsVersion *int) *http.Response {
 	// Add query parameters to request URL
 	endpoint = endpoint + "?comp=list"
 
@@ -382,7 +382,7 @@ func (*commonFunctions) MakeGETRequest(endpoint string, token string, result *ra
 	return response
 }
 
-func SetResultFailure(result *raidengine.MovementResult, message string) {
+func SetResultFailure(result *pluginkit.TestResult, message string) {
 	result.Passed = false
 
 	if len(result.Message) > 0 {
@@ -392,48 +392,48 @@ func SetResultFailure(result *raidengine.MovementResult, message string) {
 	}
 }
 
-func StrikeResultSetter(successMessage string, failureMessage string, result *raidengine.StrikeResult) {
+func TestSetResultSetter(successMessage string, failureMessage string, result *pluginkit.TestSetResult) {
 
-	// If any movement fails, set strike result to failed
-	for _, movementResult := range result.Movements {
-		if !movementResult.Passed {
+	// If any test fails, set testSet result to failed
+	for _, testResult := range result.Tests {
+		if !testResult.Passed {
 			result.Passed = false
 			result.Message = failureMessage
 			return
 		}
 	}
 
-	// If no movements failed, set strike result to passed
+	// If no tests failed, set testSet result to passed
 	result.Passed = true
 	result.Message = successMessage
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C01_TR01
+// TestSet and Tests for CCC_ObjStor_C01_TR01
 // -----
 
-// CCC_ObjStor_C01_TR01 conforms to the Strike function type
-func CCC_ObjStor_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
+// CCC_ObjStor_C01_TR01 conforms to the TestSet function type
+func CCC_ObjStor_C01_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	// set default return values
-	strikeName = "CCC_ObjStor_C01_TR01"
-	result = raidengine.StrikeResult{
+	testSetName = "CCC_ObjStor_C01_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service prevents access to any object storage bucket or object that uses KMS keys not listed as trusted by the organization.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
+		Message:     "TestSet has not yet started.", // This message will be overwritten by subsequent tests
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C01_TR01_T01)
-	// TODO: Additional movement calls go here
+	result.ExecuteTest(CCC_ObjStor_C01_TR01_T01)
+	// TODO: Additional test calls go here
 
 	return
 }
 
-func CCC_ObjStor_C01_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
+func CCC_ObjStor_C01_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -442,31 +442,31 @@ func CCC_ObjStor_C01_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C02_TR01
+// TestSet and Tests for CCC_ObjStor_C02_TR01
 // -----
 
-// CCC_ObjStor_C02_TR01 conforms to the Strike function type
-func CCC_ObjStor_C02_TR01() (strikeName string, result raidengine.StrikeResult) {
+// CCC_ObjStor_C02_TR01 conforms to the TestSet function type
+func CCC_ObjStor_C02_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	// set default return values
-	strikeName = "CCC_ObjStor_C02_TR01"
-	result = raidengine.StrikeResult{
+	testSetName = "CCC_ObjStor_C02_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Admin users can configure bucket-level permissions uniformly across all buckets, ensuring that object-level permissions cannot be applied without explicit authorization.",
-		Message:     "Strike has not yet started.", // This message will be overwritten by subsequent movements
+		Message:     "TestSet has not yet started.", // This message will be overwritten by subsequent tests
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C02",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C02_TR01_T01)
-	// TODO: Additional movement calls go here
+	result.ExecuteTest(CCC_ObjStor_C02_TR01_T01)
+	// TODO: Additional test calls go here
 
 	return
 }
 
-func CCC_ObjStor_C02_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
-		Description: "This movement is still under construction",
+func CCC_ObjStor_C02_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
 		Function:    utils.CallerPath(0),
 	}
 

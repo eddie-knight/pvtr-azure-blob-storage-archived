@@ -6,32 +6,32 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -----
-// Strike and Movements for CCC_C03_TR01
+// TestSet and Tests for CCC_C03_TR01
 // -----
 
-func CCC_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C03_TR01"
-	result = raidengine.StrikeResult{
+func CCC_C03_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C03_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Ensure that MFA is required for all user access to the service interface.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C03_TR01_T01)
+	result.ExecuteTest(CCC_C03_TR01_T01)
 
 	return
 }
 
-func CCC_C03_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C03_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that MFA is required for all user access to the service interface",
 		Function:    utils.CallerPath(0),
 	}
@@ -41,27 +41,27 @@ func CCC_C03_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C03_TR02
+// TestSet and Tests for CCC_C03_TR02
 // -----
 
-func CCC_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C03_TR02"
-	result = raidengine.StrikeResult{
+func CCC_C03_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C03_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Ensure that MFA is required for all administrative access to the management interface.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C03_TR02_T01)
+	result.ExecuteTest(CCC_C03_TR02_T01)
 
 	return
 }
 
-func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C03_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that MFA is required for all administrative access to the management interface",
 		Function:    utils.CallerPath(0),
 	}
@@ -71,41 +71,41 @@ func CCC_C03_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_ObjStor_C03_TR01
+// TestSet and Tests for CCC_ObjStor_C03_TR01
 // -----
 
-func CCC_ObjStor_C03_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C03_TR01"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C03_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C03_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Object storage buckets cannot be deleted after creation.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T01)
-	if result.Movements["CCC_ObjStor_C03_TR01_T01"].Passed {
-		result.ExecuteInvasiveMovement(CCC_ObjStor_C03_TR01_T02)
+	result.ExecuteTest(CCC_ObjStor_C03_TR01_T01)
+	if result.Tests["CCC_ObjStor_C03_TR01_T01"].Passed {
+		result.ExecuteInvasiveTest(CCC_ObjStor_C03_TR01_T02)
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T03)
-	if result.Movements["CCC_ObjStor_C03_TR01_T03"].Passed {
-		result.ExecuteInvasiveMovement(CCC_ObjStor_C03_TR01_T04)
+	result.ExecuteTest(CCC_ObjStor_C03_TR01_T03)
+	if result.Tests["CCC_ObjStor_C03_TR01_T03"].Passed {
+		result.ExecuteInvasiveTest(CCC_ObjStor_C03_TR01_T04)
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C03_TR01_T05)
+	result.ExecuteTest(CCC_ObjStor_C03_TR01_T05)
 
-	StrikeResultSetter("Object storage buckets cannot be deleted after creation.",
-		"Object storage buckets can be deleted after creation, see movement results for more details.",
+	TestSetResultSetter("Object storage buckets cannot be deleted after creation.",
+		"Object storage buckets can be deleted after creation, see test results for more details.",
 		&result)
 
 	return
 }
 
-func CCC_ObjStor_C03_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C03_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that soft delete is configured for containers in the Storage Account.",
 		Function:    utils.CallerPath(0),
 	}
@@ -129,8 +129,8 @@ func CCC_ObjStor_C03_TR01_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C03_TR01_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that soft deleted containers are available after being deleted.",
 		Function:    utils.CallerPath(0),
 	}
@@ -192,8 +192,8 @@ func CCC_ObjStor_C03_TR01_T02() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C03_TR01_T03() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C03_TR01_T03() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that soft delete is configured for blobs in the Storage Account.",
 		Function:    utils.CallerPath(0),
 	}
@@ -218,8 +218,8 @@ func CCC_ObjStor_C03_TR01_T03() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C03_TR01_T04() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that deleted blobs can be restored.",
 		Function:    utils.CallerPath(0),
 	}
@@ -261,8 +261,8 @@ func CCC_ObjStor_C03_TR01_T04() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C03_TR01_T05() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that immutability is enabled on the storage account for all blob storage.",
 		Function:    utils.CallerPath(0),
 	}
@@ -296,31 +296,31 @@ func CCC_ObjStor_C03_TR01_T05() (result raidengine.MovementResult) {
 //// wouldn't be able to delete it....
 
 // -----
-// Strike and Movements for CCC_ObjStor_C03_TR02
+// TestSet and Tests for CCC_ObjStor_C03_TR02
 // -----
 
-func CCC_ObjStor_C03_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_ObjStor_C03_TR02"
-	result = raidengine.StrikeResult{
+func CCC_ObjStor_C03_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C03_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "Retention policy for object storage buckets cannot be unset.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C03",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_ObjStor_C03_TR02_T01)
+	result.ExecuteTest(CCC_ObjStor_C03_TR02_T01)
 
-	StrikeResultSetter("Retention policy for object storage buckets cannot be unset.",
-		"Retention policy for object storage buckets can be unset, see movement results for more details.",
+	TestSetResultSetter("Retention policy for object storage buckets cannot be unset.",
+		"Retention policy for object storage buckets can be unset, see test results for more details.",
 		&result)
 
 	return
 }
 
-func CCC_ObjStor_C03_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_ObjStor_C03_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that immutability policy is locked for the storage account and hence that retention policy cannot be unset.",
 		Function:    utils.CallerPath(0),
 	}
@@ -349,7 +349,7 @@ func CCC_ObjStor_C03_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
 type ImmutabilityPolicyState struct {

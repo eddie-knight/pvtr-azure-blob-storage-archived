@@ -2,12 +2,12 @@ loglevel: Debug
 write-directory: output
 services:
   myStorageAccount:
-    raid: ABS
-    tactics:
+    plugin: ABS
+    test-suites:
       - tlp_red
       # - tlp_amber
       # - tlp_green
       # - tlp_clear
     vars:
-      storageAccountResourceId: 
-      allowedRegions: [  ]
+      storageAccountResourceId:
+      allowedRegions: []
