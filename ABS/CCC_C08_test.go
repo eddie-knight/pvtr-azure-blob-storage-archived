@@ -234,7 +234,7 @@ func Test_CCC_ObjStor_C08_TR02_T01_fails_last_sync_nil(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous movement for details on replication configuration.", result.Message)
+	assert.Equal(t, "Last sync time is not available, this usually indicates geo-replication is not enabled - see previous test for details on replication configuration.", result.Message)
 }
 
 func Test_CCC_ObjStor_C08_TR02_T01_fails_last_sync_30mins_ago(t *testing.T) {

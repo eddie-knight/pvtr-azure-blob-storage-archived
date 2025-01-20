@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,12 +17,12 @@ type tlsFunctionsMock struct {
 	confirmOutdatedProtocolRequestsFailResult bool
 }
 
-func (mock *tlsFunctionsMock) CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
+func (mock *tlsFunctionsMock) CheckTLSVersion(endpoint string, token string, result *pluginkit.TestResult) {
 	result.Passed = mock.checkTlsVersionResult
 	result.Message = "TLS Mock is being used"
 }
 
-func (mock *tlsFunctionsMock) ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
+func (mock *tlsFunctionsMock) ConfirmHTTPRequestFails(endpoint string, result *pluginkit.TestResult) {
 	if mock.confirmHttpRequestFailsResult {
 		result.Passed = true
 		result.Message = "Mocked HTTP requests are not supported"
@@ -31,7 +31,7 @@ func (mock *tlsFunctionsMock) ConfirmHTTPRequestFails(endpoint string, result *r
 	}
 }
 
-func (mock *tlsFunctionsMock) ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int) {
+func (mock *tlsFunctionsMock) ConfirmOutdatedProtocolRequestsFail(endpoint string, result *pluginkit.TestResult, tlsVersion int) {
 
 	if mock.confirmOutdatedProtocolRequestsFailResult {
 		result.Passed = true
@@ -206,7 +206,7 @@ func Test_CheckTLSVersion_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
 
 	// Assert
@@ -223,7 +223,7 @@ func Test_CheckTLSVersion_fails_for_bad_tls_version(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
 
 	// Assert
@@ -240,7 +240,7 @@ func Test_ConfirmHTTPRequestFails_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmHTTPRequestFails("https://example.com", &result)
 
 	// Assert
@@ -257,7 +257,7 @@ func Test_ConfirmHTTPRequestFails_fails_for_bad_status(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmHTTPRequestFails("https://example.com", &result)
 
 	// Assert
@@ -274,7 +274,7 @@ func Test_ConfirmHTTPRequestFails_fails_for_bad_statusCode(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmHTTPRequestFails("https://example.com", &result)
 
 	// Assert
@@ -291,7 +291,7 @@ func Test_ConfirmOutdatedProtocolRequestsFail_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmOutdatedProtocolRequestsFail("https://example.com", &result, tls.VersionTLS12)
 
 	// Assert
@@ -308,7 +308,7 @@ func Test_ConfirmOutdatedProtocolRequestFails_fails_for_nil_response(t *testing.
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmOutdatedProtocolRequestsFail("https://example.com", &result, tls.VersionTLS12)
 
 	// Assert
@@ -325,7 +325,7 @@ func Test_ConfirmOutdatedProtocolRequestFails_fails_for_bad_status(t *testing.T)
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmOutdatedProtocolRequestsFail("https://example.com", &result, tls.VersionTLS12)
 
 	// Assert
@@ -342,7 +342,7 @@ func Test_ConfirmOutdatedProtocolRequestFails_fails_for_bad_statusCode(t *testin
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := raidengine.MovementResult{}
+	result := pluginkit.TestResult{}
 	(&tlsFunctions{}).ConfirmOutdatedProtocolRequestsFail("https://example.com", &result, tls.VersionTLS12)
 
 	// Assert

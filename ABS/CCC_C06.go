@@ -11,38 +11,38 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/recoveryservices/armrecoveryservices"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -----
-// Strike and Movements for CCC_C06_TR01
+// TestSet and Tests for CCC_C06_TR01
 // -----
 
-func CCC_C06_TR01() (strikeName string, result raidengine.StrikeResult) {
+func CCC_C06_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	// set default return values
-	strikeName = "CCC_C06_TR01"
-	result = raidengine.StrikeResult{
+	testSetName = "CCC_C06_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service prevents deployment in restricted regions or cloud availability zones, blocking any provisioning attempts in designated areas.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C06_TR01_T01)
-	if result.Movements["CCC_C06_TR01_T01"].Passed {
-		result.ExecuteInvasiveMovement(CCC_C06_TR01_T02)
+	result.ExecuteTest(CCC_C06_TR01_T01)
+	if result.Tests["CCC_C06_TR01_T01"].Passed {
+		result.ExecuteInvasiveTest(CCC_C06_TR01_T02)
 	}
 
-	StrikeResultSetter("This service successfully prevents deployment in restricted regions.", "This service does not prevent deployment in restricted regions, see movement results for more details.", &result)
+	TestSetResultSetter("This service successfully prevents deployment in restricted regions.", "This service does not prevent deployment in restricted regions, see test results for more details.", &result)
 
 	return
 }
 
-func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C06_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that an Azure Policy in is place that prevents deployment in restricted regions or cloud availability zones.",
 		Function:    utils.CallerPath(0),
 	}
@@ -60,7 +60,7 @@ func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
 		}
 
 		for _, assignment := range page.Value {
-                        // Check that the default policy is assigned (https://github.com/Azure/azure-policy/blob/master/built-in-policies/policyDefinitions/General/AllowedLocations_Deny.json)
+			// Check that the default policy is assigned (https://github.com/Azure/azure-policy/blob/master/built-in-policies/policyDefinitions/General/AllowedLocations_Deny.json)
 			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c") {
 				result.Message = "Azure Policy is in place that prevents deployment in some regions."
 
@@ -89,8 +89,8 @@ func CCC_C06_TR01_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C06_TR01_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C06_TR01_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that attempted creation of resources in restricted regions fails.",
 		Function:    utils.CallerPath(0),
 	}
@@ -144,28 +144,28 @@ func CCC_C06_TR01_T02() (result raidengine.MovementResult) {
 }
 
 // -----
-// Strike and Movements for CCC_C06_TR02
+// TestSet and Tests for CCC_C06_TR02
 // -----
 
-func CCC_C06_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C06_TR02"
-	result = raidengine.StrikeResult{
+func CCC_C06_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C06_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service ensures that replication of data, backups, and disaster recovery operations do not occur in restricted regions or availability zones.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C06",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C06_TR02_T01)
-	result.ExecuteInvasiveMovement(CCC_C06_TR02_T02)
+	result.ExecuteTest(CCC_C06_TR02_T01)
+	result.ExecuteInvasiveTest(CCC_C06_TR02_T02)
 
 	return
 }
 
-func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C06_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that data is not replicated to restricted regions.",
 		Function:    utils.CallerPath(0),
 	}
@@ -197,8 +197,8 @@ func CCC_C06_TR02_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C06_TR02_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C06_TR02_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Confirms that attempts to create backup vaults in a restricted regions fails.",
 		Function:    utils.CallerPath(0),
 	}
@@ -252,11 +252,11 @@ func CCC_C06_TR02_T02() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
 type RestrictedRegionsFunctions interface {
-	GetRestrictedRegions(result *raidengine.MovementResult) []string
+	GetRestrictedRegions(result *pluginkit.TestResult) []string
 	NewAccountParameters(region string) (accountName string, parameters armstorage.AccountCreateParameters)
 	NewBackupVaultParameters(region string) (vaultName string, parameters armrecoveryservices.Vault)
 	DeleteBackupVaultWithRetry(vaultName string) (deleteError error)
@@ -264,7 +264,7 @@ type RestrictedRegionsFunctions interface {
 
 type restrictedRegionsFunctions struct{}
 
-func (*restrictedRegionsFunctions) GetRestrictedRegions(result *raidengine.MovementResult) []string {
+func (*restrictedRegionsFunctions) GetRestrictedRegions(result *pluginkit.TestResult) []string {
 	storageSkusPager := storageSkusClient.NewListPager(nil)
 
 	var restrictedRegions []string

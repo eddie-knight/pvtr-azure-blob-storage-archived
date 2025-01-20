@@ -6,36 +6,36 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/privateerproj/privateer-sdk/raidengine"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
 
 // -------------------------------------
-// Strike and Movements for CCC_C01_TR01
+// TestSet and Tests for CCC_C01_TR01
 // -------------------------------------
 
-func CCC_C01_TR01() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C01_TR01"
-	result = raidengine.StrikeResult{
+func CCC_C01_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C01_TR01"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service enforces the use of secure transport protocols for all network communications (e.g., TLS 1.2 or higher).",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C01_TR01_T01)
+	result.ExecuteTest(CCC_C01_TR01_T01)
 
-	StrikeResultSetter("Default TLS version is TLS 1.2 or TLS 1.3",
-		"Default TLS version is not TLS 1.2 or TLS 1.3, see movement results for more details",
+	TestSetResultSetter("Default TLS version is TLS 1.2 or TLS 1.3",
+		"Default TLS version is not TLS 1.2 or TLS 1.3, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C01_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "Default TLS version is TLS 1.2 or TLS 1.3",
 		Function:    utils.CallerPath(0),
 	}
@@ -55,31 +55,31 @@ func CCC_C01_TR01_T01() (result raidengine.MovementResult) {
 }
 
 // -------------------------------------
-// Strike and Movements for CCC_C01_TR02
+// TestSet and Tests for CCC_C01_TR02
 // -------------------------------------
 
-func CCC_C01_TR02() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C01_TR02"
-	result = raidengine.StrikeResult{
+func CCC_C01_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C01_TR02"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service automatically redirects incoming unencrypted HTTP requests to HTTPS.",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C01_TR02_T01)
+	result.ExecuteTest(CCC_C01_TR02_T01)
 
-	StrikeResultSetter("HTTP requests are not supported",
-		"HTTP requests are supported, see movement results for more details",
+	TestSetResultSetter("HTTP requests are not supported",
+		"HTTP requests are supported, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C01_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "HTTP requests are not supported",
 		Function:    utils.CallerPath(0),
 	}
@@ -90,32 +90,32 @@ func CCC_C01_TR02_T01() (result raidengine.MovementResult) {
 }
 
 // -------------------------------------
-// Strike and Movements for CCC_C01_TR03
+// TestSet and Tests for CCC_C01_TR03
 // -------------------------------------
 
-func CCC_C01_TR03() (strikeName string, result raidengine.StrikeResult) {
-	strikeName = "CCC_C01_TR03"
-	result = raidengine.StrikeResult{
+func CCC_C01_TR03() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C01_TR03"
+	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "The service rejects or blocks any attempts to establish outgoing connections using outdated or insecure protocols (e.g., SSL, TLS 1.0, or TLS 1.1).",
-		Message:     "Strike has not yet started.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C01",
-		Movements:   make(map[string]raidengine.MovementResult),
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteMovement(CCC_C01_TR03_T01)
-	result.ExecuteMovement(CCC_C01_TR03_T02)
+	result.ExecuteTest(CCC_C01_TR03_T01)
+	result.ExecuteTest(CCC_C01_TR03_T02)
 
-	StrikeResultSetter("All insecure TLS versions are not supported",
-		"One or more insecure TLS versions are supported, see movement results for more details",
+	TestSetResultSetter("All insecure TLS versions are not supported",
+		"One or more insecure TLS versions are supported, see test results for more details",
 		&result)
 
 	return
 }
 
-func CCC_C01_TR03_T01() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C01_TR03_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "TLS Version 1.0 is not supported",
 		Function:    utils.CallerPath(0),
 	}
@@ -126,8 +126,8 @@ func CCC_C01_TR03_T01() (result raidengine.MovementResult) {
 	return
 }
 
-func CCC_C01_TR03_T02() (result raidengine.MovementResult) {
-	result = raidengine.MovementResult{
+func CCC_C01_TR03_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
 		Description: "TLS Version 1.1 is not supported",
 		Function:    utils.CallerPath(0),
 	}
@@ -139,19 +139,19 @@ func CCC_C01_TR03_T02() (result raidengine.MovementResult) {
 }
 
 // --------------------------------------
-// Utility functions to support movements
+// Utility functions to support tests
 // --------------------------------------
 
 type TlsFunctions interface {
-	CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult)
-	ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult)
-	ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int)
+	CheckTLSVersion(endpoint string, token string, result *pluginkit.TestResult)
+	ConfirmHTTPRequestFails(endpoint string, result *pluginkit.TestResult)
+	ConfirmOutdatedProtocolRequestsFail(endpoint string, result *pluginkit.TestResult, tlsVersion int)
 }
 
 type tlsFunctions struct{}
 
 // CheckStatusCode checks the TLS version of the response and updates the result
-func (*tlsFunctions) CheckTLSVersion(endpoint string, token string, result *raidengine.MovementResult) {
+func (*tlsFunctions) CheckTLSVersion(endpoint string, token string, result *pluginkit.TestResult) {
 
 	// Set the minimum TLS version to TLS 1.0
 	minTlsVersion := tls.VersionTLS10
@@ -181,7 +181,7 @@ func (*tlsFunctions) CheckTLSVersion(endpoint string, token string, result *raid
 	}
 }
 
-func (*tlsFunctions) ConfirmHTTPRequestFails(endpoint string, result *raidengine.MovementResult) {
+func (*tlsFunctions) ConfirmHTTPRequestFails(endpoint string, result *pluginkit.TestResult) {
 	httpUrl := strings.Replace(endpoint, "https", "http", 1)
 	response := ArmoryCommonFunctions.MakeGETRequest(httpUrl, "", result, nil, nil)
 
@@ -193,7 +193,7 @@ func (*tlsFunctions) ConfirmHTTPRequestFails(endpoint string, result *raidengine
 	}
 }
 
-func (*tlsFunctions) ConfirmOutdatedProtocolRequestsFail(endpoint string, result *raidengine.MovementResult, tlsVersion int) {
+func (*tlsFunctions) ConfirmOutdatedProtocolRequestsFail(endpoint string, result *pluginkit.TestResult, tlsVersion int) {
 
 	response := ArmoryCommonFunctions.MakeGETRequest(endpoint, "", result, &tlsVersion, &tlsVersion)
 
