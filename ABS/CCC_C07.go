@@ -17,7 +17,7 @@ func CCC_C07_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C07_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service generates real-time alerts whenever non-human entities (e.g., automated scripts or processes) attempt to enumerate resources or services.",
+		Description: "When suspicious enumeration activities are detected, the service MUST generate real-time alerts to notify security personnel.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C07",
@@ -54,7 +54,7 @@ func CCC_C07_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C07_TR02"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "Confirm that logs are properly generated and accessible for review following non-human enumeration attempts.",
+		Description: "When suspicious enumeration activities are detected, the service MUST log the event, including the source details, time, and nature of the activity.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C07",
@@ -79,40 +79,6 @@ func CCC_C07_TR02_T01() (result pluginkit.TestResult) {
 	} else {
 		SetResultFailure(&result, "Microsoft Defender for Cloud is not enabled for Azure Storage, therefore security alerts will not be generated for this resource.")
 	}
-	return
-}
-
-// -----
-// TestSet and Tests for CCC_ObjStor_C07_TR01
-// -----
-
-func CCC_ObjStor_C07_TR01() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_ObjStor_C07_TR01"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C07",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_ObjStor_C07_TR01_T01)
-
-	return
-}
-
-func CCC_ObjStor_C07_TR01_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that access logs are stored in Log Analytics, outside of the Storage Account.",
-		Function:    utils.CallerPath(0),
-	}
-
-	ArmoryAzureUtils.ConfirmLoggingToLogAnalyticsIsConfigured(
-		storageAccountResourceId+"/blobServices/default",
-		diagnosticsSettingsClient,
-		&result)
-
 	return
 }
 

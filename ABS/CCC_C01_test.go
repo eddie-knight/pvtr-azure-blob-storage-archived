@@ -41,7 +41,7 @@ func (mock *tlsFunctionsMock) ConfirmOutdatedProtocolRequestsFail(endpoint strin
 	}
 }
 
-func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
+func Test_CCC_C01_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		checkTlsVersionResult: true,
@@ -52,14 +52,14 @@ func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR01_T01()
+	result := CCC_C01_TR01_T02()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "TLS Mock is being used", result.Message)
 }
 
-func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
+func Test_CCC_C01_TR01_T02_fails_if_checkTlsVersion_fails(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		checkTlsVersionResult: false,
@@ -70,14 +70,14 @@ func Test_CCC_C01_TR01_T01_fails_if_checkTlsVersion_fails(t *testing.T) {
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR01_T01()
+	result := CCC_C01_TR01_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "TLS Mock is being used", result.Message)
 }
 
-func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
+func Test_CCC_C01_TR01_T02_fails_if_no_token_received(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		checkTlsVersionResult: true,
@@ -88,14 +88,14 @@ func Test_CCC_C01_TR01_T01_fails_if_no_token_received(t *testing.T) {
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR01_T01()
+	result := CCC_C01_TR01_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked GetToken Error", result.Message)
 }
 
-func Test_CCC_C01_TR02_T01_succeeds(t *testing.T) {
+func Test_CCC_C01_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		confirmHttpRequestFailsResult: true,
@@ -105,14 +105,14 @@ func Test_CCC_C01_TR02_T01_succeeds(t *testing.T) {
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR02_T01()
+	result := CCC_C01_TR01_T01()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "Mocked HTTP requests are not supported", result.Message)
 }
 
-func Test_CCC_C01_TR02_T01_fails_if_confirmHttpRequestFails_fails(t *testing.T) {
+func Test_CCC_C01_TR01_T01_fails_if_confirmHttpRequestFails_fails(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		confirmHttpRequestFailsResult: false,
@@ -122,14 +122,14 @@ func Test_CCC_C01_TR02_T01_fails_if_confirmHttpRequestFails_fails(t *testing.T) 
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR02_T01()
+	result := CCC_C01_TR01_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked HTTP requests are supported", result.Message)
 }
 
-func Test_CCC_C01_TR03_T01_succeeds(t *testing.T) {
+func Test_CCC_C01_TR01_T03_succeeds(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		confirmOutdatedProtocolRequestsFailResult: true,
@@ -139,14 +139,14 @@ func Test_CCC_C01_TR03_T01_succeeds(t *testing.T) {
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR03_T01()
+	result := CCC_C01_TR01_T03()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "Insecure TLS version Mocked not supported", result.Message)
 }
 
-func Test_CCC_C01_TR03_T01_fails_if_confirmOutdatedProtocolRequestsFail_fails(t *testing.T) {
+func Test_CCC_C01_TR01_T03_fails_if_confirmOutdatedProtocolRequestsFail_fails(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		confirmOutdatedProtocolRequestsFailResult: false,
@@ -156,14 +156,14 @@ func Test_CCC_C01_TR03_T01_fails_if_confirmOutdatedProtocolRequestsFail_fails(t 
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR03_T01()
+	result := CCC_C01_TR01_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Insecure TLS version Mocked is supported", result.Message)
 }
 
-func Test_CCC_C01_TR03_T02_succeeds(t *testing.T) {
+func Test_CCC_C01_TR01_T04_succeeds(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		confirmOutdatedProtocolRequestsFailResult: true,
@@ -173,14 +173,14 @@ func Test_CCC_C01_TR03_T02_succeeds(t *testing.T) {
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR03_T02()
+	result := CCC_C01_TR01_T04()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "Insecure TLS version Mocked not supported", result.Message)
 }
 
-func Test_CCC_C01_TR03_T02_fails_if_confirmOutdatedProtocolRequestsFail_fails(t *testing.T) {
+func Test_CCC_C01_TR01_T04_fails_if_confirmOutdatedProtocolRequestsFail_fails(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		confirmOutdatedProtocolRequestsFailResult: false,
@@ -190,7 +190,7 @@ func Test_CCC_C01_TR03_T02_fails_if_confirmOutdatedProtocolRequestsFail_fails(t 
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C01_TR03_T02()
+	result := CCC_C01_TR01_T04()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)

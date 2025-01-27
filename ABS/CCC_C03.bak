@@ -18,7 +18,7 @@ func CCC_C03_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C03_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "When an entity attempts to modify the service, the service MUST attempt to verify the client's identity through an authentication process.",
+		Description: "Ensure that MFA is required for all user access to the service interface.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C03",
@@ -32,13 +32,11 @@ func CCC_C03_TR01() (testSetName string, result pluginkit.TestSetResult) {
 
 func CCC_C03_TR01_T01() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
-		Description: "Confirms that authentication is required to modify the service",
+		Description: "Confirms that MFA is required for all user access to the service interface",
 		Function:    utils.CallerPath(0),
 	}
 
-	result.Passed = true
-	result.Message = "Authentication is always required by Azure for a user to modify a Storage Account."
-
+	SetResultFailure(&result, "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
 	return
 }
 
@@ -50,7 +48,7 @@ func CCC_C03_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C03_TR02"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "When an entity attempts to view information presented by the service, the service MUST attempt to verify the client's identity through an authentication process.",
+		Description: "Ensure that MFA is required for all administrative access to the management interface.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C03",
@@ -58,195 +56,17 @@ func CCC_C03_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	}
 
 	result.ExecuteTest(CCC_C03_TR02_T01)
-	result.ExecuteTest(CCC_C03_TR02_T02)
 
 	return
 }
 
 func CCC_C03_TR02_T01() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
-		Description: "Confirms anonymous blob access is disabled.",
+		Description: "Confirms that MFA is required for all administrative access to the management interface",
 		Function:    utils.CallerPath(0),
 	}
 
-	if *storageAccountResource.Properties.AllowBlobPublicAccess {
-		SetResultFailure(&result, "Public anonymous blob access is enabled for the storage account.")
-	} else {
-		result.Passed = true
-		result.Message = "Public anonymous blob access is disabled for the storage account."
-	}
-
-	return
-}
-
-func CCC_C03_TR02_T02() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms Shared Key access is disabled.",
-		Function:    utils.CallerPath(0),
-	}
-
-	if *storageAccountResource.Properties.AllowSharedKeyAccess {
-		SetResultFailure(&result, "Shared Key access is enabled for the storage account.")
-	} else {
-		result.Passed = true
-		result.Message = "Shared Key access is disabled for the storage account."
-	}
-
-	return
-}
-
-// -----
-// TestSet and Tests for CCC_C03_TR03
-// -----
-
-func CCC_C03_TR03() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_C03_TR03"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "When an entity attempts to view information on the service through a user interface, the authentication process MUST require multiple identifying factors from the user.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_C03_TR03_T01)
-
-	return
-}
-
-func CCC_C03_TR03_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that MFA is required for all user access to data in the service.",
-		Function:    utils.CallerPath(0),
-	}
-
-	SetResultFailure(&result, "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
-	return
-}
-
-// -----
-// TestSet and Tests for CCC_C03_TR04
-// -----
-
-func CCC_C03_TR04() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_C03_TR04"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "When an entity attempts to modify the service through an API endpoint, the authentication process MUST be limited to a specific allowed network.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_C03_TR04_T01)
-
-	return
-}
-
-func CCC_C03_TR04_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that users can only authenticate to the control plane of the service from specific allowed networks.",
-		Function:    utils.CallerPath(0),
-	}
-
-	SetResultFailure(&result, "Restricting control plane access to resources to specific networks is not possible in Azure.")
-	return
-}
-
-// -----
-// TestSet and Tests for CCC_C03_TR05
-// -----
-
-func CCC_C03_TR05() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_C03_TR05"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "When an entity attempts to view information on the service through an API endpoint, the authentication process MUST be limited to a specific allowed network.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_C03_TR05_T01)
-
-	return
-}
-
-func CCC_C03_TR05_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that users can only authenticate to the data plane of the service from specific allowed networks.",
-		Function:    utils.CallerPath(0),
-	}
-
-	if *storageAccountResource.Properties.PublicNetworkAccess == "Disabled" {
-		result.Passed = true
-		result.Message = "Public network access is disabled for the storage account."
-	} else if *storageAccountResource.Properties.PublicNetworkAccess == "Enabled" {
-
-		if *storageAccountResource.Properties.NetworkRuleSet.DefaultAction == "Deny" {
-
-			type AllowedIps struct {
-				Name string
-				IPs  []string
-			}
-
-			allowedIps := AllowedIps{
-				Name: "Allowlisted IPs and IP ranges",
-				IPs:  []string{},
-			}
-
-			for _, ip := range storageAccountResource.Properties.NetworkRuleSet.IPRules {
-				allowedIps.IPs = append(allowedIps.IPs, *ip.IPAddressOrRange)
-			}
-
-			result.Value = allowedIps
-			result.Passed = true
-			result.Message = "Public network access is enabled for the storage account, but the default action is set to deny for sources outside of the allowlist IPs (see result value)."
-
-		} else {
-			SetResultFailure(&result, "Public network access is enabled for the storage account and the default action is not set to deny for sources outside of the allowlist.")
-		}
-
-	} else if *storageAccountResource.Properties.PublicNetworkAccess == "SecuredByPerimeter" {
-		// This isn't publicly available yet so we shouldn't hit this condition with customers
-		SetResultFailure(&result, "Public network access to the storage account is secured by Network Security Perimeter, this plugin does not support assessment of network access via Network Security Perimeter.")
-	} else {
-		SetResultFailure(&result, fmt.Sprintf("Public network access status of %s unclear.", *storageAccountResource.Properties.PublicNetworkAccess))
-	}
-
-	return
-}
-
-// -----
-// TestSet and Tests for CCC_C03_TR06
-// -----
-
-func CCC_C03_TR06() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_C03_TR06"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "When an entity attempts to modify the service through a user interface, the authentication process MUST require multiple identifying factors from the user.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C03",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_C03_TR06_T01)
-
-	return
-}
-
-func CCC_C03_TR06_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that MFA is required for all user access to the service interface",
-		Function:    utils.CallerPath(0),
-	}
-
-	SetResultFailure(&result, "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
+	SetResultFailure(&result, "MFA should be configured as required for all administrative access to the management interface. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
 	return
 }
 
@@ -258,7 +78,7 @@ func CCC_ObjStor_C03_TR01() (testSetName string, result pluginkit.TestSetResult)
 	testSetName = "CCC_ObjStor_C03_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "When an object storage bucket deletion is attempted, the bucket MUST be fully recoverable for a set time-frame after deletion is requested.",
+		Description: "Object storage buckets cannot be deleted after creation.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C03",
@@ -275,8 +95,10 @@ func CCC_ObjStor_C03_TR01() (testSetName string, result pluginkit.TestSetResult)
 		result.ExecuteInvasiveTest(CCC_ObjStor_C03_TR01_T04)
 	}
 
-	TestSetResultSetter("Object storage buckets are recoverable for a set time-frame after deletion is requested.",
-		"Object storage buckets are not recoverable for a set time-frame after deletion, see test results for more details.",
+	result.ExecuteTest(CCC_ObjStor_C03_TR01_T05)
+
+	TestSetResultSetter("Object storage buckets cannot be deleted after creation.",
+		"Object storage buckets can be deleted after creation, see test results for more details.",
 		&result)
 
 	return
@@ -439,15 +261,49 @@ func CCC_ObjStor_C03_TR01_T04() (result pluginkit.TestResult) {
 	return
 }
 
+func CCC_ObjStor_C03_TR01_T05() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "Confirms that immutability is enabled on the storage account for all blob storage.",
+		Function:    utils.CallerPath(0),
+	}
+
+	immutabilityConfiguration := ArmoryAzureUtils.GetImmutabilityConfiguration()
+	result.Value = immutabilityConfiguration
+
+	if !immutabilityConfiguration.Enabled {
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account Blobs.")
+		return
+	}
+
+	if immutabilityConfiguration.PolicyState == nil {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but no immutability policy is set.")
+		return
+	}
+
+	if *immutabilityConfiguration.PolicyState == armstorage.AccountImmutabilityPolicyStateDisabled {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.")
+		return
+	}
+
+	result.Passed = true
+	result.Message = "Immutability is enabled for Storage Account Blobs, and an immutability policy is set."
+	return
+}
+
+// TO DO (CCC): Should we behaviorally test the immutability policy state?
+//// We wouldn't want to delete a blob that we don't own, we could create
+//// a blob and then try to delete it, but then if immutability was on we
+//// wouldn't be able to delete it....
+
 // -----
-// TestSet and Tests for CCC_ObjStor_C03_TR01
+// TestSet and Tests for CCC_ObjStor_C03_TR02
 // -----
 
 func CCC_ObjStor_C03_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_ObjStor_C03_TR02"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "When an attempt is made to modify the retention policy for an object storage bucket, the service MUST prevent the policy from being modified.",
+		Description: "Retention policy for object storage buckets cannot be unset.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C03",
@@ -496,12 +352,12 @@ func CCC_ObjStor_C03_TR02_T01() (result pluginkit.TestResult) {
 // Utility functions to support tests
 // --------------------------------------
 
-type RetentionPolicy struct {
-	Name string
-	Days int32
-}
-
 type ImmutabilityPolicyState struct {
 	Name  string
 	State string
+}
+
+type RetentionPolicy struct {
+	Name string
+	Days int32
 }

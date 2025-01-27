@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
@@ -26,11 +27,12 @@ func CCC_C04_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C04_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service logs all access attempts, including successful and failed login attempts.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C04",
-		Tests:       make(map[string]pluginkit.TestResult),
+		Description: "When any access attempt is made to the service, the service MUST log the client identity, time, and result of the attempt.",
+		// TODO: Check that test covers log contents new requirement
+		Message:   "TestSet has not yet started.",
+		DocsURL:   "https://maintainer.com/docs/raids/ABS",
+		ControlID: "CCC.C04",
+		Tests:     make(map[string]pluginkit.TestResult),
 	}
 
 	result.ExecuteTest(CCC_C04_TR01_T01)
@@ -106,11 +108,12 @@ func CCC_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C04_TR02"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service logs all changes to configuration, including administrative actions and modifications to user roles or privileges.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C04",
-		Tests:       make(map[string]pluginkit.TestResult),
+		Description: "When any change is made to the service configuration, the service MUST the change, including the client, time, previous state, and the new state following the change.",
+		// TODO: Check that we are testing for the required log fields mentioned.
+		Message:   "TestSet has not yet started.",
+		DocsURL:   "https://maintainer.com/docs/raids/ABS",
+		ControlID: "CCC.C04",
+		Tests:     make(map[string]pluginkit.TestResult),
 	}
 
 	result.ExecuteInvasiveTest(CCC_C04_TR02_T01)
@@ -212,6 +215,117 @@ func CCC_C04_TR02_T02() (result pluginkit.TestResult) {
 
 	if err != nil {
 		SetResultFailure(&result, fmt.Sprintf("Could not revoke permission: %v", err))
+	}
+
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_ObjStor_C03_TR01
+// -----
+
+func CCC_ObjStor_C04_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C04_TR01"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When an object is uploaded to the object storage system, the object MUST automatically receive a default retention policy that prevents premature deletion or modification.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C04",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_ObjStor_C04_TR01_T01)
+
+	TestSetResultSetter("Object storage buckets cannot be deleted after creation.",
+		"Object storage buckets can be deleted after creation, see test results for more details.",
+		&result)
+
+	return
+}
+
+func CCC_ObjStor_C04_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "Confirms that immutability is enabled on the storage account for all blob storage.",
+		Function:    utils.CallerPath(0),
+	}
+
+	immutabilityConfiguration := ArmoryAzureUtils.GetImmutabilityConfiguration()
+	result.Value = immutabilityConfiguration
+
+	if !immutabilityConfiguration.Enabled {
+		SetResultFailure(&result, "Immutability is not enabled for Storage Account Blobs.")
+		return
+	}
+
+	if immutabilityConfiguration.PolicyState == nil {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but no immutability policy is set.")
+		return
+	}
+
+	if *immutabilityConfiguration.PolicyState == armstorage.AccountImmutabilityPolicyStateDisabled {
+		SetResultFailure(&result, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.")
+		return
+	}
+
+	result.Passed = true
+	result.Message = "Immutability is enabled for Storage Account Blobs, and an immutability policy is set."
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_ObjStor_C04_TR02
+// -----
+
+func CCC_ObjStor_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C04_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When an attempt is made to delete or modify an object that is subject to an active retention policy, the service MUST prevent the action from being completed.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C05",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteInvasiveTest(CCC_ObjStor_C04_TR02_T01)
+
+	return
+}
+
+func CCC_ObjStor_C04_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "Confirms that deleting objects subject to a retention policy is prevented.",
+		Function:    utils.CallerPath(0),
+	}
+
+	randomString := ArmoryCommonFunctions.GenerateRandomString(8)
+	containerName := "privateer-test-container-" + randomString
+	blobName := "privateer-test-blob-" + randomString
+	blobUri := fmt.Sprintf("%s%s/%s", storageAccountUri, containerName, blobName)
+	blobContent := "Privateer test blob content"
+
+	blobBlockClient, newBlockBlobClientFailedError := ArmoryAzureUtils.GetBlockBlobClient(blobUri)
+
+	if newBlockBlobClientFailedError != nil {
+		SetResultFailure(&result, fmt.Sprintf("Failed to create block blob client with error: %v", newBlockBlobClientFailedError))
+		return
+	}
+
+	blobBlockClient, createContainerSucceeded := ArmoryAzureUtils.CreateContainerWithBlobContent(&result, blobBlockClient, containerName, blobName, blobContent)
+
+	if createContainerSucceeded {
+
+		_, blobDeleteFailedError := blobBlockClient.Delete(context.Background(), nil)
+
+		if blobDeleteFailedError == nil {
+			SetResultFailure(&result, "Object deletion is not prevented for objects subject to a retention policy.")
+		} else if blobDeleteFailedError.(*azcore.ResponseError).ErrorCode == "BlobImmutableDueToPolicy" {
+			result.Passed = true
+			result.Message = "Object deletion is prevented for objects subject to a retention policy."
+		} else {
+			SetResultFailure(&result, fmt.Sprintf("Failed to delete blob with error unrelated to immutability: %v", blobDeleteFailedError))
+		}
 	}
 
 	return

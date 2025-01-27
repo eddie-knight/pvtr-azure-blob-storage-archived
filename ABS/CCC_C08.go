@@ -1,7 +1,6 @@
 package abs
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -19,7 +18,7 @@ func CCC_C08_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C08_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "Data is replicated across multiple availability zones or regions.",
+		Description: "When data is stored, the service MUST ensure that data is replicated across multiple availability zones or regions.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C08",
@@ -27,17 +26,6 @@ func CCC_C08_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	}
 
 	result.ExecuteTest(CCC_C08_TR01_T01)
-
-	if result.Tests["CCC_C08_TR01_T01"].Passed {
-
-		if strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GRS") ||
-			strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "GZRS") {
-			result.ExecuteTest(CCC_C08_TR01_T02)
-		} else if strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGRS") ||
-			strings.Contains(result.Tests["CCC_C08_TR01_T01"].Value.(SKU).SKUName, "RAGZRS") {
-			result.ExecuteTest(CCC_C08_TR01_T03)
-		}
-	}
 
 	return
 }
@@ -71,9 +59,38 @@ func CCC_C08_TR01_T01() (result pluginkit.TestResult) {
 	return
 }
 
-func CCC_C08_TR01_T02() (result pluginkit.TestResult) {
+// -----
+// TestSet and Tests for CCC_C08_TR02
+// -----
+
+func CCC_C08_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C08_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When data is replicated across multiple zones or regions, the service MUST be able to verify the replication state, including the replication locations and data synchronization status.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C08",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C08_TR02_T01)
+	result.ExecuteTest(CCC_C08_TR02_T02)
+
+	if result.Tests["CCC_C08_TR02_T01"].Passed && result.Tests["CCC_C08_TR02_T02"].Passed {
+		result.Passed = true
+		result.Message = "Data is replicated across multiple zones or regions and the replication state is verified."
+	} else {
+		result.Passed = false
+		result.Message = "Data is not replicated across multiple zones or regions or the replication state is not verified."
+	}
+
+	return
+}
+
+func CCC_C08_TR02_T01() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
-		Description: "Confirms that the secondary location for the storage account is available.",
+		Description: "When data is replicated across multiple zones or regions, the service MUST be able to verify the replication state, including the replication locations and data synchronization status.",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -90,63 +107,7 @@ func CCC_C08_TR01_T02() (result pluginkit.TestResult) {
 	}
 }
 
-func CCC_C08_TR01_T03() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that the storage account can be accessed via the secondary blob URI in the backup region.",
-		Function:    utils.CallerPath(0),
-	}
-
-	// Get access token
-	token := ArmoryAzureUtils.GetToken(&result)
-	if token == "" {
-		return
-	}
-
-	secondaryEndpoint := storageAccountResource.Properties.SecondaryEndpoints.Blob
-
-	if secondaryEndpoint == nil {
-		SetResultFailure(&result, "Secondary endpoint is not available.")
-		return
-	}
-
-	response := ArmoryCommonFunctions.MakeGETRequest(*secondaryEndpoint, token, &result, nil, nil)
-
-	if response == nil {
-		return
-	} else if response.StatusCode == 200 {
-		result.Passed = true
-		result.Message = "Storage account can be accessed via the secondary blob URI in the backup region."
-		return
-	} else {
-		SetResultFailure(&result, fmt.Sprintf("Storage account cannot be accessed via the secondary blob URI in the backup region. Status message: %s", response.Status))
-		return
-	}
-}
-
-// -----
-// TestSet and Tests for CCC_ObjStor_C08_TR02
-// -----
-
-func CCC_ObjStor_C08_TR02() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_ObjStor_C08_TR02"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "Admin users can verify the replication status of data across multiple zones or regions, including the replication locations and data synchronization status.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C08",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_ObjStor_C08_TR02_T01)
-	TestSetResultSetter("Replication is working as expected and data has recently synchronized across multiple regions or zones.",
-		"Replication is not working as expected or data has not recently synchronized across multiple regions or zones, see test results for more details.",
-		&result)
-
-	return
-}
-
-func CCC_ObjStor_C08_TR02_T01() (result pluginkit.TestResult) {
+func CCC_C08_TR02_T02() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "Confirms that the last sync time of data being replicated across multiple regions or zones is within 15 minutes.",
 		Function:    utils.CallerPath(0),
@@ -173,38 +134,6 @@ func CCC_ObjStor_C08_TR02_T01() (result pluginkit.TestResult) {
 			return
 		}
 	}
-}
-
-// -----
-// TestSet and Tests for CCC_ObjStor_C08_TR01
-// -----
-
-func CCC_ObjStor_C08_TR01() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_ObjStor_C08_TR01"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "Object replication to destinations outside of the defined trust perimeter is automatically blocked, preventing replication to untrusted resources.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.08",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_ObjStor_C08_TR01_T01)
-
-	return
-}
-
-func CCC_ObjStor_C08_TR01_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Checks that object replication outside of the defined trust perimeter is blocked.",
-		Function:    utils.CallerPath(0),
-	}
-
-	result.Passed = true
-	result.Message = "Object replication outside of the network access enabled on the Storage Account is always blocked on Azure Storage Accounts. See the results of CCC_C05_TR01 for more details on the configured network access."
-
-	return
 }
 
 // --------------------------------------
