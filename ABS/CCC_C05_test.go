@@ -3,8 +3,9 @@ package abs
 import (
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,121 +88,279 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *te
 
 func Test_CCC_C05_TR04_T01_succeeds(t *testing.T) {
 	// Arrange
-	myMock := storageAccountMock{
-		allowBlobPublicAccess: false,
+	myMock := loggingFunctionsMock{
+		azureUtilsMock: azureUtilsMock{
+			confirmLoggingToLogAnalyticsIsConfiguredResult: true,
+		},
 	}
-	storageAccountResource = myMock.SetStorageAccount()
+
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myMock
 
 	// Act
 	result := CCC_C05_TR04_T01()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, "Public anonymous blob access is disabled for the storage account.", result.Message)
+	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C05_TR04_T01_fails(t *testing.T) {
+func Test_CCC_ObjStor_C05_TR01_T01_succeeds(t *testing.T) {
 	// Arrange
-	myMock := storageAccountMock{
-		allowBlobPublicAccess: true,
+	myMock := blobServicePropertiesMock{
+		blobVersioningEnabled: true,
 	}
-	storageAccountResource = myMock.SetStorageAccount()
-
-	// Act
-	result := CCC_C05_TR04_T01()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Public anonymous blob access is enabled for the storage account.", result.Message)
-}
-
-func Test_CCC_C05_TR04_T02_succeeds(t *testing.T) {
-	// Arrange
-	myMock := storageAccountMock{
-		allowSharedKeyAccess: false,
-	}
-	storageAccountResource = myMock.SetStorageAccount()
-
-	// Act
-	result := CCC_C05_TR04_T02()
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, "Shared Key access is disabled for the storage account.", result.Message)
-}
-
-func Test_CCC_C05_TR04_T02_fails(t *testing.T) {
-	// Arrange
-	myMock := storageAccountMock{
-		allowSharedKeyAccess: true,
-	}
-	storageAccountResource = myMock.SetStorageAccount()
-
-	// Act
-	result := CCC_C05_TR04_T02()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
-}
-
-func Test_CCC_ObjStor_C05_TR01_T01_success(t *testing.T) {
-	// Arrange
-	myMock := storageAccountMock{
-		immutabilityPolicyEnabled: true,
-		immutabilityPopulated:     true,
-		immutabilityPolicyState:   "Locked",
-	}
-	storageAccountResource = myMock.SetStorageAccount()
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C05_TR01_T01()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, and an immutability policy is set.", result.Message)
+	assert.Equal(t, "Versioning is enabled for Storage Account Blobs.", result.Message)
 }
 
-func Test_CCC_ObjStor_C05_TR01_T01_fails_when_immutability_disabled(t *testing.T) {
+func Test_CCC_ObjStor_C05_TR01_T01_fails_versioning_disabled(t *testing.T) {
 	// Arrange
-	myMock := storageAccountMock{
-		immutabilityPolicyEnabled: false,
+	myMock := blobServicePropertiesMock{
+		blobVersioningEnabled: false,
 	}
-	storageAccountResource = myMock.SetStorageAccount()
+	blobServiceProperties = myMock.SetBlobServiceProperties()
 
 	// Act
 	result := CCC_ObjStor_C05_TR01_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability is not enabled for Storage Account.", result.Message)
+	assert.Equal(t, "Versioning is not enabled for Storage Account Blobs.", result.Message)
 }
 
-func Test_CCC_ObjStor_C05_TR01_T01_fails_when_policy_disabled(t *testing.T) {
+func Test_CCC_ObjStor_C05_TR02_T01_succeeds(t *testing.T) {
 	// Arrange
-	myMock := storageAccountMock{
-		immutabilityPolicyEnabled: true,
-		immutabilityPopulated:     true,
-		immutabilityPolicyState:   "Disabled",
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+			},
+		},
+		blobBlockClient: &mockBlockBlobClient{},
 	}
-	storageAccountResource = myMock.SetStorageAccount()
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
 
 	// Act
-	result := CCC_ObjStor_C05_TR01_T01()
+	result := CCC_ObjStor_C05_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Previous versions are accessible when a blob is updated.", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_succeeds(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+			},
+		},
+		blobBlockClient: &mockBlockBlobClient{},
+	}
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	blobContainersClient = &blobContainersClientMock{
+		createResponse: armstorage.BlobContainersClientCreateResponse{},
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Previous versions are accessible when a blob is updated.", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_fails_create_container_fails(t *testing.T) {
+	// Arrange
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.", result.Message)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_fails_get_block_client_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		getBlobBlockClientError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_fails_get_blob_client_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient:    &mockBlockBlobClient{},
+		getBlobClientError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob client with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_upload_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			uploadError: assert.AnError,
+		},
+	}
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_no_previous_version(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+			},
+		},
+		blobBlockClient: &mockBlockBlobClient{},
+	}
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_succeeds_but_delete_container_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+			},
+		},
+		blobBlockClient: &mockBlockBlobClient{},
+	}
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	blobContainersClient = &blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Previous versions are accessible when a blob is updated. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR03_T01_fails_fails_and_delete_container_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+			},
+		},
+		blobBlockClient: &mockBlockBlobClient{},
+	}
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
+	}
+
+	blobContainersClient = &blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Previous versions are not accessible when a blob is updated. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }
 
 func Test_CCC_ObjStor_C05_TR04_T01_succeeds(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
-		blobBlockClient: &mockBlockBlobClient{
-			deleteError: &azcore.ResponseError{
-				ErrorCode: "BlobImmutableDueToPolicy",
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
 			},
 		},
+		blobBlockClient: &mockBlockBlobClient{},
+	}
+
+	ArmoryCommonFunctions = &commonFunctionsMock{
+		randomString: "randomst",
 	}
 
 	blobContainersClient = &blobContainersClientMock{}
@@ -211,10 +370,24 @@ func Test_CCC_ObjStor_C05_TR04_T01_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, "Object deletion is prevented for objects subject to a retention policy.", result.Message)
+	assert.Equal(t, "Previous version is accessible when a blob is deleted.", result.Message)
 }
 
-func Test_CCC_ObjStor_C05_TR04_T01_fails_block_blob_client_fails(t *testing.T) {
+func Test_CCC_ObjStor_C05_TR04_T01_fails_fails_create_container_fails(t *testing.T) {
+	// Arrange
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_fails_get_block_client_fails(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
 		getBlobBlockClientError: assert.AnError,
@@ -230,34 +403,11 @@ func Test_CCC_ObjStor_C05_TR04_T01_fails_block_blob_client_fails(t *testing.T) {
 	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
 }
 
-func Test_CCC_ObjStor_C05_TR04_T01_fails_container_create_fails(t *testing.T) {
+func Test_CCC_ObjStor_C05_TR04_T01_fails_fails_get_blob_client_fails(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
-		blobBlockClient: &mockBlockBlobClient{
-			deleteError: &azcore.ResponseError{
-				ErrorCode: "BlobImmutableDueToPolicy",
-			},
-		},
-	}
-
-	blobContainersClient = &blobContainersClientMock{
-		createError: assert.AnError,
-	}
-
-	// Act
-	result := CCC_ObjStor_C05_TR04_T01()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
-}
-
-func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_succeeds(t *testing.T) {
-	// Arrange
-	ArmoryAzureUtils = &azureUtilsMock{
-		blobBlockClient: &mockBlockBlobClient{
-			deleteError: nil,
-		},
+		blobBlockClient:    &mockBlockBlobClient{},
+		getBlobClientError: assert.AnError,
 	}
 
 	blobContainersClient = &blobContainersClientMock{}
@@ -267,25 +417,117 @@ func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Object deletion is not prevented for objects subject to a retention policy.", result.Message)
+	assert.Equal(t, "Failed to create blob client with error: assert.AnError general error for testing", result.Message)
 }
 
-func Test_CCC_ObjStor_C05_TR04_T01_fails_delete_fails_wrong_error(t *testing.T) {
+func Test_CCC_ObjStor_C05_TR04_T01_fails_upload_fails(t *testing.T) {
 	// Arrange
-	ArmoryAzureUtils = &azureUtilsMock{
-		blobBlockClient: &mockBlockBlobClient{
-			deleteError: &azcore.ResponseError{
-				ErrorCode: "AnotherErrorCode",
-			},
-		},
+	myBlockBlobClient := mockBlockBlobClient{
+		uploadError: assert.AnError,
 	}
+	myMock := azureUtilsMock{
+		blobBlockClient: &myBlockBlobClient,
+	}
+	myCommonFunctionsMock := commonFunctionsMock{
+		randomString: "randomst",
+	}
+	myBlobContainersClientMock := blobContainersClientMock{}
+	blobContainersClient = &myBlobContainersClientMock
 
-	blobContainersClient = &blobContainersClientMock{}
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myCommonFunctionsMock
 
 	// Act
 	result := CCC_ObjStor_C05_TR04_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Failed to delete blob with error unrelated to immutability: Missing RawResponse\n--------------------------------------------------------------------------------\nERROR CODE: AnotherErrorCode\n--------------------------------------------------------------------------------\n", result.Message)
+	assert.Equal(t, "Failed to upload blob with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_no_previous_version(t *testing.T) {
+	// Arrange
+	myBlobClient := mockBlobClient{
+		blobItems: []*container.BlobItem{},
+	}
+	myBlockBlobClient := mockBlockBlobClient{}
+	myMock := azureUtilsMock{
+		blobClient:      &myBlobClient,
+		blobBlockClient: &myBlockBlobClient,
+	}
+	myCommonFunctionsMock := commonFunctionsMock{
+		randomString: "randomst",
+	}
+	myBlobContainersClientMock := blobContainersClientMock{}
+	blobContainersClient = &myBlobContainersClientMock
+
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myCommonFunctionsMock
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Previous version is not accessible when a blob is deleted.", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_succeeds_but_delete_container_fails(t *testing.T) {
+	// Arrange
+	myMock := azureUtilsMock{
+		blobClient: &mockBlobClient{
+			blobItems: []*container.BlobItem{
+				{
+					Name: to.Ptr("privateer-test-blob-randomst"),
+				},
+			},
+		},
+		blobBlockClient: &mockBlockBlobClient{},
+	}
+	myCommonFunctionsMock := commonFunctionsMock{
+		randomString: "randomst",
+	}
+	myBlobContainersClientMock := blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
+	blobContainersClient = &myBlobContainersClientMock
+
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myCommonFunctionsMock
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Previous version is accessible when a blob is deleted. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C05_TR04_T01_fails_fails_and_delete_container_fails(t *testing.T) {
+	// Arrange
+	myBlobClient := mockBlobClient{
+		blobItems: []*container.BlobItem{},
+	}
+	myBlockBlobClient := mockBlockBlobClient{}
+	myMock := azureUtilsMock{
+		blobClient:      &myBlobClient,
+		blobBlockClient: &myBlockBlobClient,
+	}
+	myCommonFunctionsMock := commonFunctionsMock{
+		randomString: "randomst",
+	}
+	myBlobContainersClientMock := blobContainersClientMock{
+		deleteError: assert.AnError,
+	}
+	blobContainersClient = &myBlobContainersClientMock
+
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myCommonFunctionsMock
+
+	// Act
+	result := CCC_ObjStor_C05_TR04_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Previous version is not accessible when a blob is deleted. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
 }

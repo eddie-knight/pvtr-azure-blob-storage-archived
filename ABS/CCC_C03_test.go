@@ -213,6 +213,66 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_get_block_client_fails(t *testing.T) {
 	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
 }
 
+func Test_CCC_C03_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowBlobPublicAccess: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Public anonymous blob access is disabled for the storage account.", result.Message)
+}
+
+func Test_CCC_C03_TR02_T01_fails(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowBlobPublicAccess: true,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Public anonymous blob access is enabled for the storage account.", result.Message)
+}
+
+func Test_CCC_C03_TR02_T02_succeeds(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowSharedKeyAccess: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Shared Key access is disabled for the storage account.", result.Message)
+}
+
+func Test_CCC_C03_TR02_T02_fails(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowSharedKeyAccess: true,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
+}
+
 func Test_CCC_ObjStor_C03_TR01_T04_fails_upload_blob_fails(t *testing.T) {
 	// Arrange
 	ArmoryAzureUtils = &azureUtilsMock{
@@ -283,55 +343,6 @@ func Test_CCC_ObjStor_C03_TR01_T04_fails_container_delete_fails(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Deleted blob successfully restored. Failed to delete blob container with error: assert.AnError general error for testing", result.Message)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T05_succeeds_with_immutability_enabled(t *testing.T) {
-	// Arrange
-	myMock := storageAccountMock{
-		immutabilityPopulated:     true,
-		immutabilityPolicyEnabled: true,
-		immutabilityPolicyDays:    30,
-	}
-	storageAccountResource = myMock.SetStorageAccount()
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T05()
-
-	// Assert
-	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, myMock.immutabilityPolicyDays, *result.Value.(ImmutabilityConfiguration).PolicyRetentionPeriodInDays)
-	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, and an immutability policy is set.", result.Message)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_empty(t *testing.T) {
-	// Arrange
-	myMock := storageAccountMock{
-		immutabilityPopulated: false,
-	}
-	storageAccountResource = myMock.SetStorageAccount()
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T05()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
-}
-
-func Test_CCC_ObjStor_C03_TR01_T05_fails_with_immutability_disabled_populated(t *testing.T) {
-	// Arrange
-	myMock := storageAccountMock{
-		immutabilityPopulated:     true,
-		immutabilityPolicyEnabled: false,
-	}
-	storageAccountResource = myMock.SetStorageAccount()
-
-	// Act
-	result := CCC_ObjStor_C03_TR01_T05()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
 }
 
 func Test_CCC_ObjStor_C03_TR02_T01_succeeds_with_immutability_locked(t *testing.T) {

@@ -24,7 +24,7 @@ func CCC_C06_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C06_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service prevents deployment in restricted regions or cloud availability zones, blocking any provisioning attempts in designated areas.",
+		Description: "When a deployment request is made, the service MUST validate that the deployment region is not to a restricted or regions or availability zones.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C06",
@@ -151,7 +151,7 @@ func CCC_C06_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C06_TR02"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service ensures that replication of data, backups, and disaster recovery operations do not occur in restricted regions or availability zones.",
+		Description: "When a deployment request is made, the service MUST validate that replication of data, backups, and disaster recovery operations will not occur in restricted regions or availability zones.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C06",
@@ -248,6 +248,40 @@ func CCC_C06_TR02_T02() (result pluginkit.TestResult) {
 
 	result.Passed = true
 	result.Message = "Deployment to all restricted regions failed, and deployment to allowed regions succeeded (confirming that incorrect permissions are not what is blocking creation). This is the expected behavior."
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_ObjStor_C07_TR01
+// -----
+
+func CCC_ObjStor_C06_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C06_TR01"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C07",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_ObjStor_C07_TR01_T01)
+
+	return
+}
+
+func CCC_ObjStor_C07_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "Confirms that access logs are stored in Log Analytics, outside of the Storage Account.",
+		Function:    utils.CallerPath(0),
+	}
+
+	ArmoryAzureUtils.ConfirmLoggingToLogAnalyticsIsConfigured(
+		storageAccountResourceId+"/blobServices/default",
+		diagnosticsSettingsClient,
+		&result)
+
 	return
 }
 
