@@ -640,7 +640,7 @@ func Test_ConfirmAdminActivityIsLogged_fails_if_timeout(t *testing.T) {
 	assert.Equal(t, "Admin activity on resources was not logged", result.Message)
 }
 
-func Test_CCC_ObjStor_C03_TR02_T01_succeeds_with_immutability_enabled(t *testing.T) {
+func Test_CCC_ObjStor_C04_TR01_T01_succeeds_with_immutability_enabled(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
 		immutabilityPopulated:     true,
@@ -687,6 +687,23 @@ func Test_CCC_ObjStor_C04_TR01_T01_fails_with_immutability_disabled_populated(t 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR01_T01_fails_with_policy_disabled(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPopulated:     true,
+		immutabilityPolicyEnabled: true,
+		immutabilityPolicyState:   armstorage.AccountImmutabilityPolicyStateDisabled,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C04_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.", result.Message)
 }
 
 func Test_CCC_ObjStor_C04_TR02_T01_succeeds(t *testing.T) {

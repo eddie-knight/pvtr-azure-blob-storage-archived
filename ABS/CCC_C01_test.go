@@ -214,7 +214,7 @@ func Test_CheckTLSVersion_succeeds(t *testing.T) {
 	assert.Equal(t, "TLS 1.2 is being used", result.Message)
 }
 
-func Test_CheckTLSVersion_fails_for_bad_tls_version(t *testing.T) {
+func Test_CheckTLSVersion_fails_for_tls_10(t *testing.T) {
 	// Arrange
 	myMock := tlsFunctionsMock{
 		commonFunctionsMock: commonFunctionsMock{
@@ -229,6 +229,61 @@ func Test_CheckTLSVersion_fails_for_bad_tls_version(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "TLS 1.0 is being used", result.Message)
+}
+
+func Test_CheckTLSVersion_fails_for_tls_11(t *testing.T) {
+	// Arrange
+	myMock := tlsFunctionsMock{
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{TLS: &tls.ConnectionState{Version: tls.VersionTLS11}}}}
+
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := pluginkit.TestResult{}
+	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "TLS 1.1 is being used", result.Message)
+}
+
+func Test_CheckTLSVersion_fails_for_unknown_tls_version(t *testing.T) {
+	// Arrange
+	myMock := tlsFunctionsMock{
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{TLS: &tls.ConnectionState{Version: 0x0300}},
+		},
+	}
+
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := pluginkit.TestResult{}
+	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "error: Unknown TLS version", result.Message)
+}
+
+func Test_CheckTLSVersion_fails_for_nil_tls_version(t *testing.T) {
+	// Arrange
+	myMock := tlsFunctionsMock{
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{TLS: nil},
+		},
+	}
+
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := pluginkit.TestResult{}
+	(&tlsFunctions{}).CheckTLSVersion("https://example.com", "mocked_token", &result)
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "error: No TLS information found in response", result.Message)
 }
 
 func Test_ConfirmHTTPRequestFails_succeeds(t *testing.T) {

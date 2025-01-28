@@ -86,6 +86,22 @@ func Test_CCC_C05_TR01_T01_fails_with_public_network_access_status_unclear(t *te
 	assert.Equal(t, "Public network access status of Unknown unclear.", result.Message)
 }
 
+func Test_CCC_C05_TR02_T01_succeeds(t *testing.T) {
+	// Act
+	result := CCC_C05_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+}
+
+func Test_CCC_C05_TR03_T01_succeeds(t *testing.T) {
+	// Act
+	result := CCC_C05_TR03_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+}
+
 func Test_CCC_C05_TR04_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
