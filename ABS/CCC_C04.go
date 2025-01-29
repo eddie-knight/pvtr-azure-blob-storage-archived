@@ -28,18 +28,16 @@ func CCC_C04_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	result = pluginkit.TestSetResult{
 		Passed:      false,
 		Description: "When any access attempt is made to the service, the service MUST log the client identity, time, and result of the attempt.",
-		// TODO: Check that test covers log contents new requirement
-		Message:   "TestSet has not yet started.",
-		DocsURL:   "https://maintainer.com/docs/raids/ABS",
-		ControlID: "CCC.C04",
-		Tests:     make(map[string]pluginkit.TestResult),
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C04",
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
 	result.ExecuteTest(CCC_C04_TR01_T01)
 
 	if result.Tests["CCC_C04_TR01_T01"].Passed {
 		result.ExecuteTest(CCC_C04_TR01_T02)
-		result.ExecuteTest(CCC_C04_TR01_T03)
 	}
 
 	TestSetResultSetter(
@@ -67,7 +65,7 @@ func CCC_C04_TR01_T01() (result pluginkit.TestResult) {
 
 func CCC_C04_TR01_T02() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
-		Description: "This test tests that a successful login attempt is logged",
+		Description: "This test tests that an attempt to list containers is logged",
 		Function:    utils.CallerPath(0),
 	}
 
@@ -76,23 +74,6 @@ func CCC_C04_TR01_T02() (result pluginkit.TestResult) {
 
 	if response.StatusCode != http.StatusOK {
 		SetResultFailure(&result, "Could not successfully authenticate with storage account")
-		return
-	}
-
-	ArmoryLoggingFunctions.ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
-	return
-}
-
-func CCC_C04_TR01_T03() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "This test tests that a failed login attempt is logged",
-		Function:    utils.CallerPath(0),
-	}
-
-	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, "", &result, nil, nil)
-
-	if response.StatusCode != http.StatusUnauthorized {
-		SetResultFailure(&result, "Could not unsuccessfully authenticate with storage account")
 		return
 	}
 
@@ -117,7 +98,10 @@ func CCC_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
 
 	result.ExecuteTest(CCC_C04_TR02_T01)
 
-	// TO DO: More tests required here/previous one?
+	if result.Tests["CCC_C04_TR02_T01"].Passed {
+		result.ExecuteTest(CCC_C04_TR02_T02)
+		result.ExecuteTest(CCC_C04_TR02_T03)
+	}
 
 	TestSetResultSetter(
 		"All access attempts are logged",
@@ -142,6 +126,41 @@ func CCC_C04_TR02_T01() (result pluginkit.TestResult) {
 	return
 }
 
+func CCC_C04_TR02_T02() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that a successful login attempt is logged",
+		Function:    utils.CallerPath(0),
+	}
+
+	token := ArmoryAzureUtils.GetToken(&result)
+	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, token, &result, nil, nil)
+
+	if response.StatusCode != http.StatusOK {
+		SetResultFailure(&result, "Could not successfully authenticate with storage account")
+		return
+	}
+
+	ArmoryLoggingFunctions.ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
+	return
+}
+
+func CCC_C04_TR02_T03() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that a failed login attempt is logged",
+		Function:    utils.CallerPath(0),
+	}
+
+	response := ArmoryCommonFunctions.MakeGETRequest(storageAccountUri, "", &result, nil, nil)
+
+	if response.StatusCode != http.StatusUnauthorized {
+		SetResultFailure(&result, "Could not unsuccessfully authenticate with storage account")
+		return
+	}
+
+	ArmoryLoggingFunctions.ConfirmHTTPResponseIsLogged(response, storageAccountResourceId, logsClient, &result)
+	return
+}
+
 // -----
 // TestSet and Tests for CCC_C04_TR03
 // -----
@@ -150,12 +169,11 @@ func CCC_C04_TR03() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C04_TR03"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "When any change is made to the service configuration, the service MUST the change, including the client, time, previous state, and the new state following the change.",
-		// TODO: Check that we are testing for the required log fields mentioned.
-		Message:   "TestSet has not yet started.",
-		DocsURL:   "https://maintainer.com/docs/raids/ABS",
-		ControlID: "CCC.C04",
-		Tests:     make(map[string]pluginkit.TestResult),
+		Description: "When any change is made to the service configuration, the service MUST log the change, including the client, time, previous state, and the new state following the change.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C04",
+		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
 	result.ExecuteInvasiveTest(CCC_C04_TR03_T01)
@@ -439,9 +457,49 @@ func (*loggingFunctions) ConfirmHTTPResponseIsLogged(response *http.Response, re
 
 		if len(logsResult.Results.Tables) == 1 && len(logsResult.Results.Tables[0].Rows) > 0 {
 			log.Default().Printf("Log result found after %v seconds", timeWaitedSoFar)
-			result.Passed = true
-			result.Message = fmt.Sprintf("%d response from %v was logged", response.StatusCode, response.Request.URL.Host)
-			return
+
+			// Check log contains required fields
+			timeGeneratedIndex := -1
+			for i, column := range logsResult.Results.Tables[0].Columns {
+				if *column.Name == "TimeGenerated" {
+					timeGeneratedIndex = i
+					break
+				}
+			}
+
+			requesterObjectIdIndex := -1
+			for i, column := range logsResult.Results.Tables[0].Columns {
+				if *column.Name == "RequesterObjectId" {
+					requesterObjectIdIndex = i
+					break
+				}
+			}
+
+			statusCodeIndex := -1
+			for i, column := range logsResult.Results.Tables[0].Columns {
+				if *column.Name == "StatusCode" {
+					statusCodeIndex = i
+					break
+				}
+			}
+
+			if timeGeneratedIndex == -1 ||
+				requesterObjectIdIndex == -1 ||
+				statusCodeIndex == -1 {
+				SetResultFailure(result, "Log result does not contain required fields: TimeGenerated, RequesterObjectId, StatusCode")
+				return
+			}
+
+			if logsResult.Results.Tables[0].Rows[0][timeGeneratedIndex] == nil ||
+				logsResult.Results.Tables[0].Rows[0][requesterObjectIdIndex] == nil ||
+				logsResult.Results.Tables[0].Rows[0][statusCodeIndex] == nil {
+				SetResultFailure(result, "Log result does not contain required fields")
+				return
+			} else {
+				result.Passed = true
+				result.Message = fmt.Sprintf("%d response from %v was logged with values for required fields: TimeGenerated, RequesterObjectId, StatusCode", response.StatusCode, response.Request.URL.Host)
+				return
+			}
 		}
 
 		log.Default().Printf("Log result not found after %v", timeWaitedSoFar)

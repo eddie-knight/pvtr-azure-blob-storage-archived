@@ -75,22 +75,6 @@ func Test_CCC_C03_TR02_T02_fails(t *testing.T) {
 	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
 }
 
-func Test_CCC_C03_TR03_T01_fails(t *testing.T) {
-	// Act
-	result := CCC_C03_TR03_T01()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
-func Test_CCC_C03_TR04_T01_fails(t *testing.T) {
-	// Act
-	result := CCC_C03_TR04_T01()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
-}
-
 func Test_CCC_C03_TR05_T01_succeeds_with_public_network_access_disabled(t *testing.T) {
 	// Arrange
 	myMock := storageAccountMock{
@@ -166,14 +150,6 @@ func Test_CCC_C03_TR05_T01_fails_with_public_network_access_status_unclear(t *te
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Public network access status of Unknown unclear.", result.Message)
-}
-
-func Test_CCC_C03_TR06_T01_fails(t *testing.T) {
-	// Act
-	result := CCC_C03_TR06_T01()
-
-	// Assert
-	assert.Equal(t, false, result.Passed)
 }
 
 func Test_CCC_ObjStor_C03_TR01_T01_succeeds(t *testing.T) {

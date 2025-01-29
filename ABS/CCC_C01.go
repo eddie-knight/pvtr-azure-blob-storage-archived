@@ -109,9 +109,6 @@ func CCC_C01_TR02() (testSetName string, result pluginkit.TestSetResult) {
 
 	result.Passed = true
 	result.Message = "Azure Storage Accounts do no accept SSH traffic, nothing to assess"
-
-	// TODO: Should we add a test for this?
-
 	return
 }
 

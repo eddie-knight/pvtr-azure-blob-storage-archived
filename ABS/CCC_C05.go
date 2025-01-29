@@ -96,22 +96,8 @@ func CCC_C05_TR02() (testSetName string, result pluginkit.TestSetResult) {
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteTest(CCC_C05_TR02_T01)
-
-	return
-}
-
-// TO DO: Are there any examples of this outside of control plane?
-
-func CCC_C05_TR02_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that control plane access to the storage account is limited to allowlisted networks.",
-		Function:    utils.CallerPath(0),
-	}
-
 	result.Message = "Limiting control plane access by network is not possible in Azure."
 	result.Passed = false
-
 	return
 }
 

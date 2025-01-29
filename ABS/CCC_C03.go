@@ -110,18 +110,8 @@ func CCC_C03_TR03() (testSetName string, result pluginkit.TestSetResult) {
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteTest(CCC_C03_TR03_T01)
-
-	return
-}
-
-func CCC_C03_TR03_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that MFA is required for all user access to data in the service.",
-		Function:    utils.CallerPath(0),
-	}
-
-	SetResultFailure(&result, "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
+	result.Passed = false
+	result.Message = "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration."
 	return
 }
 
@@ -140,18 +130,8 @@ func CCC_C03_TR04() (testSetName string, result pluginkit.TestSetResult) {
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteTest(CCC_C03_TR04_T01)
-
-	return
-}
-
-func CCC_C03_TR04_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that users can only authenticate to the control plane of the service from specific allowed networks.",
-		Function:    utils.CallerPath(0),
-	}
-
-	SetResultFailure(&result, "Restricting control plane access to resources to specific networks is not possible in Azure.")
+	result.Passed = false
+	result.Message = "Restricting control plane access to resources to specific networks is not possible in Azure."
 	return
 }
 
@@ -235,18 +215,8 @@ func CCC_C03_TR06() (testSetName string, result pluginkit.TestSetResult) {
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteTest(CCC_C03_TR06_T01)
-
-	return
-}
-
-func CCC_C03_TR06_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "Confirms that MFA is required for all user access to the service interface",
-		Function:    utils.CallerPath(0),
-	}
-
-	SetResultFailure(&result, "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration.")
+	result.Passed = false
+	result.Message = "MFA should be configured as required for all user logins at the tenant level. This cannot be checked on the resource level and requires tenant level permissions - please check the tenant level configuration."
 	return
 }
 
