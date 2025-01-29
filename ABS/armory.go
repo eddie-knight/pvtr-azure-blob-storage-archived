@@ -187,6 +187,9 @@ var (
 				CCC_ObjStor_C05_TR04,
 				CCC_ObjStor_C06_TR01,
 			},
+			"testing": {
+				CCC_C04_TR01,
+			},
 		},
 	}
 )

@@ -125,7 +125,6 @@ func Test_CCC_C04_TR01_T01_fails_if_confirmLoggingToLogAnalyticsIsConfigured_fai
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmLoggingToLogAnalyticsIsConfigured Error", result.Message)
 }
-
 func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
@@ -150,7 +149,31 @@ func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR01_T02_fails_if_httpResponse_is_bad(t *testing.T) {
+func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmHTTPResponseIsLoggedResult: true,
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{StatusCode: http.StatusOK},
+		},
+		azureUtilsMock: azureUtilsMock{
+			tokenResult: "mocked_token",
+		},
+	}
+
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_httpResponse_is_bad(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		commonFunctionsMock: commonFunctionsMock{
@@ -160,14 +183,14 @@ func Test_CCC_C04_TR01_T02_fails_if_httpResponse_is_bad(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T02()
+	result := CCC_C04_TR02_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not successfully authenticate with storage account", result.Message)
 }
 
-func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR02_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: false,
@@ -184,14 +207,14 @@ func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T02()
+	result := CCC_C04_TR02_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmHTTPResponseIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR01_T03_succeeds(t *testing.T) {
+func Test_CCC_C04_TR02_T03_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: true,
@@ -202,14 +225,14 @@ func Test_CCC_C04_TR01_T03_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T03()
+	result := CCC_C04_TR02_T03()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR01_T03_fails_if_httpResponse_is_bad(t *testing.T) {
+func Test_CCC_C04_TR02_T03_fails_if_httpResponse_is_bad(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		commonFunctionsMock: commonFunctionsMock{
@@ -219,14 +242,14 @@ func Test_CCC_C04_TR01_T03_fails_if_httpResponse_is_bad(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T03()
+	result := CCC_C04_TR02_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not unsuccessfully authenticate with storage account", result.Message)
 }
 
-func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR02_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: false,
@@ -243,7 +266,7 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T03()
+	result := CCC_C04_TR02_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
@@ -443,7 +466,14 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 		logAnalyticsResult: azquery.Results{
 			Tables: []*azquery.Table{
 				{
-					Rows: []azquery.Row{{0: "dummy_value"}},
+					Rows: []azquery.Row{
+						{"dummy_value_1", "dummy_value_2", "dummy_value_3"},
+					},
+					Columns: []*azquery.Column{
+						{Name: to.Ptr("RequesterObjectId")},
+						{Name: to.Ptr("TimeGenerated")},
+						{Name: to.Ptr("StatusCode")},
+					},
 				},
 			},
 		},
@@ -467,7 +497,7 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, "200 response from test.com was logged", result.Message)
+	assert.Contains(t, result.Message, "200 response from test.com was logged")
 }
 
 func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
