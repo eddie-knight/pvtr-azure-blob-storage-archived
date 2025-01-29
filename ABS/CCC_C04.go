@@ -108,6 +108,48 @@ func CCC_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C04_TR02"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
+		Description: "When any access attempt is made to the view sensitive information, the service MUST log the client identity, time, and result of the attempt.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C04",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C04_TR02_T01)
+
+	// TO DO: More tests required here/previous one?
+
+	TestSetResultSetter(
+		"All access attempts are logged",
+		"Not all access attempts are logged, see test results for more details",
+		&result)
+
+	return
+}
+
+func CCC_C04_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test tests that logging of access attempts is configured for the storage account",
+		Function:    utils.CallerPath(0),
+	}
+
+	storageAccountBlobResourceId := storageAccountResourceId + "/blobServices/default"
+	ArmoryAzureUtils.ConfirmLoggingToLogAnalyticsIsConfigured(
+		storageAccountBlobResourceId,
+		diagnosticsSettingsClient,
+		&result)
+
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C04_TR03
+// -----
+
+func CCC_C04_TR03() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C04_TR03"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
 		Description: "When any change is made to the service configuration, the service MUST the change, including the client, time, previous state, and the new state following the change.",
 		// TODO: Check that we are testing for the required log fields mentioned.
 		Message:   "TestSet has not yet started.",
@@ -116,8 +158,8 @@ func CCC_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
 		Tests:     make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteInvasiveTest(CCC_C04_TR02_T01)
-	result.ExecuteInvasiveTest(CCC_C04_TR02_T02)
+	result.ExecuteInvasiveTest(CCC_C04_TR03_T01)
+	result.ExecuteInvasiveTest(CCC_C04_TR03_T02)
 
 	TestSetResultSetter(
 		"All changes to configuration are logged",
@@ -127,7 +169,7 @@ func CCC_C04_TR02() (testSetName string, result pluginkit.TestSetResult) {
 	return
 }
 
-func CCC_C04_TR02_T01() (result pluginkit.TestResult) {
+func CCC_C04_TR03_T01() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "This test tests that a storage key rotation is logged",
 		Function:    utils.CallerPath(0),
@@ -161,7 +203,7 @@ func CCC_C04_TR02_T01() (result pluginkit.TestResult) {
 	return
 }
 
-func CCC_C04_TR02_T02() (result pluginkit.TestResult) {
+func CCC_C04_TR03_T02() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "This test tests that a modification to user privileges is logged",
 		Function:    utils.CallerPath(0),
@@ -221,7 +263,7 @@ func CCC_C04_TR02_T02() (result pluginkit.TestResult) {
 }
 
 // -----
-// TestSet and Tests for CCC_ObjStor_C03_TR01
+// TestSet and Tests for CCC_ObjStor_C04_TR01
 // -----
 
 func CCC_ObjStor_C04_TR01() (testSetName string, result pluginkit.TestSetResult) {

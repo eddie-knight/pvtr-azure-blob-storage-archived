@@ -250,7 +250,7 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 	assert.Equal(t, "Mocked ConfirmHTTPResponseIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T01_succeeds(t *testing.T) {
+func Test_CCC_C04_TR03_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true}
@@ -261,14 +261,14 @@ func Test_CCC_C04_TR02_T01_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T01()
+	result := CCC_C04_TR03_T01()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR02_T01_fails_if_regenerateKey_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T01_fails_if_regenerateKey_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{}
 
@@ -278,14 +278,14 @@ func Test_CCC_C04_TR02_T01_fails_if_regenerateKey_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T01()
+	result := CCC_C04_TR03_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not regenerate key: Test error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: false}
@@ -296,14 +296,14 @@ func Test_CCC_C04_TR02_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testin
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T01()
+	result := CCC_C04_TR03_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
+func Test_CCC_C04_TR03_T02_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -318,14 +318,14 @@ func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_getPrincipalId_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_getPrincipalId_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -340,14 +340,14 @@ func Test_CCC_C04_TR02_T02_fails_if_getPrincipalId_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked GetCurrentPrincipalID Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_roleAssignment_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_roleAssignment_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -362,14 +362,14 @@ func Test_CCC_C04_TR02_T02_fails_if_roleAssignment_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not assign permission: Test error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: false,
@@ -384,14 +384,14 @@ func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testin
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_roleRemoval_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_roleRemoval_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -406,14 +406,14 @@ func Test_CCC_C04_TR02_T02_fails_if_roleRemoval_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not revoke permission: Test error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: false,
@@ -428,7 +428,7 @@ func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
