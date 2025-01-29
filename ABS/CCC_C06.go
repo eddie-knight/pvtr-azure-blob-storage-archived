@@ -252,7 +252,7 @@ func CCC_C06_TR02_T02() (result pluginkit.TestResult) {
 }
 
 // -----
-// TestSet and Tests for CCC_ObjStor_C07_TR01
+// TestSet and Tests for CCC_ObjStor_C06_TR01
 // -----
 
 func CCC_ObjStor_C06_TR01() (testSetName string, result pluginkit.TestSetResult) {
@@ -262,16 +262,16 @@ func CCC_ObjStor_C06_TR01() (testSetName string, result pluginkit.TestSetResult)
 		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.ObjStor.C07",
+		ControlID:   "CCC.ObjStor.C06",
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
-	result.ExecuteTest(CCC_ObjStor_C07_TR01_T01)
+	result.ExecuteTest(CCC_ObjStor_C06_TR01_T01)
 
 	return
 }
 
-func CCC_ObjStor_C07_TR01_T01() (result pluginkit.TestResult) {
+func CCC_ObjStor_C06_TR01_T01() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "Confirms that access logs are stored in Log Analytics, outside of the Storage Account.",
 		Function:    utils.CallerPath(0),

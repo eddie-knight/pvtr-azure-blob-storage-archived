@@ -93,7 +93,7 @@ func CCC_C01_TR01_T04() (result pluginkit.TestResult) {
 }
 
 // -------------------------------------
-// TestSet and Tests for CCC_C01_TR01
+// TestSet and Tests for CCC_C01_TR02
 // -------------------------------------
 
 func CCC_C01_TR02() (testSetName string, result pluginkit.TestSetResult) {
