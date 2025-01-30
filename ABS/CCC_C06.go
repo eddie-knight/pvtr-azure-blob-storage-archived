@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/recoveryservices/armrecoveryservices"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
@@ -61,7 +62,7 @@ func CCC_C06_TR01_T01() (result pluginkit.TestResult) {
 
 		for _, assignment := range page.Value {
 			// Check that the default policy is assigned (https://github.com/Azure/azure-policy/blob/master/built-in-policies/policyDefinitions/General/AllowedLocations_Deny.json)
-			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c") {
+			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c") && *assignment.Properties.EnforcementMode != armpolicy.EnforcementModeDoNotEnforce {
 				result.Message = "Azure Policy is in place that prevents deployment in some regions."
 
 				// Check if any restricted regions are allowed by Policy
@@ -259,7 +260,7 @@ func CCC_ObjStor_C06_TR01() (testSetName string, result pluginkit.TestSetResult)
 	testSetName = "CCC_ObjStor_C06_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
+		Description: "When an object storage bucket is accessed, the service MUST store access logs in a separate data store.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C06",

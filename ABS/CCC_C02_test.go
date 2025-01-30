@@ -56,3 +56,63 @@ func Test_CCC_C02_TR01_T01_fails_if_encryption_disabled(t *testing.T) {
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Encryption is not enabled on the Azure Storage Account.", result.Message)
 }
+
+func Test_CCC_ObjStor_C02_TR01_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowSharedKeyAccess: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Shared Key access is disabled for the storage account.", result.Message)
+}
+
+func Test_CCC_ObjStor_C02_TR01_T01_fails(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowSharedKeyAccess: true,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
+}
+
+func Test_CCC_ObjStor_C02_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowSharedKeyAccess: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Shared Key access is disabled for the storage account.", result.Message)
+}
+
+func Test_CCC_ObjStor_C02_TR02_T01_fails(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		allowSharedKeyAccess: true,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_C03_TR02_T02()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Shared Key access is enabled for the storage account.", result.Message)
+}

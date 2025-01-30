@@ -16,9 +16,11 @@ import (
 )
 
 type mockPolicyClient struct {
-	pagerError         error
-	allowedLocations   []interface{}
-	policyDefinitionID string
+	pagerError          error
+	allowedLocations    []interface{}
+	maximumDaysToRotate float64
+	policyDefinitionID  string
+	enforcementMode     armpolicy.EnforcementMode
 }
 
 func (mock *mockPolicyClient) NewListForResourcePager(resourceGroupName string, namespace string, policySetDefinitionName string, resourceType string, resourceName string, options *armpolicy.AssignmentsClientListForResourceOptions) *runtime.Pager[armpolicy.AssignmentsClientListForResourceResponse] {
@@ -28,10 +30,12 @@ func (mock *mockPolicyClient) NewListForResourcePager(resourceGroupName string, 
 				{
 					Properties: &armpolicy.AssignmentProperties{
 						PolicyDefinitionID: to.Ptr(mock.policyDefinitionID),
+						EnforcementMode:    to.Ptr(mock.enforcementMode),
 						Parameters: map[string]*armpolicy.ParameterValuesValue{
 							"listOfAllowedLocations": {
 								Value: mock.allowedLocations,
 							},
+							"maximumDaysToRotate": {Value: mock.maximumDaysToRotate},
 						},
 					},
 				},
@@ -140,6 +144,7 @@ func Test_CCC_C06_TR01_T01_succeeds(t *testing.T) {
 	mock := &mockPolicyClient{
 		pagerError:         nil,
 		allowedLocations:   []interface{}{"westus", "eastus"},
+		enforcementMode:    armpolicy.EnforcementModeDefault,
 		policyDefinitionID: "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
 	}
 
@@ -175,7 +180,27 @@ func Test_CCC_C06_TR01_T01_fails_when_policy_not_found(t *testing.T) {
 	mock := &mockPolicyClient{
 		pagerError:         nil,
 		allowedLocations:   []interface{}{"westus", "eastus"},
+		enforcementMode:    armpolicy.EnforcementModeDefault,
 		policyDefinitionID: "somethingelse",
+	}
+
+	allowedRegions = []string{"westus", "eastus"}
+	policyClient = mock
+
+	// Act
+	result := CCC_C06_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Contains(t, result.Message, "Built-in Azure Policy Allowed locations is not assigned to the resource")
+}
+func Test_CCC_C06_TR01_T01_fails_when_enforcement_mode_disabled(t *testing.T) {
+	// Arrange
+	mock := &mockPolicyClient{
+		pagerError:         nil,
+		allowedLocations:   []interface{}{"westus", "eastus"},
+		enforcementMode:    armpolicy.EnforcementModeDoNotEnforce,
+		policyDefinitionID: "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
 	}
 
 	allowedRegions = []string{"westus", "eastus"}
