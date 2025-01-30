@@ -259,7 +259,7 @@ func CCC_ObjStor_C06_TR01() (testSetName string, result pluginkit.TestSetResult)
 	testSetName = "CCC_ObjStor_C06_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "Access logs for all object storage buckets are stored in a separate bucket.",
+		Description: "When an object storage bucket is accessed, the service MUST store access logs in a separate data store.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C06",
