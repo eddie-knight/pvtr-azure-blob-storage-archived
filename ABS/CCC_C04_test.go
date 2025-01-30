@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
@@ -124,7 +125,6 @@ func Test_CCC_C04_TR01_T01_fails_if_confirmLoggingToLogAnalyticsIsConfigured_fai
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmLoggingToLogAnalyticsIsConfigured Error", result.Message)
 }
-
 func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
@@ -149,7 +149,31 @@ func Test_CCC_C04_TR01_T02_succeeds(t *testing.T) {
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR01_T02_fails_if_httpResponse_is_bad(t *testing.T) {
+func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		confirmHTTPResponseIsLoggedResult: true,
+		commonFunctionsMock: commonFunctionsMock{
+			httpResponse: &http.Response{StatusCode: http.StatusOK},
+		},
+		azureUtilsMock: azureUtilsMock{
+			tokenResult: "mocked_token",
+		},
+	}
+
+	ArmoryLoggingFunctions = &myMock
+	ArmoryCommonFunctions = &myMock
+	ArmoryAzureUtils = &myMock
+
+	// Act
+	result := CCC_C04_TR02_T02()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
+}
+
+func Test_CCC_C04_TR02_T02_fails_if_httpResponse_is_bad(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		commonFunctionsMock: commonFunctionsMock{
@@ -159,14 +183,14 @@ func Test_CCC_C04_TR01_T02_fails_if_httpResponse_is_bad(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T02()
+	result := CCC_C04_TR02_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not successfully authenticate with storage account", result.Message)
 }
 
-func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR02_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: false,
@@ -183,14 +207,14 @@ func Test_CCC_C04_TR01_T02_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T02()
+	result := CCC_C04_TR02_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmHTTPResponseIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR01_T03_succeeds(t *testing.T) {
+func Test_CCC_C04_TR02_T03_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: true,
@@ -201,14 +225,14 @@ func Test_CCC_C04_TR01_T03_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T03()
+	result := CCC_C04_TR02_T03()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR01_T03_fails_if_httpResponse_is_bad(t *testing.T) {
+func Test_CCC_C04_TR02_T03_fails_if_httpResponse_is_bad(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		commonFunctionsMock: commonFunctionsMock{
@@ -218,14 +242,14 @@ func Test_CCC_C04_TR01_T03_fails_if_httpResponse_is_bad(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T03()
+	result := CCC_C04_TR02_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not unsuccessfully authenticate with storage account", result.Message)
 }
 
-func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR02_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmHTTPResponseIsLoggedResult: false,
@@ -242,14 +266,14 @@ func Test_CCC_C04_TR01_T03_fails_if_confirmHTTPResponseIsLogged_fails(t *testing
 	ArmoryAzureUtils = &myMock
 
 	// Act
-	result := CCC_C04_TR01_T03()
+	result := CCC_C04_TR02_T03()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmHTTPResponseIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T01_succeeds(t *testing.T) {
+func Test_CCC_C04_TR03_T01_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true}
@@ -260,14 +284,14 @@ func Test_CCC_C04_TR02_T01_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T01()
+	result := CCC_C04_TR03_T01()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR02_T01_fails_if_regenerateKey_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T01_fails_if_regenerateKey_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{}
 
@@ -277,14 +301,14 @@ func Test_CCC_C04_TR02_T01_fails_if_regenerateKey_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T01()
+	result := CCC_C04_TR03_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not regenerate key: Test error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: false}
@@ -295,14 +319,14 @@ func Test_CCC_C04_TR02_T01_fails_if_confirmAdminActivityIsLogged_fails(t *testin
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T01()
+	result := CCC_C04_TR03_T01()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
+func Test_CCC_C04_TR03_T02_succeeds(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -317,14 +341,14 @@ func Test_CCC_C04_TR02_T02_succeeds(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
 	assert.Equal(t, "", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_getPrincipalId_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_getPrincipalId_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -339,14 +363,14 @@ func Test_CCC_C04_TR02_T02_fails_if_getPrincipalId_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked GetCurrentPrincipalID Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_roleAssignment_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_roleAssignment_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -361,14 +385,14 @@ func Test_CCC_C04_TR02_T02_fails_if_roleAssignment_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not assign permission: Test error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: false,
@@ -383,14 +407,14 @@ func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_fails(t *testin
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Mocked ConfirmAdminActivityIsLogged Error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_roleRemoval_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_roleRemoval_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: true,
@@ -405,14 +429,14 @@ func Test_CCC_C04_TR02_T02_fails_if_roleRemoval_fails(t *testing.T) {
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Could not revoke permission: Test error", result.Message)
 }
 
-func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval_fails(t *testing.T) {
+func Test_CCC_C04_TR03_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval_fails(t *testing.T) {
 	// Arrange
 	myMock := loggingFunctionsMock{
 		confirmAdminActivityIsLoggedResult: false,
@@ -427,7 +451,7 @@ func Test_CCC_C04_TR02_T02_fails_if_confirmAdminActivityIsLogged_and_roleRemoval
 	ArmoryCommonFunctions = &myMock
 
 	// Act
-	result := CCC_C04_TR02_T02()
+	result := CCC_C04_TR03_T02()
 
 	// Assert
 	assert.Equal(t, false, result.Passed)
@@ -442,7 +466,14 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 		logAnalyticsResult: azquery.Results{
 			Tables: []*azquery.Table{
 				{
-					Rows: []azquery.Row{{0: "dummy_value"}},
+					Rows: []azquery.Row{
+						{"dummy_value_1", "dummy_value_2", "dummy_value_3"},
+					},
+					Columns: []*azquery.Column{
+						{Name: to.Ptr("RequesterObjectId")},
+						{Name: to.Ptr("TimeGenerated")},
+						{Name: to.Ptr("StatusCode")},
+					},
 				},
 			},
 		},
@@ -466,7 +497,7 @@ func Test_ConfirmHTTPResponseIsLogged_succeeds(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, true, result.Passed)
-	assert.Equal(t, "200 response from test.com was logged", result.Message)
+	assert.Contains(t, result.Message, "200 response from test.com was logged")
 }
 
 func Test_ConfirmHTTPResponseIsLogged_fails_if_query_error(t *testing.T) {
@@ -637,4 +668,166 @@ func Test_ConfirmAdminActivityIsLogged_fails_if_timeout(t *testing.T) {
 	// Assert
 	assert.Equal(t, false, result.Passed)
 	assert.Equal(t, "Admin activity on resources was not logged", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR01_T01_succeeds_with_immutability_enabled(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPopulated:     true,
+		immutabilityPolicyEnabled: true,
+		immutabilityPolicyDays:    30,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C04_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, myMock.immutabilityPolicyDays, *result.Value.(ImmutabilityConfiguration).PolicyRetentionPeriodInDays)
+	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, and an immutability policy is set.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR01_T01_fails_with_immutability_empty(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPopulated: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C04_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR01_T01_fails_with_immutability_disabled_populated(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPopulated:     true,
+		immutabilityPolicyEnabled: false,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C04_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is not enabled for Storage Account Blobs.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR01_T01_fails_with_policy_disabled(t *testing.T) {
+	// Arrange
+	myMock := storageAccountMock{
+		immutabilityPopulated:     true,
+		immutabilityPolicyEnabled: true,
+		immutabilityPolicyState:   armstorage.AccountImmutabilityPolicyStateDisabled,
+	}
+	storageAccountResource = myMock.SetStorageAccount()
+
+	// Act
+	result := CCC_ObjStor_C04_TR01_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Immutability is enabled for Storage Account Blobs, but immutability policy is disabled.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR02_T01_succeeds(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: &azcore.ResponseError{
+				ErrorCode: "BlobImmutableDueToPolicy",
+			},
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "Object deletion is prevented for objects subject to a retention policy.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR02_T01_fails_block_blob_client_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		getBlobBlockClientError: assert.AnError,
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create block blob client with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR02_T01_fails_container_create_fails(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: &azcore.ResponseError{
+				ErrorCode: "BlobImmutableDueToPolicy",
+			},
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{
+		createError: assert.AnError,
+	}
+
+	// Act
+	result := CCC_ObjStor_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to create blob container with error: assert.AnError general error for testing", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR02_T01_fails_delete_succeeds(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: nil,
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Object deletion is not prevented for objects subject to a retention policy.", result.Message)
+}
+
+func Test_CCC_ObjStor_C04_TR02_T01_fails_delete_fails_wrong_error(t *testing.T) {
+	// Arrange
+	ArmoryAzureUtils = &azureUtilsMock{
+		blobBlockClient: &mockBlockBlobClient{
+			deleteError: &azcore.ResponseError{
+				ErrorCode: "AnotherErrorCode",
+			},
+		},
+	}
+
+	blobContainersClient = &blobContainersClientMock{}
+
+	// Act
+	result := CCC_ObjStor_C04_TR02_T01()
+
+	// Assert
+	assert.Equal(t, false, result.Passed)
+	assert.Equal(t, "Failed to delete blob with error unrelated to immutability: Missing RawResponse\n--------------------------------------------------------------------------------\nERROR CODE: AnotherErrorCode\n--------------------------------------------------------------------------------\n", result.Message)
 }

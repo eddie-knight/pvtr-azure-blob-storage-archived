@@ -18,7 +18,7 @@ func CCC_C01_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	testSetName = "CCC_C01_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service enforces the use of secure transport protocols for all network communications (e.g., TLS 1.2 or higher).",
+		Description: "When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.2 or higher.",
 		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.C01",
@@ -26,15 +26,29 @@ func CCC_C01_TR01() (testSetName string, result pluginkit.TestSetResult) {
 	}
 
 	result.ExecuteTest(CCC_C01_TR01_T01)
+	result.ExecuteTest(CCC_C01_TR01_T02)
+	result.ExecuteTest(CCC_C01_TR01_T03)
+	result.ExecuteTest(CCC_C01_TR01_T04)
 
-	TestSetResultSetter("Default TLS version is TLS 1.2 or TLS 1.3",
-		"Default TLS version is not TLS 1.2 or TLS 1.3, see test results for more details",
+	TestSetResultSetter("TLS and minimum version 1.2 are enforced for non-SSH requests",
+		"TLS or minimum TLS version 1.2 are not being enforced, see test results for more details.",
 		&result)
 
 	return
 }
 
 func CCC_C01_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "HTTP requests are not supported",
+		Function:    utils.CallerPath(0),
+	}
+
+	ArmoryTlsFunctions.ConfirmHTTPRequestFails(storageAccountUri, &result)
+
+	return
+}
+
+func CCC_C01_TR01_T02() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "Default TLS version is TLS 1.2 or TLS 1.3",
 		Function:    utils.CallerPath(0),
@@ -54,67 +68,7 @@ func CCC_C01_TR01_T01() (result pluginkit.TestResult) {
 	return
 }
 
-// -------------------------------------
-// TestSet and Tests for CCC_C01_TR02
-// -------------------------------------
-
-func CCC_C01_TR02() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_C01_TR02"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "The service automatically redirects incoming unencrypted HTTP requests to HTTPS.",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C01",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_C01_TR02_T01)
-
-	TestSetResultSetter("HTTP requests are not supported",
-		"HTTP requests are supported, see test results for more details",
-		&result)
-
-	return
-}
-
-func CCC_C01_TR02_T01() (result pluginkit.TestResult) {
-	result = pluginkit.TestResult{
-		Description: "HTTP requests are not supported",
-		Function:    utils.CallerPath(0),
-	}
-
-	ArmoryTlsFunctions.ConfirmHTTPRequestFails(storageAccountUri, &result)
-
-	return
-}
-
-// -------------------------------------
-// TestSet and Tests for CCC_C01_TR03
-// -------------------------------------
-
-func CCC_C01_TR03() (testSetName string, result pluginkit.TestSetResult) {
-	testSetName = "CCC_C01_TR03"
-	result = pluginkit.TestSetResult{
-		Passed:      false,
-		Description: "The service rejects or blocks any attempts to establish outgoing connections using outdated or insecure protocols (e.g., SSL, TLS 1.0, or TLS 1.1).",
-		Message:     "TestSet has not yet started.",
-		DocsURL:     "https://maintainer.com/docs/raids/ABS",
-		ControlID:   "CCC.C01",
-		Tests:       make(map[string]pluginkit.TestResult),
-	}
-
-	result.ExecuteTest(CCC_C01_TR03_T01)
-	result.ExecuteTest(CCC_C01_TR03_T02)
-
-	TestSetResultSetter("All insecure TLS versions are not supported",
-		"One or more insecure TLS versions are supported, see test results for more details",
-		&result)
-
-	return
-}
-
-func CCC_C01_TR03_T01() (result pluginkit.TestResult) {
+func CCC_C01_TR01_T03() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "TLS Version 1.0 is not supported",
 		Function:    utils.CallerPath(0),
@@ -126,7 +80,7 @@ func CCC_C01_TR03_T01() (result pluginkit.TestResult) {
 	return
 }
 
-func CCC_C01_TR03_T02() (result pluginkit.TestResult) {
+func CCC_C01_TR01_T04() (result pluginkit.TestResult) {
 	result = pluginkit.TestResult{
 		Description: "TLS Version 1.1 is not supported",
 		Function:    utils.CallerPath(0),
@@ -135,6 +89,26 @@ func CCC_C01_TR03_T02() (result pluginkit.TestResult) {
 	tlsVersion := tls.VersionTLS11
 
 	ArmoryTlsFunctions.ConfirmOutdatedProtocolRequestsFail(storageAccountUri, &result, tlsVersion)
+	return
+}
+
+// -------------------------------------
+// TestSet and Tests for CCC_C01_TR02
+// -------------------------------------
+
+func CCC_C01_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C01_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When a port is exposed for SSH network traffic, all traffic MUST include a SSH handshake AND be encrypted using SSHv2 or higher.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C01",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.Passed = true
+	result.Message = "Azure Storage Accounts do no accept SSH traffic, nothing to assess"
 	return
 }
 

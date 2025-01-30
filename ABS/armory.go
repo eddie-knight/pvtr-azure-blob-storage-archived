@@ -34,103 +34,158 @@ var (
 			"tlp_amber": {
 				CCC_C01_TR01,
 				CCC_C01_TR02,
-				CCC_C01_TR03,
 				CCC_C02_TR01,
-				CCC_C02_TR02,
 				CCC_C03_TR01,
 				CCC_C03_TR02,
+				CCC_C03_TR03,
+				CCC_C03_TR04,
+				CCC_C03_TR05,
+				CCC_C03_TR06,
 				CCC_C04_TR01,
 				CCC_C04_TR02,
 				CCC_C05_TR01,
+				CCC_C05_TR02,
+				CCC_C05_TR03,
 				CCC_C05_TR04,
 				CCC_C06_TR01,
 				CCC_C06_TR02,
 				CCC_C07_TR02,
 				CCC_C08_TR01,
-				CCC_ObjStor_C08_TR02,
+				CCC_C08_TR02,
+				CCC_C09_TR01,
+				CCC_C09_TR02,
+				CCC_C09_TR03,
+				CCC_C10_TR01,
+				CCC_C11_TR01,
+				CCC_C11_TR02,
+				CCC_C11_TR03,
+				CCC_C11_TR04,
 				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C01_TR02,
+				CCC_ObjStor_C01_TR03,
+				CCC_ObjStor_C01_TR04,
 				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C02_TR02,
 				CCC_ObjStor_C03_TR01,
 				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C04_TR01,
+				CCC_ObjStor_C04_TR02,
 				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR02,
+				CCC_ObjStor_C05_TR03,
 				CCC_ObjStor_C05_TR04,
 				CCC_ObjStor_C06_TR01,
-				CCC_ObjStor_C06_TR04,
-				CCC_ObjStor_C07_TR01,
-				CCC_ObjStor_C08_TR01,
 			},
 			"tlp_clear": {
 				CCC_C01_TR01,
 				CCC_C01_TR02,
-				CCC_C01_TR03,
 				CCC_C02_TR01,
-				CCC_C02_TR02,
-				CCC_C03_TR02,
+				CCC_C03_TR01,
+				CCC_C03_TR04,
+				CCC_C03_TR06,
 				CCC_C04_TR02,
-				CCC_C05_TR01,
+				CCC_C05_TR02,
 				CCC_C05_TR04,
 				CCC_C06_TR01,
 				CCC_C06_TR02,
-				CCC_ObjStor_C01_TR01,
+				CCC_C07_TR02,
+				CCC_C09_TR01,
+				CCC_C09_TR02,
+				CCC_C09_TR03,
+				CCC_C10_TR01,
+				CCC_C11_TR01,
+				CCC_ObjStor_C01_TR03,
+				CCC_ObjStor_C01_TR04,
+				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C02_TR02,
 				CCC_ObjStor_C03_TR01,
 				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C04_TR01,
+				CCC_ObjStor_C04_TR02,
 				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR02,
+				CCC_ObjStor_C05_TR03,
 				CCC_ObjStor_C05_TR04,
-				CCC_ObjStor_C06_TR01,
-				CCC_ObjStor_C06_TR04,
 			},
 			"tlp_green": {
 				CCC_C01_TR01,
 				CCC_C01_TR02,
-				CCC_C01_TR03,
 				CCC_C02_TR01,
-				CCC_C02_TR02,
-				CCC_C03_TR02,
+				CCC_C03_TR01,
+				CCC_C03_TR04,
+				CCC_C03_TR06,
 				CCC_C04_TR02,
-				CCC_C05_TR01,
+				CCC_C05_TR02,
 				CCC_C05_TR04,
 				CCC_C06_TR01,
 				CCC_C06_TR02,
 				CCC_C07_TR02,
 				CCC_C08_TR01,
-				CCC_ObjStor_C08_TR02,
-				CCC_ObjStor_C01_TR01,
+				CCC_C08_TR02,
+				CCC_C09_TR01,
+				CCC_C09_TR02,
+				CCC_C09_TR03,
+				CCC_C10_TR01,
+				CCC_C11_TR01,
+				CCC_C11_TR02,
+				CCC_ObjStor_C01_TR03,
+				CCC_ObjStor_C01_TR04,
+				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C02_TR02,
 				CCC_ObjStor_C03_TR01,
 				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C04_TR01,
+				CCC_ObjStor_C04_TR02,
 				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR02,
+				CCC_ObjStor_C05_TR03,
 				CCC_ObjStor_C05_TR04,
-				CCC_ObjStor_C06_TR01,
-				CCC_ObjStor_C06_TR04,
-				CCC_ObjStor_C08_TR01,
 			},
 			"tlp_red": {
 				CCC_C01_TR01,
 				CCC_C01_TR02,
-				CCC_C01_TR03,
 				CCC_C02_TR01,
-				CCC_C02_TR02,
 				CCC_C03_TR01,
 				CCC_C03_TR02,
+				CCC_C03_TR03,
+				CCC_C03_TR04,
+				CCC_C03_TR05,
+				CCC_C03_TR06,
 				CCC_C04_TR01,
 				CCC_C04_TR02,
 				CCC_C05_TR01,
+				CCC_C05_TR02,
+				CCC_C05_TR03,
 				CCC_C05_TR04,
 				CCC_C06_TR01,
 				CCC_C06_TR02,
 				CCC_C07_TR01,
 				CCC_C07_TR02,
 				CCC_C08_TR01,
-				CCC_ObjStor_C08_TR02,
+				CCC_C08_TR02,
+				CCC_C09_TR01,
+				CCC_C09_TR02,
+				CCC_C09_TR03,
+				CCC_C10_TR01,
+				CCC_C11_TR01,
+				CCC_C11_TR02,
+				CCC_C11_TR03,
+				CCC_C11_TR04,
 				CCC_ObjStor_C01_TR01,
+				CCC_ObjStor_C01_TR02,
+				CCC_ObjStor_C01_TR03,
+				CCC_ObjStor_C01_TR04,
 				CCC_ObjStor_C02_TR01,
+				CCC_ObjStor_C02_TR02,
 				CCC_ObjStor_C03_TR01,
 				CCC_ObjStor_C03_TR02,
+				CCC_ObjStor_C04_TR01,
+				CCC_ObjStor_C04_TR02,
 				CCC_ObjStor_C05_TR01,
+				CCC_ObjStor_C05_TR02,
+				CCC_ObjStor_C05_TR03,
 				CCC_ObjStor_C05_TR04,
 				CCC_ObjStor_C06_TR01,
-				CCC_ObjStor_C06_TR04,
-				CCC_ObjStor_C07_TR01,
-				CCC_ObjStor_C08_TR01,
 			},
 		},
 	}
@@ -412,21 +467,18 @@ func TestSetResultSetter(successMessage string, failureMessage string, result *p
 // TestSet and Tests for CCC_ObjStor_C01_TR01
 // -----
 
-// CCC_ObjStor_C01_TR01 conforms to the TestSet function type
 func CCC_ObjStor_C01_TR01() (testSetName string, result pluginkit.TestSetResult) {
-	// set default return values
 	testSetName = "CCC_ObjStor_C01_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "The service prevents access to any object storage bucket or object that uses KMS keys not listed as trusted by the organization.",
-		Message:     "TestSet has not yet started.", // This message will be overwritten by subsequent tests
+		Description: "When a request is made to read a protected bucket, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C01",
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
 	result.ExecuteTest(CCC_ObjStor_C01_TR01_T01)
-	// TODO: Additional test calls go here
 
 	return
 }
@@ -442,24 +494,111 @@ func CCC_ObjStor_C01_TR01_T01() (result pluginkit.TestResult) {
 }
 
 // -----
+// TestSet and Tests for CCC_ObjStor_C01_TR02
+// -----
+
+func CCC_ObjStor_C01_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C01_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When a request is made to read a protected object, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C01",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_ObjStor_C01_TR02_T01)
+
+	return
+}
+
+func CCC_ObjStor_C01_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C01_TR02
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_ObjStor_C01_TR03
+// -----
+
+func CCC_ObjStor_C01_TR03() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C01_TR03"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When a request is made to write to a bucket, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C01",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_ObjStor_C01_TR03_T01)
+
+	return
+}
+
+func CCC_ObjStor_C01_TR03_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C01_TR03
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_ObjStor_C01_TR04
+// -----
+
+func CCC_ObjStor_C01_TR04() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C01_TR04"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When a request is made to write to an object, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C01",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_ObjStor_C01_TR04_T01)
+
+	return
+}
+
+func CCC_ObjStor_C01_TR04_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C01_TR04
+	return
+}
+
+// -----
 // TestSet and Tests for CCC_ObjStor_C02_TR01
 // -----
 
-// CCC_ObjStor_C02_TR01 conforms to the TestSet function type
 func CCC_ObjStor_C02_TR01() (testSetName string, result pluginkit.TestSetResult) {
-	// set default return values
 	testSetName = "CCC_ObjStor_C02_TR01"
 	result = pluginkit.TestSetResult{
 		Passed:      false,
-		Description: "Admin users can configure bucket-level permissions uniformly across all buckets, ensuring that object-level permissions cannot be applied without explicit authorization.",
-		Message:     "TestSet has not yet started.", // This message will be overwritten by subsequent tests
+		Description: "When a permission set is allowed for an object in a bucket, the service MUST allow the same permission set to access all objects in the same bucket.",
+		Message:     "TestSet has not yet started.",
 		DocsURL:     "https://maintainer.com/docs/raids/ABS",
 		ControlID:   "CCC.ObjStor.C02",
 		Tests:       make(map[string]pluginkit.TestResult),
 	}
 
 	result.ExecuteTest(CCC_ObjStor_C02_TR01_T01)
-	// TODO: Additional test calls go here
 
 	return
 }
@@ -471,5 +610,245 @@ func CCC_ObjStor_C02_TR01_T01() (result pluginkit.TestResult) {
 	}
 
 	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C02_TR01
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_ObjStor_C02_TR02
+// -----
+
+func CCC_ObjStor_C02_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_ObjStor_C02_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When a permission set is denied for an object in a bucket, the service MUST deny the same permission set to access all objects in the same bucket.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.ObjStor.C02",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_ObjStor_C02_TR02_T01)
+
+	return
+}
+
+func CCC_ObjStor_C02_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_ObjStor_C02_TR02
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C09_TR01
+// -----
+
+func CCC_C09_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C09_TR01"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When access logs are stored, the service MUST ensure that access logs cannot be accessed without proper authorization.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C09.TR01",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C09_TR01_T01)
+
+	return
+}
+
+func CCC_C09_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C09_TR01
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C09_TR02
+// -----
+
+func CCC_C09_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C09_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When access logs are stored, the service MUST ensure that access logs cannot be modified without proper authorization.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C09.TR02",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C09_TR02_T01)
+
+	return
+}
+
+func CCC_C09_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C09_TR02
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C09_TR03
+// -----
+
+func CCC_C09_TR03() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C09_TR03"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When access logs are stored, the service MUST ensure that access logs cannot be deleted without proper authorization.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C09.TR03",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C09_TR03_T01)
+
+	return
+}
+
+func CCC_C09_TR03_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C09_TR03
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C11_TR01
+// -----
+
+func CCC_C11_TR01() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C11_TR01"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When encryption keys are used, the service MUST verify that all encryption keys use approved cryptographic algorithms as per organizational standards.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C11.TR01",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C11_TR01_T01)
+
+	return
+}
+
+func CCC_C11_TR01_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C11_TR01
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C11_TR02
+// -----
+
+func CCC_C11_TR02() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C11_TR02"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When encryption keys are used, the service MUST verify that encryption keys are rotated at a frequency compliant with organizational policies.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C11.TR02",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C11_TR02_T01)
+
+	return
+}
+
+func CCC_C11_TR02_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C11_TR02
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C11_TR03
+// -----
+
+func CCC_C11_TR03() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C11_TR03"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When encrypting data, the service MUST verify that customer-managed encryption keys (CMEKs) are used.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C11.TR03",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C11_TR03_T01)
+
+	return
+}
+
+func CCC_C11_TR03_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C11_TR03
+	return
+}
+
+// -----
+// TestSet and Tests for CCC_C11_TR04
+// -----
+
+func CCC_C11_TR04() (testSetName string, result pluginkit.TestSetResult) {
+	testSetName = "CCC_C11_TR04"
+	result = pluginkit.TestSetResult{
+		Passed:      false,
+		Description: "When encryption keys are accessed, the service MUST verify that access to encryption keys is restricted to authorized personnel and services, following the principle of least privilege.",
+		Message:     "TestSet has not yet started.",
+		DocsURL:     "https://maintainer.com/docs/raids/ABS",
+		ControlID:   "CCC.C11.TR04",
+		Tests:       make(map[string]pluginkit.TestResult),
+	}
+
+	result.ExecuteTest(CCC_C11_TR04_T01)
+
+	return
+}
+
+func CCC_C11_TR04_T01() (result pluginkit.TestResult) {
+	result = pluginkit.TestResult{
+		Description: "This test is still under construction",
+		Function:    utils.CallerPath(0),
+	}
+
+	// TODO: Use this section to write a single step or test that contributes to CCC_C11_TR04
 	return
 }
