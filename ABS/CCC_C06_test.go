@@ -472,3 +472,22 @@ func Test_CCC_C06_TR02_T02_fails_when_allowedRegion_delete_fails(t *testing.T) {
 	assert.Equal(t, false, result.Passed)
 	assert.Contains(t, result.Message, "Failed to delete Backup Vault with error")
 }
+
+func Test_CCC_ObjStor_C06_TR01_T01_succeeds(t *testing.T) {
+	// Arrange
+	myMock := loggingFunctionsMock{
+		azureUtilsMock: azureUtilsMock{
+			confirmLoggingToLogAnalyticsIsConfiguredResult: true,
+		},
+	}
+
+	ArmoryAzureUtils = &myMock
+	ArmoryCommonFunctions = &myMock
+
+	// Act
+	result := CCC_ObjStor_C06_TR01_T01()
+
+	// Assert
+	assert.Equal(t, true, result.Passed)
+	assert.Equal(t, "", result.Message)
+}
