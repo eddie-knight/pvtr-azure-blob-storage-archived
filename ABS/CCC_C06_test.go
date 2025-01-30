@@ -18,7 +18,7 @@ import (
 type mockPolicyClient struct {
 	pagerError          error
 	allowedLocations    []interface{}
-	maximumDaysToRotate int
+	maximumDaysToRotate float64
 	policyDefinitionID  string
 }
 
@@ -29,6 +29,7 @@ func (mock *mockPolicyClient) NewListForResourcePager(resourceGroupName string, 
 				{
 					Properties: &armpolicy.AssignmentProperties{
 						PolicyDefinitionID: to.Ptr(mock.policyDefinitionID),
+						EnforcementMode:    to.Ptr(armpolicy.EnforcementModeDefault),
 						Parameters: map[string]*armpolicy.ParameterValuesValue{
 							"listOfAllowedLocations": {
 								Value: mock.allowedLocations,

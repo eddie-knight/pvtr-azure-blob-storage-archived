@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armpolicy"
 	"github.com/privateerproj/privateer-sdk/pluginkit"
 	"github.com/privateerproj/privateer-sdk/utils"
 )
@@ -72,12 +73,12 @@ func CCC_C11_TR02_T01() (result pluginkit.TestResult) {
 
 		for _, assignment := range page.Value {
 			// Check that the default policy is assigned (https://github.com/Azure/azure-policy/blob/0c3bf524cb141cd08ca72b7e6beb9d01a7955791/built-in-policies/policyDefinitions/Key%20Vault/Keys_KeyRotationPolicy_MaximumDaysToRotate.json)
-			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/d8cf8476-a2ec-4916-896e-992351803c44") {
+			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/d8cf8476-a2ec-4916-896e-992351803c44") && *assignment.Properties.EnforcementMode != armpolicy.EnforcementModeDoNotEnforce {
 				result.Message = "Azure Policy is assigned that requires keys be rotated for Storage Account encryption."
 				result.Passed = true
 				result.Value = KeyRotationPolicy{
 					Name: "MaximumDaysToRotateRequiredByPolicy",
-					Days: assignment.Properties.Parameters["maximumDaysToRotate"].Value.(int),
+					Days: int(assignment.Properties.Parameters["maximumDaysToRotate"].Value.(float64)),
 				}
 
 				return
@@ -133,7 +134,7 @@ func CCC_C11_TR03_T01() (result pluginkit.TestResult) {
 
 		for _, assignment := range page.Value {
 			// Check that the default policy is assigned (https://github.com/Azure/azure-policy/blob/0c3bf524cb141cd08ca72b7e6beb9d01a7955791/built-in-policies/policyDefinitions/Storage/StorageAccountCustomerManagedKeyEnabled_Audit.json)
-			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/6fac406b-40ca-413b-bf8e-0bf964659c25") {
+			if strings.Contains(*assignment.Properties.PolicyDefinitionID, "/providers/Microsoft.Authorization/policyDefinitions/6fac406b-40ca-413b-bf8e-0bf964659c25") && *assignment.Properties.EnforcementMode != armpolicy.EnforcementModeDoNotEnforce {
 				result.Message = "Azure Policy is assigned that requires customer-managed keys be used for Storage Account encryption."
 				result.Passed = true
 				return
