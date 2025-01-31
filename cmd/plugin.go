@@ -21,7 +21,9 @@ var (
 
 type Plugin struct{}
 
-// Plugin.Start() is called by plugin.Serve
+// Start is called from Privateer after the plugin is served
+// At minimum, this should call pluginkit.Run()
+// Adding pluginkit.SetupCloseHandler(cleanupFunc) will allow you to append custom cleanup behavior
 func (p *Plugin) Start() (err error) {
 	err = Vessel.Mobilize()
 	return
